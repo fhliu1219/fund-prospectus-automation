@@ -1,0 +1,8 @@
+# Runtime dependencies
+requests>=2.31,<3
+tqdm>=4.66,<5
+
+# Optional: HTML -> PDF conversion (enabled with --pdf).
+# WeasyPrint has system-level dependencies (cairo, pango); the Dockerfile installs them.
+# The tool runs fine without it — PDF conversion is skipped with a warning if unavailable.
+# weasyprint>=60
