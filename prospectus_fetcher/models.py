@@ -1,4 +1,5 @@
-"""Data structures passed between pipeline stages.
+"""
+Data structures passed between pipeline stages.
 
 These are plain dataclasses with no behaviour, so every other module can
 import them without creating cycles.
@@ -12,7 +13,8 @@ from typing import Optional
 
 @dataclass
 class ResolvedFund:
-    """Result of resolving a ticker symbol to an SEC EDGAR entity.
+    """
+    Result of resolving a ticker symbol to an SEC EDGAR entity.
 
     ``series_id``/``class_id`` are only present for funds found in the mutual
     fund mapping file. Tickers resolved via ``ticker.txt`` (e.g. standalone ETF

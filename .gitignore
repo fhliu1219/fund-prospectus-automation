@@ -1,6 +1,7 @@
 # Generated output
 output/
 logs/
+docs/
 
 # Python
 __pycache__/
