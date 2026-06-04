@@ -1,0 +1,13 @@
+# Example batch file for the take-home checkpoints.
+# Blank lines and comments are ignored.
+VUSXX
+VTSAX
+VMFXX
+SWPPX
+TRBCX
+SPY
+QQQ
+VOO
+SWVXX
+FDRXX
+ZZZZ
