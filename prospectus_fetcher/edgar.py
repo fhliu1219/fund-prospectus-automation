@@ -33,7 +33,7 @@ _PRIORITY_RANK = {form: i for i, form in enumerate(PROSPECTUS_FORM_PRIORITY)}
 _PROSPECTUS_FORMS = set(PROSPECTUS_FORM_PRIORITY)
 
 _FORM_DESCRIPTIONS = {
-    "497K": "investor-facing summary prospectus",
+    "497K": "investor-facing 497K prospectus filing (summary or supplement)",
     "485BPOS": "post-effective prospectus filing (Rule 485(b), in force)",
     "485APOS": "post-effective amendment (Rule 485(a), delayed-effective)",
     "N-1A": "original registration statement",
