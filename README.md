@@ -67,8 +67,8 @@ got a 497K summary prospectus; SPY a full 485BPOS). The per-fund reasoning is in
 
 ```
 VUSXX: selected 497K dated 2025-12-19: highest-priority available form —
-  investor-facing summary prospectus (note: a newer 497 dated 2026-04-16 was
-  skipped to honour the priority policy)
+  investor-facing 497K prospectus filing (summary or supplement) (note: a
+  newer 497 dated 2026-04-16 was skipped to honour the priority policy)
 ```
 
 ---
