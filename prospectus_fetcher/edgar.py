@@ -90,6 +90,7 @@ def select_filing(
 def _selection_reason(chosen_base: str, chosen: FilingRef, all_filings: List[FilingRef]) -> str:
     descr = _FORM_DESCRIPTIONS.get(chosen_base, chosen_base)
     reason = f"selected {chosen.form} dated {chosen.date}: highest-priority available form — {descr}"
+    # "Did we skip a newer but lower-priority form?" check
     newer_lower = [
         f
         for f in all_filings
