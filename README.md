@@ -210,6 +210,9 @@ pytest                         # offline, deterministic (HTTP mocked)
 RUN_LIVE_TESTS=1 pytest tests/test_integration_live.py   # optional live EDGAR check
 ```
 
+The live EDGAR integration test is skipped by default so the normal test suite
+stays fast, deterministic, and independent of network/SEC availability.
+
 Coverage includes mapping-file parsing, form-priority selection (incl. amended
 forms), series filtering, Atom parsing, primary-document resolution (and its
 fallback heuristic), archive-URL construction, and the graceful-error path.
