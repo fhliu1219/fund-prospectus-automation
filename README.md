@@ -5,7 +5,7 @@ finds its **latest prospectus** on the SEC's public **EDGAR** system, and saves
 the document to local storage.
 
 It handles mutual funds, money-market funds, and ETFs across multiple providers,
-narrows filing lookup to the fund series when SEC identifiers allow it, and
+narrows filing lookup to the fund class when SEC identifiers allow it, and
 explains **why** each filing was chosen.
 
 The V2 branch is evolving this CLI into a production-minded retrieval and
@@ -80,16 +80,17 @@ VUSXX: selected 497K dated 2025-12-19: highest-priority available form —
 ## How it works
 
 ```
-ticker → resolve to (CIK [, seriesId]) → find latest prospectus filing
+ticker → resolve to (CIK [, seriesId, classId]) → find preferred filing
        → resolve primary document → download HTML  (→ optional PDF)
 ```
 
 1. **Resolve** the ticker against SEC's two mapping files — `company_tickers_mf.json`
-   (mutual funds & fund-structured ETFs; includes a `seriesId`) and `ticker.txt`
+   (mutual funds & fund-structured ETFs; includes `seriesId` and `classId`) and `ticker.txt`
    (stocks & standalone ETF trusts).
-2. **Find the filing.** When a `seriesId` is known we fetch that fund's filings
-   from EDGAR's browse-edgar Atom feed and pick the best prospectus form (see
-   policy below). Otherwise we use the registrant's submissions history.
+2. **Find the filing.** Prefer the class-level Atom feed when a `classId` is
+   available. If it has no qualifying prospectus, fall back to the `seriesId`
+   feed with an explicit warning. Use registrant submissions only when neither
+   fund identifier is available.
 3. **Resolve the document** (the filing-designated `primaryDocument`) and download it.
 
 SEC requires a descriptive `User-Agent` and limits clients to 10 requests/second;
@@ -124,14 +125,21 @@ Per SEC's [EDGAR Filer Manual](https://www.sec.gov/files/edgar/filermanual/efmvo
 | `N-1A` | Original registration statement | Usually years old after launch; a fallback. |
 | `497` | Prospectus / supplement filing | **Last resort** — the most recent 497 is often a short *supplement*, not a full prospectus, so we log a warning when it's chosen. |
 
-We select the **highest-priority form that exists**, then the **newest filing of
-that form**. Amended variants (e.g. `497K/A`, `N-1A/A`) are ranked by their base
-form but the actual form is recorded.
+Within the strongest available identity level, we select the **highest-priority
+form that exists**, then the **newest filing of that form**. Amended variants
+(e.g. `497K/A`, `N-1A/A`) are ranked by their base form but the actual form is
+recorded.
 
 > The tool intentionally prefers the highest-priority form over a *newer*
 > lower-priority filing — e.g. a newer 497 supplement is skipped when a recent
 > 497K summary prospectus exists. The `selection_reason` in the log states this
 > for each fund.
+
+Identity specificity is evaluated first: any qualifying class-associated form
+wins before the tool considers series-associated candidates. This favors
+share-class relevance over form preference across identity levels. Document
+validation remains necessary because a class-associated filing can still be a
+supplement.
 
 **Known nuance:** a `497K` is *usually* the summary prospectus but can
 occasionally itself be a short supplement. **Example: QQQ** — its most recent
@@ -140,31 +148,31 @@ highest-priority filing returned for QQQ's resolved identity under the confirmed
 policy, but its completeness is a separate question. (Cross-check against
 the issuer's page: <https://www.invesco.com/qqq-etf/en/about.html>.)
 
-### 2. Narrowing the lookup to a fund series
+### 2. Narrowing the lookup to a fund class
 
 One SEC registrant (CIK) holds **many funds**. For example, "Vanguard Admiral
 Funds" filed **12 different funds' 497Ks on the same day**, so naively taking the
 registrant's "most recent 497K" can silently return the **wrong series'**
-document. We reduce this risk by filtering filings by the fund's `seriesId`.
+document. Series filtering reduces that risk, but one series can still contain
+multiple ticker-bearing share classes. V2 therefore queries the requested
+`classId` first.
 
-**Proof it matters:** `VTSAX` and `VOO` are both under CIK `36405`, but resolve
-to distinct series-level candidates for *Vanguard Total Stock Market Index Fund*
-and *Vanguard 500 Index Fund*. Likewise `VUSXX` (Treasury MMF) vs `VMFXX`
-(Federal MMF).
+**Proof it matters:** VUSXX resolves to class `C000005732` inside series
+`S000002233`. A candidate selected from that class feed receives `class` identity
+instead of the weaker `series` identity. If the class feed contains no qualifying
+prospectus, the tool falls back to the series feed and records the downgrade.
 
-This is series-level, not exact share-class, evidence. A series can contain
-multiple ticker-bearing classes, so the current lookup does not prove that the
-downloaded document covers the requested ticker. V2 records that distinction
-explicitly; class-level lookup and document-content validation are the next
-correctness milestones.
+Class-level SEC association still does not prove that the selected primary
+document explicitly covers the ticker or is a complete prospectus. That separate
+content-verification step is the next correctness milestone.
 
 ### 3. Tickers in `ticker.txt` only (no series id)
 
 Standalone ETF trusts resolve via `ticker.txt` to a registrant CIK with no
 series. We assume such a registrant is effectively single-fund and use its
 submissions history directly. **Example: SPY** (SPDR S&P 500 ETF Trust). This
-assumption is **verified at runtime**: if the CIK actually maps to multiple fund
-series, the tool logs a notice rather than silently guessing.
+assumption is checked against the available mutual-fund mapping at runtime. If
+the CIK maps to multiple known series, the tool logs a notice before proceeding.
 
 ### 4. Other assumptions
 
@@ -227,8 +235,9 @@ The live EDGAR integration test is skipped by default so the normal test suite
 stays fast, deterministic, and independent of network/SEC availability.
 
 Coverage includes mapping-file parsing, form-priority selection (incl. amended
-forms), series filtering, Atom parsing, primary-document resolution (and its
-fallback heuristic), archive-URL construction, and the graceful-error path.
+forms), class-first selection, explicit class-to-series fallback, Atom parsing,
+primary-document resolution (and its fallback heuristic), archive-URL
+construction, and the graceful-error path.
 
 ---
 
@@ -239,7 +248,7 @@ main.py                     # CLI entry point
 prospectus_fetcher/
   config.py                 # SEC endpoints, User-Agent, rate limit
   sec_client.py             # rate-limited HTTP client (User-Agent, retries)
-  resolver.py               # ticker -> CIK/series; cik->series reverse index
+  resolver.py               # ticker -> CIK/series/class; cik->series reverse index
   edgar.py                  # PROSPECTUS_FORM_PRIORITY; filing selection; doc resolution
   downloader.py             # save the document to disk
   converter.py              # optional, best-effort HTML -> PDF

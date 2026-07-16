@@ -2,10 +2,10 @@
 
 The hard part of this workflow lives here. Two facts drive the design:
 
-1. **One registrant (CIK) holds many funds.** "Vanguard Admiral Funds" can file a
-   dozen different funds' 497Ks on the same day, so picking the registrant's
-   "most recent 497K" can silently return the *wrong* fund. When we know the
-   fund's ``seriesId`` we therefore filter filings by series via browse-edgar.
+1. **One registrant and series can cover multiple ticker-bearing classes.** We
+   prefer the requested ``classId`` in EDGAR's Atom feed, fall back to its
+   ``seriesId`` only when no qualifying class filing exists, and use registrant
+   submissions only when neither fund identifier is available.
 2. **"Prospectus" is several form types.** We rank them by an explicit, swappable
    policy and pick the best available, normalising amended (``/A``) variants.
 """
@@ -144,14 +144,36 @@ class EdgarClient:
     # -- public API --------------------------------------------------------
     def find_prospectus(self, fund: ResolvedFund) -> Optional[Filing]:
         """Find the latest prospectus filing for a fund and resolve its doc URL."""
-        if fund.series_id:
-            refs = self._series_filings(fund.series_id)
-            selection = select_filing(refs)
-            if selection is None:
-                logger.debug("No prospectus in the series feed for %s; retrying per-form.", fund.ticker)
-                selection = select_filing(self._series_filings_by_form(fund.series_id))
-            series_id = fund.series_id
-        else:
+        selection: Optional[Tuple[FilingRef, str]] = None
+        identity_level = IdentityLevel.UNKNOWN
+        identity_evidence: List[str] = []
+        warnings: List[str] = []
+
+        if fund.class_id:
+            selection = self._select_atom_filing(fund.class_id, "class", fund.ticker)
+            if selection is not None:
+                identity_level = IdentityLevel.CLASS
+                identity_evidence = [
+                    f"candidate filing selected from the EDGAR class feed for {fund.class_id}"
+                ]
+            elif fund.series_id:
+                warning = (
+                    f"class-level lookup for {fund.class_id} found no qualifying prospectus; "
+                    f"fell back to series {fund.series_id}"
+                )
+                warnings.append(warning)
+
+        if selection is None and fund.series_id:
+            selection = self._select_atom_filing(fund.series_id, "series", fund.ticker)
+            if selection is not None:
+                identity_level = IdentityLevel.SERIES
+                identity_evidence = [
+                    f"candidate filing selected from the EDGAR series feed for {fund.series_id}"
+                ]
+                if not fund.class_id:
+                    warnings.append("class identifier unavailable; selected at series level")
+
+        if selection is None and not fund.class_id and not fund.series_id:
             if self.resolver is not None and len(self.resolver.series_for_cik(fund.cik)) > 1:
                 logger.warning(
                     "multi-series registrant detected via ticker.txt; series filtering "
@@ -159,7 +181,14 @@ class EdgarClient:
                 )
             refs = self._recent_refs(self._get_submissions(fund.cik))
             selection = select_filing(refs)
-            series_id = None
+            if selection is not None:
+                identity_level = IdentityLevel.REGISTRANT
+                identity_evidence = [
+                    f"candidate filing selected from registrant submissions for CIK {fund.cik}"
+                ]
+                warnings.append(
+                    "class and series identifiers unavailable; selected at registrant level"
+                )
 
         if selection is None:
             logger.info("No qualifying prospectus filing found for %s.", fund.ticker)
@@ -179,18 +208,6 @@ class EdgarClient:
             config.ARCHIVES_BASE.format(cik=fund.cik, accession_nodash=accession_nodash)
             + f"/{doc_name}"
         )
-        if series_id:
-            identity_level = IdentityLevel.SERIES
-            identity_evidence = [
-                f"candidate filing selected from the EDGAR series feed for {series_id}"
-            ]
-        else:
-            identity_level = IdentityLevel.REGISTRANT
-            identity_evidence = [
-                f"candidate filing selected from registrant submissions for CIK {fund.cik}"
-            ]
-
-        warnings = []
         if heuristic_used:
             warnings.append("primary document selected by fallback size heuristic")
 
@@ -199,7 +216,8 @@ class EdgarClient:
             accession=chosen.accession,
             form=chosen.form,
             date=chosen.date,
-            series_id=series_id,
+            series_id=fund.series_id,
+            class_id=fund.class_id,
             filing_detail_url=chosen.filing_href,
             doc_url=doc_url,
             fund_name=chosen.description,
@@ -210,12 +228,27 @@ class EdgarClient:
             warnings=warnings,
         )
 
-    # -- series-filtered filing lookup -------------------------------------
-    def _series_filings(self, series_id: str) -> List[FilingRef]:
-        """All recent filings for a single fund series (one request, all forms)."""
+    # -- class/series-filtered filing lookup -------------------------------
+    def _select_atom_filing(
+        self, identifier: str, identity_name: str, ticker: str
+    ) -> Optional[Tuple[FilingRef, str]]:
+        refs = self._atom_filings(identifier)
+        selection = select_filing(refs)
+        if selection is None:
+            logger.debug(
+                "No prospectus in the %s feed for %s; retrying per-form for %s.",
+                identity_name,
+                identifier,
+                ticker,
+            )
+            selection = select_filing(self._atom_filings_by_form(identifier))
+        return selection
+
+    def _atom_filings(self, identifier: str) -> List[FilingRef]:
+        """All recent filings for one class or series identifier."""
         params = {
             "action": "getcompany",
-            "CIK": series_id,
+            "CIK": identifier,
             "dateb": "",
             "owner": "include",
             "count": 100,
@@ -223,13 +256,13 @@ class EdgarClient:
         }
         return parse_atom(self.client.get_text(config.BROWSE_EDGAR_URL, params=params))
 
-    def _series_filings_by_form(self, series_id: str) -> List[FilingRef]:
+    def _atom_filings_by_form(self, identifier: str) -> List[FilingRef]:
         """Fallback: query each prospectus form explicitly if the feed missed them."""
         collected: List[FilingRef] = []
         for form in PROSPECTUS_FORM_PRIORITY:
             params = {
                 "action": "getcompany",
-                "CIK": series_id,
+                "CIK": identifier,
                 "type": form,
                 "dateb": "",
                 "owner": "include",

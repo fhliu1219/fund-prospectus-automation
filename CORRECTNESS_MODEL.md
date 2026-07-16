@@ -23,10 +23,14 @@ does not count unless the selection path uses or independently confirms it.
 | `registrant` | The filing belongs to the ticker's registrant CIK. | Which series or class the filing covers when the registrant contains multiple products. |
 | `unknown` | No identity claim has been established yet. | Any fund-level relevance. |
 
-The baseline implementation queries the series feed when a series ID exists
-and registrant submissions otherwise. Milestone 1 therefore reports `series`
-or `registrant`, even when the resolver already knows a class ID. Class-level
-selection is a later implementation milestone.
+The current implementation prefers the class feed when a class ID exists. If
+that feed and its per-form queries contain no qualifying prospectus, it falls
+back to the series feed and records the downgrade. Registrant submissions are
+used only when neither class nor series identifiers are available.
+
+A request or parsing failure is not treated as an empty class feed. It propagates
+as an error so a temporary infrastructure problem cannot silently lower the
+identity level.
 
 ## Document verification
 
@@ -34,7 +38,7 @@ selection is a later implementation milestone.
 
 | Status | Meaning |
 |---|---|
-| `not_checked` | The file was not inspected for share-class evidence. This is the Milestone 1 default. |
+| `not_checked` | The file was not inspected for share-class evidence. This remains the default through Milestone 2. |
 | `document_verified` | Content checks found sufficient evidence that the file covers the requested ticker or class. |
 | `manual_review_required` | Automated evidence is absent, conflicting, incomplete, or ambiguous. |
 | `rejected` | Content evidence shows that the file does not cover the requested ticker or class. |
@@ -58,14 +62,14 @@ form type alone is not enough.
 
 ## Concrete examples
 
-- **VUSXX:** the resolver knows a class ID and series ID, but the current lookup selects from the series feed. Its Milestone 1 identity level is therefore `series`, and its document status is `not_checked`.
+- **VUSXX:** the resolver knows class `C000005732` and series `S000002233`. A successful class-feed selection now produces `class` identity while document status remains `not_checked`.
 - **SPY:** the fallback mapping provides only a registrant CIK. The current selection is `registrant` until filing metadata or document content establishes stronger evidence.
 - **QQQ:** its latest preferred `497K` can be a supplement. This demonstrates why form priority cannot replace content validation.
 
 ## Milestone boundaries
 
-Milestone 1 introduces the vocabulary, model fields, evidence containers, and
-tests without changing which filing is selected. Milestone 2 will prefer
-class-level EDGAR lookup when a class ID is available. Milestone 3 will inspect
-filing metadata and document content, assign document verification, and route
-ambiguous cases to manual review.
+Milestone 1 introduced the vocabulary, model fields, and evidence containers.
+Milestone 2 implements class-first lookup, explicit series fallback, identity
+provenance, and regression tests. Milestone 3 will inspect filing metadata and
+document content, assign document verification, and route ambiguous cases to
+manual review.

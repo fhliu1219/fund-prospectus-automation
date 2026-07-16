@@ -56,6 +56,7 @@ class Filing:
     form: str                 # actual form as filed, e.g. "497K" or "497K/A"
     date: str                 # filing date, "YYYY-MM-DD"
     series_id: Optional[str] = None
+    class_id: Optional[str] = None
     filing_detail_url: Optional[str] = None
     doc_url: Optional[str] = None
     fund_name: Optional[str] = None     # from primaryDocDescription when available

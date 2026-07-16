@@ -56,11 +56,8 @@ class ProspectusFetcher:
 
             path = self.downloader.save(filing, symbol)
             logger.info("%s: %s", symbol, filing.selection_reason)
-            if filing.heuristic_used:
-                logger.warning(
-                    "%s: primary document was selected using the fallback size heuristic.",
-                    symbol,
-                )
+            for warning in filing.warnings:
+                logger.warning("%s: %s.", symbol, warning)
             if self.want_pdf:
                 to_pdf(path)
             return FetchResult(

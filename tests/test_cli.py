@@ -1,5 +1,6 @@
 """CLI orchestration tests: ticker parsing, summary table, graceful errors."""
 
+import logging
 from unittest.mock import Mock
 
 import responses
@@ -38,7 +39,10 @@ def test_format_summary_shows_columns_and_statuses():
     assert "ok" in table and "error" in table
 
 
-def test_fetch_propagates_identity_evidence_without_claiming_document_verification(tmp_path):
+def test_fetch_propagates_identity_evidence_without_claiming_document_verification(
+    tmp_path, caplog
+):
+    caplog.set_level(logging.WARNING, logger="prospectus_fetcher")
     fetcher = ProspectusFetcher.__new__(ProspectusFetcher)
     fetcher.resolver = Mock(
         resolve=Mock(return_value=ResolvedFund("VUSXX", 891190, "S1", "C1", "mf"))
@@ -65,6 +69,7 @@ def test_fetch_propagates_identity_evidence_without_claiming_document_verificati
     assert result.document_verification is DocumentVerification.NOT_CHECKED
     assert result.identity_evidence == ["selected from series S1"]
     assert result.warnings == ["example warning"]
+    assert "VUSXX: example warning." in caplog.text
 
 
 @responses.activate

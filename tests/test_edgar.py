@@ -108,7 +108,7 @@ def edgar(monkeypatch):
 
 
 @responses.activate
-def test_find_prospectus_series_path(edgar):
+def test_find_prospectus_prefers_class_path(edgar):
     responses.add(responses.GET, config.BROWSE_EDGAR_URL, body=ATOM, status=200)
     responses.add(
         responses.GET,
@@ -129,11 +129,173 @@ def test_find_prospectus_series_path(edgar):
         "000119312525325229/f43673d1.htm"
     )
     assert filing.heuristic_used is False
-    # A class ID was resolved, but this path queried only the series feed.
-    # Report the evidence actually used instead of over-claiming class identity.
+    assert filing.series_id == "S000002233"
+    assert filing.class_id == "C000005732"
+    assert filing.identity_level is IdentityLevel.CLASS
+    assert filing.document_verification is DocumentVerification.NOT_CHECKED
+    assert "C000005732" in filing.identity_evidence[0]
+    browse_calls = [
+        call for call in responses.calls if call.request.url.startswith(config.BROWSE_EDGAR_URL)
+    ]
+    assert len(browse_calls) == 1
+    assert "CIK=C000005732" in browse_calls[0].request.url
+
+
+def test_find_prospectus_uses_series_when_class_id_is_unavailable(edgar, monkeypatch):
+    calls = []
+
+    def atom_filings(identifier):
+        calls.append(identifier)
+        return [
+            FilingRef(
+                form="497K",
+                date="2026-01-01",
+                accession="0000000000-26-000001",
+                primary_document="series-prospectus.htm",
+            )
+        ]
+
+    monkeypatch.setattr(edgar, "_atom_filings", atom_filings)
+    fund = ResolvedFund("VUSXX", 891190, "S000002233", None, "mf")
+
+    filing = edgar.find_prospectus(fund)
+
+    assert calls == ["S000002233"]
     assert filing.identity_level is IdentityLevel.SERIES
     assert filing.document_verification is DocumentVerification.NOT_CHECKED
-    assert "S000002233" in filing.identity_evidence[0]
+    assert filing.warnings == ["class identifier unavailable; selected at series level"]
+
+
+def test_class_per_form_recovery_remains_class_level(edgar, monkeypatch):
+    feed_calls = []
+    form_calls = []
+
+    def atom_filings(identifier):
+        feed_calls.append(identifier)
+        return [FilingRef(form="NPORT-P", date="2026-01-01", accession="ignored")]
+
+    def atom_filings_by_form(identifier):
+        form_calls.append(identifier)
+        return [
+            FilingRef(
+                form="497K",
+                date="2025-12-19",
+                accession="0000000000-25-000001",
+                primary_document="class-prospectus.htm",
+            )
+        ]
+
+    monkeypatch.setattr(edgar, "_atom_filings", atom_filings)
+    monkeypatch.setattr(edgar, "_atom_filings_by_form", atom_filings_by_form)
+    fund = ResolvedFund("VUSXX", 891190, "S000002233", "C000005732", "mf")
+
+    filing = edgar.find_prospectus(fund)
+
+    assert feed_calls == ["C000005732"]
+    assert form_calls == ["C000005732"]
+    assert filing.identity_level is IdentityLevel.CLASS
+    assert filing.warnings == []
+
+
+def test_empty_class_feed_falls_back_to_series_with_warning(edgar, monkeypatch):
+    feed_calls = []
+    form_calls = []
+
+    def atom_filings(identifier):
+        feed_calls.append(identifier)
+        if identifier == "C000005732":
+            return []
+        return [
+            FilingRef(
+                form="497K",
+                date="2025-12-19",
+                accession="0000000000-25-000002",
+                primary_document="series-prospectus.htm",
+            )
+        ]
+
+    def atom_filings_by_form(identifier):
+        form_calls.append(identifier)
+        return []
+
+    monkeypatch.setattr(edgar, "_atom_filings", atom_filings)
+    monkeypatch.setattr(edgar, "_atom_filings_by_form", atom_filings_by_form)
+    fund = ResolvedFund("VUSXX", 891190, "S000002233", "C000005732", "mf")
+
+    filing = edgar.find_prospectus(fund)
+
+    assert feed_calls == ["C000005732", "S000002233"]
+    assert form_calls == ["C000005732"]
+    assert filing.identity_level is IdentityLevel.SERIES
+    assert filing.class_id == "C000005732"
+    assert filing.warnings == [
+        "class-level lookup for C000005732 found no qualifying prospectus; "
+        "fell back to series S000002233"
+    ]
+
+
+def test_class_candidate_wins_before_series_form_priority(edgar, monkeypatch):
+    calls = []
+
+    def atom_filings(identifier):
+        calls.append(identifier)
+        if identifier != "C000005732":
+            raise AssertionError("series feed must not be queried after a class candidate wins")
+        return [
+            FilingRef(
+                form="497",
+                date="2026-01-01",
+                accession="0000000000-26-000003",
+                primary_document="class-supplement.htm",
+            )
+        ]
+
+    monkeypatch.setattr(edgar, "_atom_filings", atom_filings)
+    fund = ResolvedFund("VUSXX", 891190, "S000002233", "C000005732", "mf")
+
+    filing = edgar.find_prospectus(fund)
+
+    assert calls == ["C000005732"]
+    assert filing.form == "497"
+    assert filing.identity_level is IdentityLevel.CLASS
+
+
+def test_class_request_failure_does_not_silently_fall_back(edgar, monkeypatch):
+    def atom_filings(identifier):
+        raise RuntimeError(f"class feed unavailable for {identifier}")
+
+    monkeypatch.setattr(edgar, "_atom_filings", atom_filings)
+    fund = ResolvedFund("VUSXX", 891190, "S000002233", "C000005732", "mf")
+
+    with pytest.raises(RuntimeError, match="class feed unavailable"):
+        edgar.find_prospectus(fund)
+
+
+def test_empty_class_and_series_feeds_do_not_broaden_to_registrant(edgar, monkeypatch):
+    feed_calls = []
+    form_calls = []
+
+    def atom_filings(identifier):
+        feed_calls.append(identifier)
+        return []
+
+    def atom_filings_by_form(identifier):
+        form_calls.append(identifier)
+        return []
+
+    def unexpected_submissions(cik):
+        raise AssertionError(f"must not broaden lookup to registrant CIK {cik}")
+
+    monkeypatch.setattr(edgar, "_atom_filings", atom_filings)
+    monkeypatch.setattr(edgar, "_atom_filings_by_form", atom_filings_by_form)
+    monkeypatch.setattr(edgar, "_get_submissions", unexpected_submissions)
+    fund = ResolvedFund("VUSXX", 891190, "S000002233", "C000005732", "mf")
+
+    filing = edgar.find_prospectus(fund)
+
+    assert filing is None
+    assert feed_calls == ["C000005732", "S000002233"]
+    assert form_calls == ["C000005732", "S000002233"]
 
 
 @responses.activate
@@ -168,7 +330,7 @@ def test_find_prospectus_registrant_path_picks_485bpos(edgar):
 
 @responses.activate
 def test_primary_doc_falls_back_to_index_heuristic(edgar):
-    # Series filing whose accession is NOT in submissions -> index.json heuristic
+    # Class filing whose accession is NOT in submissions -> index.json heuristic
     atom = ATOM.replace("0001193125-25-325229", "0009999999-25-000001")
     responses.add(responses.GET, config.BROWSE_EDGAR_URL, body=atom, status=200)
     responses.add(
@@ -200,4 +362,5 @@ def test_primary_doc_falls_back_to_index_heuristic(edgar):
 
     assert filing.doc_url.endswith("/prospectus.htm")
     assert filing.heuristic_used is True
+    assert filing.identity_level is IdentityLevel.CLASS
     assert filing.warnings == ["primary document selected by fallback size heuristic"]
