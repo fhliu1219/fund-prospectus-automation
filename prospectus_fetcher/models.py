@@ -1,14 +1,33 @@
 """
 Data structures passed between pipeline stages.
 
-These are plain dataclasses with no behaviour, so every other module can
-import them without creating cycles.
+These are plain data types with no pipeline behaviour, so every other module
+can import them without creating cycles.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import List, Optional
+
+
+class IdentityLevel(str, Enum):
+    """Strongest SEC identity relationship actually used to select a filing."""
+
+    UNKNOWN = "unknown"
+    REGISTRANT = "registrant"
+    SERIES = "series"
+    CLASS = "class"
+
+
+class DocumentVerification(str, Enum):
+    """Result of checking whether the saved document covers the requested class."""
+
+    NOT_CHECKED = "not_checked"
+    VERIFIED = "document_verified"
+    MANUAL_REVIEW_REQUIRED = "manual_review_required"
+    REJECTED = "rejected"
 
 
 @dataclass
@@ -42,6 +61,10 @@ class Filing:
     fund_name: Optional[str] = None     # from primaryDocDescription when available
     selection_reason: str = ""          # why this filing/form won
     heuristic_used: bool = False        # True if the primary-doc size heuristic was needed
+    identity_level: IdentityLevel = IdentityLevel.UNKNOWN
+    document_verification: DocumentVerification = DocumentVerification.NOT_CHECKED
+    identity_evidence: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -56,6 +79,10 @@ class FetchResult:
     selection_reason: str = ""
     path: Optional[str] = None          # saved file path on success
     error: Optional[str] = None         # message on failure
+    identity_level: IdentityLevel = IdentityLevel.UNKNOWN
+    document_verification: DocumentVerification = DocumentVerification.NOT_CHECKED
+    identity_evidence: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:

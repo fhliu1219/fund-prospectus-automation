@@ -1,10 +1,18 @@
 """CLI orchestration tests: ticker parsing, summary table, graceful errors."""
 
+from unittest.mock import Mock
+
 import responses
 
 from prospectus_fetcher import config
 from prospectus_fetcher.cli import ProspectusFetcher, format_summary, parse_tickers
-from prospectus_fetcher.models import FetchResult
+from prospectus_fetcher.models import (
+    DocumentVerification,
+    FetchResult,
+    Filing,
+    IdentityLevel,
+    ResolvedFund,
+)
 
 
 def test_parse_tickers_splits_uppercases_dedupes():
@@ -28,6 +36,35 @@ def test_format_summary_shows_columns_and_statuses():
         assert col in table
     assert "497K" in table
     assert "ok" in table and "error" in table
+
+
+def test_fetch_propagates_identity_evidence_without_claiming_document_verification(tmp_path):
+    fetcher = ProspectusFetcher.__new__(ProspectusFetcher)
+    fetcher.resolver = Mock(
+        resolve=Mock(return_value=ResolvedFund("VUSXX", 891190, "S1", "C1", "mf"))
+    )
+    fetcher.edgar = Mock(
+        find_prospectus=Mock(
+            return_value=Filing(
+                registrant_cik=891190,
+                accession="0000000000-00-000001",
+                form="497K",
+                date="2026-01-01",
+                identity_level=IdentityLevel.SERIES,
+                identity_evidence=["selected from series S1"],
+                warnings=["example warning"],
+            )
+        )
+    )
+    fetcher.downloader = Mock(save=Mock(return_value=str(tmp_path / "prospectus.html")))
+    fetcher.want_pdf = False
+
+    result = fetcher.fetch("vusxx")
+
+    assert result.identity_level is IdentityLevel.SERIES
+    assert result.document_verification is DocumentVerification.NOT_CHECKED
+    assert result.identity_evidence == ["selected from series S1"]
+    assert result.warnings == ["example warning"]
 
 
 @responses.activate

@@ -4,10 +4,14 @@ A command-line tool that takes a fund **ticker** (e.g. `VUSXX`, `SPY`, `QQQ`),
 finds its **latest prospectus** on the SEC's public **EDGAR** system, and saves
 the document to local storage.
 
-It handles mutual funds, money-market funds, and ETFs across multiple providers
-(Vanguard, Schwab, Fidelity, T. Rowe Price, State Street/SPDR, Invesco, …),
-resolves the *fund-specific* filing (not just the registrant's most recent one),
-and explains **why** each filing was chosen.
+It handles mutual funds, money-market funds, and ETFs across multiple providers,
+narrows filing lookup to the fund series when SEC identifiers allow it, and
+explains **why** each filing was chosen.
+
+The V2 branch is evolving this CLI into a production-minded retrieval and
+verification tool for fund-operations workflows. Its strict
+[correctness model](CORRECTNESS_MODEL.md) separates registrant, series,
+and class identity from verification of the downloaded document itself.
 
 ---
 
@@ -86,7 +90,7 @@ ticker → resolve to (CIK [, seriesId]) → find latest prospectus filing
 2. **Find the filing.** When a `seriesId` is known we fetch that fund's filings
    from EDGAR's browse-edgar Atom feed and pick the best prospectus form (see
    policy below). Otherwise we use the registrant's submissions history.
-3. **Resolve the document** (SEC's authoritative `primaryDocument`) and download it.
+3. **Resolve the document** (the filing-designated `primaryDocument`) and download it.
 
 SEC requires a descriptive `User-Agent` and limits clients to 10 requests/second;
 both are handled centrally in `sec_client.py`. (EDGAR-internal mechanics are kept
@@ -107,8 +111,9 @@ swappable constant at the top of `prospectus_fetcher/edgar.py`:
 PROSPECTUS_FORM_PRIORITY = ["497K", "485BPOS", "485APOS", "N-1A", "497"]
 ```
 
-This order was **confirmed with Atomic's engineering team** ("497K as primary is
-the right call … there's no single correct answer — document your reasoning").
+This order was retained from the original project's stakeholder-confirmed policy
+("497K as primary is the right call ... there is no single correct answer;
+document the reasoning").
 Per SEC's [EDGAR Filer Manual](https://www.sec.gov/files/edgar/filermanual/efmvol2-c3.pdf):
 
 | Form | What it is | Why this rank |
@@ -130,20 +135,28 @@ form but the actual form is recorded.
 
 **Known nuance:** a `497K` is *usually* the summary prospectus but can
 occasionally itself be a short supplement. **Example: QQQ** — its most recent
-`497K` is a supplement to the December 2025 prospectus. It is still the correct
-fund's highest-priority filing under the confirmed policy. (Cross-check against
+`497K` is a supplement to the December 2025 prospectus. It is the
+highest-priority filing returned for QQQ's resolved identity under the confirmed
+policy, but its completeness is a separate question. (Cross-check against
 the issuer's page: <https://www.invesco.com/qqq-etf/en/about.html>.)
 
-### 2. Getting the *fund-specific* prospectus (series-level filtering)
+### 2. Narrowing the lookup to a fund series
 
 One SEC registrant (CIK) holds **many funds**. For example, "Vanguard Admiral
 Funds" filed **12 different funds' 497Ks on the same day**, so naively taking the
-registrant's "most recent 497K" can silently return the **wrong fund's**
-document. We avoid this by filtering filings by the fund's `seriesId`.
+registrant's "most recent 497K" can silently return the **wrong series'**
+document. We reduce this risk by filtering filings by the fund's `seriesId`.
 
 **Proof it matters:** `VTSAX` and `VOO` are both under CIK `36405`, but resolve
-correctly to *Vanguard Total Stock Market Index Fund* and *Vanguard 500 Index
-Fund* respectively. Likewise `VUSXX` (Treasury MMF) vs `VMFXX` (Federal MMF).
+to distinct series-level candidates for *Vanguard Total Stock Market Index Fund*
+and *Vanguard 500 Index Fund*. Likewise `VUSXX` (Treasury MMF) vs `VMFXX`
+(Federal MMF).
+
+This is series-level, not exact share-class, evidence. A series can contain
+multiple ticker-bearing classes, so the current lookup does not prove that the
+downloaded document covers the requested ticker. V2 records that distinction
+explicitly; class-level lookup and document-content validation are the next
+correctness milestones.
 
 ### 3. Tickers in `ticker.txt` only (no series id)
 
@@ -167,10 +180,10 @@ series, the tool logs a notice rather than silently guessing.
 
 - Foreign-domiciled or brand-new funds may not appear in EDGAR's mapping files.
 - SEC refreshes the mapping files periodically and does not guarantee their scope
-  or accuracy; all 10 assignment test tickers resolved as of June 2026.
+  or accuracy; all tickers in the original validation set resolved as of June 2026.
 - A best-effort full-text-search fallback for unmapped tickers is left as an
   extension point — a clean "unresolved" message is preferred over a brittle
-  scraper. (Not needed for any assignment test ticker.)
+  scraper. (Not needed for the current validation set.)
 
 ---
 
@@ -232,6 +245,7 @@ prospectus_fetcher/
   converter.py              # optional, best-effort HTML -> PDF
   models.py                 # ResolvedFund, Filing, FetchResult
   cli.py                    # orchestration, summary table, logging
+CORRECTNESS_MODEL.md         # V2 identity and document-verification rules
 tests/                      # pytest suite (HTTP mocked) + optional live test
 Dockerfile
 ```

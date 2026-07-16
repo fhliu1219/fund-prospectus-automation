@@ -1,4 +1,4 @@
-# Example batch file for the take-home checkpoints.
+# Example batch file for validating a mixed set of fund types.
 # Blank lines and comments are ignored.
 VUSXX
 VTSAX

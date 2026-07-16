@@ -2,9 +2,9 @@
 
 Lookup order (a ticker may appear in either mapping file):
   1. ``company_tickers_mf.json`` — mutual funds & fund-structured ETFs; carries
-     ``seriesId``/``classId``, which lets us fetch the *fund-specific* filings.
+     ``seriesId``/``classId``, which lets us narrow the filing candidates.
   2. ``ticker.txt`` — stocks and standalone ETF trusts (e.g. SPY); CIK only.
-  3. (optional) a best-effort EDGAR search hook — not required for the test set;
+  3. (optional) a best-effort EDGAR search hook, currently left unimplemented;
      if it finds nothing we return ``None`` so the caller emits a clean error.
 
 Both mapping files are fetched once and cached in memory, so a batch run only
@@ -106,7 +106,7 @@ class Resolver:
     def _search_fallback(self, symbol: str) -> Optional[ResolvedFund]:
         """Best-effort extension point for tickers absent from both files.
 
-        Intentionally a no-op: all assignment test tickers resolve via the two
+        Intentionally a no-op: the current validation set resolves via the two
         mapping files, and a clean "unresolved" error is preferable to a brittle
         search scraper. Implement here (EDGAR full-text/company search) if a
         broader ticker universe is ever needed.

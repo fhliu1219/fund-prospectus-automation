@@ -1,6 +1,6 @@
 """Locate the latest prospectus filing for a resolved fund and its document URL.
 
-The hard part of this assignment lives here. Two facts drive the design:
+The hard part of this workflow lives here. Two facts drive the design:
 
 1. **One registrant (CIK) holds many funds.** "Vanguard Admiral Funds" can file a
    dozen different funds' 497Ks on the same day, so picking the registrant's
@@ -19,15 +19,14 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from . import config
-from .models import Filing, ResolvedFund
+from .models import Filing, IdentityLevel, ResolvedFund
 from .resolver import Resolver
 from .sec_client import SECClient
 
 logger = logging.getLogger(__name__)
 
-# Prospectus form preference. Company-confirmed (Atomic eng., Jun 2026):
-# "497K as primary is the right call." Single source of truth for filing-type
-# preference — change only here if the policy is ever revisited.
+# Prospectus form preference, retained from the original stakeholder-confirmed
+# policy. This is the single source of truth for filing-type preference.
 PROSPECTUS_FORM_PRIORITY = ["497K", "485BPOS", "485APOS", "N-1A", "497"]
 _PRIORITY_RANK = {form: i for i, form in enumerate(PROSPECTUS_FORM_PRIORITY)}
 _PROSPECTUS_FORMS = set(PROSPECTUS_FORM_PRIORITY)
@@ -180,6 +179,21 @@ class EdgarClient:
             config.ARCHIVES_BASE.format(cik=fund.cik, accession_nodash=accession_nodash)
             + f"/{doc_name}"
         )
+        if series_id:
+            identity_level = IdentityLevel.SERIES
+            identity_evidence = [
+                f"candidate filing selected from the EDGAR series feed for {series_id}"
+            ]
+        else:
+            identity_level = IdentityLevel.REGISTRANT
+            identity_evidence = [
+                f"candidate filing selected from registrant submissions for CIK {fund.cik}"
+            ]
+
+        warnings = []
+        if heuristic_used:
+            warnings.append("primary document selected by fallback size heuristic")
+
         return Filing(
             registrant_cik=fund.cik,
             accession=chosen.accession,
@@ -191,6 +205,9 @@ class EdgarClient:
             fund_name=chosen.description,
             selection_reason=reason,
             heuristic_used=heuristic_used,
+            identity_level=identity_level,
+            identity_evidence=identity_evidence,
+            warnings=warnings,
         )
 
     # -- series-filtered filing lookup -------------------------------------

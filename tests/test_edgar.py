@@ -11,7 +11,7 @@ from prospectus_fetcher.edgar import (
     parse_atom,
     select_filing,
 )
-from prospectus_fetcher.models import ResolvedFund
+from prospectus_fetcher.models import DocumentVerification, IdentityLevel, ResolvedFund
 from prospectus_fetcher.sec_client import SECClient
 
 
@@ -129,6 +129,11 @@ def test_find_prospectus_series_path(edgar):
         "000119312525325229/f43673d1.htm"
     )
     assert filing.heuristic_used is False
+    # A class ID was resolved, but this path queried only the series feed.
+    # Report the evidence actually used instead of over-claiming class identity.
+    assert filing.identity_level is IdentityLevel.SERIES
+    assert filing.document_verification is DocumentVerification.NOT_CHECKED
+    assert "S000002233" in filing.identity_evidence[0]
 
 
 @responses.activate
@@ -157,6 +162,8 @@ def test_find_prospectus_registrant_path_picks_485bpos(edgar):
     assert filing.form == "485BPOS"
     assert "skipped" in filing.selection_reason
     assert filing.doc_url.endswith("/d77353d485bpos.htm")
+    assert filing.identity_level is IdentityLevel.REGISTRANT
+    assert filing.document_verification is DocumentVerification.NOT_CHECKED
 
 
 @responses.activate
@@ -193,3 +200,4 @@ def test_primary_doc_falls_back_to_index_heuristic(edgar):
 
     assert filing.doc_url.endswith("/prospectus.htm")
     assert filing.heuristic_used is True
+    assert filing.warnings == ["primary document selected by fallback size heuristic"]

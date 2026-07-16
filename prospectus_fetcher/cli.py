@@ -67,6 +67,10 @@ class ProspectusFetcher:
                 symbol, "ok",
                 form=filing.form, date=filing.date, fund_name=filing.fund_name,
                 selection_reason=filing.selection_reason, path=path,
+                identity_level=filing.identity_level,
+                document_verification=filing.document_verification,
+                identity_evidence=list(filing.identity_evidence),
+                warnings=list(filing.warnings),
             )
         except Exception as exc:  # network/parse errors -> graceful per-ticker error
             logger.debug("Unhandled error fetching %s", symbol, exc_info=True)
