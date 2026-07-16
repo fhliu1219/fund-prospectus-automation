@@ -6,7 +6,16 @@ from unittest.mock import Mock
 import responses
 
 from prospectus_fetcher import config
-from prospectus_fetcher.cli import ProspectusFetcher, format_summary, parse_tickers
+from prospectus_fetcher.cli import (
+    EXIT_FETCH_ERROR,
+    EXIT_REVIEW_REQUIRED,
+    EXIT_SUCCESS,
+    EXIT_USAGE_ERROR,
+    ProspectusFetcher,
+    format_summary,
+    main,
+    parse_tickers,
+)
 from prospectus_fetcher.models import (
     DocumentVerification,
     FetchResult,
@@ -39,9 +48,7 @@ def test_format_summary_shows_columns_and_statuses():
     assert "ok" in table and "error" in table
 
 
-def test_fetch_propagates_identity_evidence_without_claiming_document_verification(
-    tmp_path, caplog
-):
+def test_fetch_returns_package_result_and_logs_warnings(caplog):
     caplog.set_level(logging.WARNING, logger="prospectus_fetcher")
     fetcher = ProspectusFetcher.__new__(ProspectusFetcher)
     fetcher.resolver = Mock(
@@ -60,13 +67,20 @@ def test_fetch_propagates_identity_evidence_without_claiming_document_verificati
             )
         )
     )
-    fetcher.downloader = Mock(save=Mock(return_value=str(tmp_path / "prospectus.html")))
-    fetcher.want_pdf = False
+    expected = FetchResult(
+        "VUSXX",
+        "ok",
+        identity_level=IdentityLevel.SERIES,
+        document_verification=DocumentVerification.MANUAL_REVIEW_REQUIRED,
+        identity_evidence=["selected from series S1"],
+        warnings=["example warning"],
+    )
+    fetcher.package_builder = Mock(build=Mock(return_value=expected))
 
     result = fetcher.fetch("vusxx")
 
     assert result.identity_level is IdentityLevel.SERIES
-    assert result.document_verification is DocumentVerification.NOT_CHECKED
+    assert result.document_verification is DocumentVerification.MANUAL_REVIEW_REQUIRED
     assert result.identity_evidence == ["selected from series S1"]
     assert result.warnings == ["example warning"]
     assert "VUSXX: example warning." in caplog.text
@@ -87,3 +101,52 @@ def test_fetch_unresolvable_ticker_yields_error_result(monkeypatch, tmp_path):
 
     assert result.status == "error"
     assert "ZZZZ" in result.error
+
+
+def _main_with_results(monkeypatch, results):
+    monkeypatch.setattr("prospectus_fetcher.cli._setup_logging", lambda verbose: None)
+    monkeypatch.setattr(ProspectusFetcher, "fetch_many", lambda self, tickers, progress: results)
+    return main([result.ticker for result in results])
+
+
+def test_main_exit_code_zero_requires_all_results_verified(monkeypatch):
+    results = [
+        FetchResult(
+            "VUSXX",
+            "ok",
+            document_verification=DocumentVerification.VERIFIED,
+        )
+    ]
+
+    assert _main_with_results(monkeypatch, results) == EXIT_SUCCESS
+
+
+def test_main_exit_code_three_preserves_review_as_distinct_state(monkeypatch):
+    results = [
+        FetchResult(
+            "QQQ",
+            "ok",
+            document_verification=DocumentVerification.MANUAL_REVIEW_REQUIRED,
+        )
+    ]
+
+    assert _main_with_results(monkeypatch, results) == EXIT_REVIEW_REQUIRED
+
+
+def test_main_fetch_error_takes_precedence_over_review(monkeypatch):
+    results = [
+        FetchResult(
+            "QQQ",
+            "ok",
+            document_verification=DocumentVerification.MANUAL_REVIEW_REQUIRED,
+        ),
+        FetchResult("ZZZZ", "error", error="unresolved"),
+    ]
+
+    assert _main_with_results(monkeypatch, results) == EXIT_FETCH_ERROR
+
+
+def test_main_without_tickers_returns_usage_error(monkeypatch):
+    monkeypatch.setattr("prospectus_fetcher.cli._setup_logging", lambda verbose: None)
+
+    assert main([]) == EXIT_USAGE_ERROR

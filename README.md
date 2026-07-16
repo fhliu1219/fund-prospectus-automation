@@ -1,8 +1,9 @@
 # Fund Prospectus Retrieval
 
 A command-line tool that takes a fund **ticker** (e.g. `VUSXX`, `SPY`, `QQQ`),
-finds its **latest prospectus** on the SEC's public **EDGAR** system, and saves
-the document to local storage.
+finds its **latest prospectus material** on the SEC's public **EDGAR** system,
+validates the downloaded content, and saves an evidence-bearing document package
+to local storage.
 
 It handles mutual funds, money-market funds, and ETFs across multiple providers,
 narrows filing lookup to the fund class when SEC identifiers allow it, and
@@ -11,7 +12,11 @@ explains **why** each filing was chosen.
 The V2 branch is evolving this CLI into a production-minded retrieval and
 verification tool for fund-operations workflows. Its strict
 [correctness model](CORRECTNESS_MODEL.md) separates registrant, series,
-and class identity from verification of the downloaded document itself.
+and class identity from verification of the downloaded document itself. The
+[caveats register](CAVEATS.md) tracks residual risks, assumptions, and active
+design decisions as the project evolves. Future work is ordered in the
+[accuracy-first roadmap](ROADMAP.md), and representative validation cases are
+defined in the [curated contract matrix](TEST_MATRIX.md).
 
 ---
 
@@ -49,8 +54,11 @@ python main.py VUSXX --verbose               # DEBUG logging to the console
 
 You can also run it as a module: `python -m prospectus_fetcher VUSXX`.
 
-Documents are saved to `output/{TICKER}/{date}_{form}_{accession}.html` and a
-run summary is written to `logs/summary.log`.
+Documents are saved to `output/{TICKER}/{date}_{form}_{accession}.html`. Every
+successful ticker also receives `output/{TICKER}/manifest.json`, which records
+structured SEC identity, source URLs, content classification, verification,
+warnings, document roles, byte sizes, SHA-256 checksums, and any recovery
+candidate decisions. A run summary is written to `logs/summary.log`.
 
 ### Example run
 
@@ -81,7 +89,8 @@ VUSXX: selected 497K dated 2025-12-19: highest-priority available form —
 
 ```
 ticker → resolve to (CIK [, seriesId, classId]) → find preferred filing
-       → resolve primary document → download HTML  (→ optional PDF)
+       → resolve primary document → classify and verify HTML
+       → save document package + manifest  (→ optional PDFs)
 ```
 
 1. **Resolve** the ticker against SEC's two mapping files — `company_tickers_mf.json`
@@ -91,11 +100,26 @@ ticker → resolve to (CIK [, seriesId, classId]) → find preferred filing
    available. If it has no qualifying prospectus, fall back to the `seriesId`
    feed with an explicit warning. Use registrant submissions only when neither
    fund identifier is available.
-3. **Resolve the document** (the filing-designated `primaryDocument`) and download it.
+3. **Resolve the document** (normally the filing-designated `primaryDocument`)
+   and download its bytes for validation. If it fails verification, inventory
+   the accession and inspect eligible SEC-labeled prospectus siblings.
+4. **Validate the content.** Detect a summary prospectus, statutory prospectus,
+   supplement, or unknown document; require direct requested-ticker/class
+   evidence before reporting `document_verified`.
+5. **Build the package.** A complete prospectus produces one document plus a
+   manifest. If the latest filing is a supplement, exhaust the older filing
+   metadata exposed for the same identity scope, evaluate likely dates first,
+   and include a verified complete base prospectus. An ambiguous or incomplete
+   relationship is saved as `manual_review_required`.
 
 SEC requires a descriptive `User-Agent` and limits clients to 10 requests/second;
 both are handled centrally in `sec_client.py`. (EDGAR-internal mechanics are kept
 brief here on purpose — see the code/comments for detail.)
+
+Every consumed SEC response is validated before selection. Structurally valid
+empty feeds remain empty; missing required fields, malformed identifiers/dates,
+misaligned submissions arrays, and unsafe archive filenames produce explicit
+endpoint/path-specific errors instead of being treated as absent data.
 
 ---
 
@@ -119,7 +143,7 @@ Per SEC's [EDGAR Filer Manual](https://www.sec.gov/files/edgar/filermanual/efmvo
 
 | Form | What it is | Why this rank |
 |---|---|---|
-| `497K` | Summary prospectus | Investor-facing summary; most current & readable. **Example: VUSXX, SWPPX, FDRXX.** |
+| `497K` | Summary prospectus filing; occasionally a supplement | Usually the most current and readable investor-facing document. **Example: VUSXX, SWPPX, FDRXX.** |
 | `485BPOS` | Post-effective amendment, Rule 485(**b**) | Becomes effective immediately → legally in force. **Example: SPY (full 1.2 MB registration).** |
 | `485APOS` | Post-effective amendment, Rule 485(**a**) | Delayed-effective (pending SEC review). Ranked below 485BPOS because it is *not yet effective*, but above the original registration. |
 | `N-1A` | Original registration statement | Usually years old after launch; a fallback. |
@@ -163,16 +187,17 @@ instead of the weaker `series` identity. If the class feed contains no qualifyin
 prospectus, the tool falls back to the series feed and records the downgrade.
 
 Class-level SEC association still does not prove that the selected primary
-document explicitly covers the ticker or is a complete prospectus. That separate
-content-verification step is the next correctness milestone.
+document explicitly covers the ticker or is complete. The content validator
+therefore checks document type and direct identity evidence independently.
 
 ### 3. Tickers in `ticker.txt` only (no series id)
 
-Standalone ETF trusts resolve via `ticker.txt` to a registrant CIK with no
-series. We assume such a registrant is effectively single-fund and use its
-submissions history directly. **Example: SPY** (SPDR S&P 500 ETF Trust). This
-assumption is checked against the available mutual-fund mapping at runtime. If
-the CIK maps to multiple known series, the tool logs a notice before proceeding.
+Standalone ETF trusts may resolve via `ticker.txt` to a registrant CIK with no
+series or class identifier. The tool uses registrant submissions but preserves
+`registrant` identity confidence. It can independently verify the downloaded
+content when the document directly covers the ticker. **Example: SPY** remains
+registrant-level while its 485BPOS prospectus is `document_verified` from its
+content. This does not manufacture missing class-level identity.
 
 ### 4. Other assumptions
 
@@ -183,12 +208,28 @@ the CIK maps to multiple known series, the tool logs a notice before proceeding.
 - **Unresolvable tickers produce a clean error**, not a guess. **Example: `ZZZZ`.**
 - **Archive URLs use the registrant CIK**, never the accession's leading digits
   (that prefix can be a filing agent's CIK, not the fund's).
+- **Content verification is conservative and deterministic.** A complete
+  prospectus requires a recognized title plus at least two expected sections.
+  Direct ticker/class evidence must appear within the first 20,000 normalized
+  visible characters, limiting incidental late-document matches.
+- **Supplement packages preserve identity scope.** A class-level supplement
+  searches only older class-level candidates; it never silently broadens to a
+  series or registrant to find a base.
+- **Sibling recovery never guesses.** The accession's `index.json` supplies the
+  file inventory and the SEC filing document table supplies document types.
+  Exactly one sibling must pass direct-identity and content rules; zero or
+  multiple matches require manual review.
 
 ### Known limitations
 
 - Foreign-domiciled or brand-new funds may not appear in EDGAR's mapping files.
 - SEC refreshes the mapping files periodically and does not guarantee their scope
   or accuracy; all tickers in the original validation set resolved as of June 2026.
+- Deterministic phrase rules can route unusual but valid documents to manual
+  review, and an incidental early ticker reference can still be a false positive.
+- Automatic sibling recovery depends on compatible SEC archive metadata and the
+  deterministic content rules. Missing metadata, evaluation failures, or
+  multiple qualifying files require manual review.
 - A best-effort full-text-search fallback for unmapped tickers is left as an
   extension point — a clean "unresolved" message is preferred over a brittle
   scraper. (Not needed for the current validation set.)
@@ -199,8 +240,13 @@ the CIK maps to multiple known series, the tool logs a notice before proceeding.
 
 ```
 output/
-  VUSXX/2025-12-19_497K_0001193125-25-325229.html
-  SPY/2026-01-26_485BPOS_0001193125-26-022316.html
+  VUSXX/
+    2026-06-30_497K_0000891190-26-000223.html
+    manifest.json
+  QQQ/
+    2026-06-10_497K_0001193125-26-265096.html   # latest supplement
+    2025-12-19_497K_0001104659-25-123275.html   # verified base
+    manifest.json
 logs/
   summary.log     # timestamped run log: selection reasons, warnings, summary table
 ```
@@ -208,6 +254,24 @@ logs/
 The accession is part of the filename to avoid collisions when a fund has
 multiple same-date/same-form filings; the form code is filesystem-sanitised
 (`497K/A` → `497K-A`).
+
+Each artifact in `manifest.json` also records its SEC source URL and the
+accession's `archive_index_url`. Manifest schema version 2 additionally records
+the coverage and stopping reason for recovery searches plus every evaluated
+candidate's URL, checksum, classification, evidence, and disposition. Rejected
+candidate files are not saved as package documents.
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Every requested package was retrieved and verified. |
+| `1` | At least one ticker failed retrieval or processing. |
+| `2` | Invalid CLI usage, such as no ticker input. |
+| `3` | Retrieval succeeded, but at least one package requires manual review. |
+
+Exit code `3` preserves the downloaded evidence while preventing unattended
+automation from treating review-required output as ready for use.
 
 ---
 
@@ -236,8 +300,12 @@ stays fast, deterministic, and independent of network/SEC availability.
 
 Coverage includes mapping-file parsing, form-priority selection (incl. amended
 forms), class-first selection, explicit class-to-series fallback, Atom parsing,
-primary-document resolution (and its fallback heuristic), archive-URL
-construction, and the graceful-error path.
+validated Atom pagination, historical submissions batches, primary-document
+resolution, accession inventory filtering, strict sibling recovery, content
+classification, exact-identifier evidence, date-first supplement/base linkage,
+manifest serialization, archive-URL construction, and the graceful-error path.
+The single opt-in live contract test exercises VUSXX, QQQ, and SPY across
+class-level and registrant-level paths, including a real SEC filing inventory.
 
 ---
 
@@ -248,13 +316,19 @@ main.py                     # CLI entry point
 prospectus_fetcher/
   config.py                 # SEC endpoints, User-Agent, rate limit
   sec_client.py             # rate-limited HTTP client (User-Agent, retries)
+  sec_schema.py             # runtime contracts for external SEC responses
   resolver.py               # ticker -> CIK/series/class; cik->series reverse index
   edgar.py                  # PROSPECTUS_FORM_PRIORITY; filing selection; doc resolution
   downloader.py             # save the document to disk
+  validator.py              # classify content and collect verification evidence
+  package.py                # assemble documents and write the evidence manifest
   converter.py              # optional, best-effort HTML -> PDF
   models.py                 # ResolvedFund, Filing, FetchResult
   cli.py                    # orchestration, summary table, logging
 CORRECTNESS_MODEL.md         # V2 identity and document-verification rules
+CAVEATS.md                   # residual risks, assumptions, and decision log
+ROADMAP.md                   # prioritized accuracy-first future milestones
+TEST_MATRIX.md               # curated live and deterministic contract cases
 tests/                      # pytest suite (HTTP mocked) + optional live test
 Dockerfile
 ```

@@ -15,10 +15,10 @@ import sys
 from typing import List, Optional
 
 from . import config
-from .converter import to_pdf
 from .downloader import Downloader
 from .edgar import EdgarClient
-from .models import FetchResult
+from .models import DocumentVerification, FetchResult
+from .package import DocumentPackageBuilder
 from .resolver import Resolver
 from .sec_client import SECClient
 
@@ -28,6 +28,11 @@ except ImportError:  # pragma: no cover
     tqdm = None
 
 logger = logging.getLogger("prospectus_fetcher")
+
+EXIT_SUCCESS = 0
+EXIT_FETCH_ERROR = 1
+EXIT_USAGE_ERROR = 2
+EXIT_REVIEW_REQUIRED = 3
 
 
 class ProspectusFetcher:
@@ -39,6 +44,11 @@ class ProspectusFetcher:
         self.edgar = EdgarClient(self.client, self.resolver)
         self.downloader = Downloader(self.client, output_dir=output_dir)
         self.want_pdf = want_pdf
+        self.package_builder = DocumentPackageBuilder(
+            self.edgar,
+            self.downloader,
+            want_pdf=want_pdf,
+        )
 
     def fetch(self, ticker: str) -> FetchResult:
         symbol = ticker.strip().upper()
@@ -54,21 +64,17 @@ class ProspectusFetcher:
             if filing is None:
                 return FetchResult(symbol, "error", error="No prospectus filing found on EDGAR")
 
-            path = self.downloader.save(filing, symbol)
+            result = self.package_builder.build(fund, filing)
             logger.info("%s: %s", symbol, filing.selection_reason)
-            for warning in filing.warnings:
-                logger.warning("%s: %s.", symbol, warning)
-            if self.want_pdf:
-                to_pdf(path)
-            return FetchResult(
-                symbol, "ok",
-                form=filing.form, date=filing.date, fund_name=filing.fund_name,
-                selection_reason=filing.selection_reason, path=path,
-                identity_level=filing.identity_level,
-                document_verification=filing.document_verification,
-                identity_evidence=list(filing.identity_evidence),
-                warnings=list(filing.warnings),
+            logger.info(
+                "%s: document package classified as %s (%s)",
+                symbol,
+                result.document_kind.value,
+                result.document_verification.value,
             )
+            for warning in result.warnings:
+                logger.warning("%s: %s.", symbol, warning)
+            return result
         except Exception as exc:  # network/parse errors -> graceful per-ticker error
             logger.debug("Unhandled error fetching %s", symbol, exc_info=True)
             return FetchResult(symbol, "error", error=str(exc))
@@ -152,7 +158,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     tickers = parse_tickers(args.tickers, args.batch)
     if not tickers:
         logger.error("No tickers provided. Example: python main.py VUSXX")
-        return 2
+        return EXIT_USAGE_ERROR
 
     logger.info("Fetching prospectuses for: %s", ", ".join(tickers))
     fetcher = ProspectusFetcher(output_dir=args.output, want_pdf=args.pdf)
@@ -164,4 +170,19 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     succeeded = sum(1 for r in results if r.ok)
     logger.info("Done: %d/%d succeeded.", succeeded, len(results))
-    return 0 if succeeded == len(results) else 1
+    if succeeded != len(results):
+        return EXIT_FETCH_ERROR
+
+    review_count = sum(
+        1
+        for result in results
+        if result.document_verification is not DocumentVerification.VERIFIED
+    )
+    if review_count:
+        logger.warning(
+            "%d result(s) require review; returning exit code %d.",
+            review_count,
+            EXIT_REVIEW_REQUIRED,
+        )
+        return EXIT_REVIEW_REQUIRED
+    return EXIT_SUCCESS

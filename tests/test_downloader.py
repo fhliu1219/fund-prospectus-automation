@@ -1,5 +1,7 @@
 """Downloader tests: path construction, form sanitisation, file writing."""
 
+import json
+
 import responses
 
 from prospectus_fetcher.downloader import Downloader, safe_form
@@ -46,3 +48,13 @@ def test_save_sanitizes_amended_form_in_filename(tmp_path, monkeypatch):
 
     assert "497K-A" in path
     assert "/" not in path.rsplit("/", 1)[-1].replace(".html", "")  # filename has no stray slash
+
+
+def test_save_manifest_writes_deterministic_json(tmp_path):
+    downloader = Downloader(SECClient(), output_dir=str(tmp_path))
+
+    path = downloader.save_manifest("vusxx", {"ticker": "VUSXX", "version": 1})
+
+    with open(path, encoding="utf-8") as handle:
+        assert json.load(handle) == {"ticker": "VUSXX", "version": 1}
+    assert not (tmp_path / "VUSXX" / "manifest.json.tmp").exists()

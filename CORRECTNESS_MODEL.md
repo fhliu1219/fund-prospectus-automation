@@ -38,17 +38,40 @@ identity level.
 
 | Status | Meaning |
 |---|---|
-| `not_checked` | The file was not inspected for share-class evidence. This remains the default through Milestone 2. |
+| `not_checked` | The file was not inspected for share-class evidence. This remains the EDGAR selection layer's state before package validation. |
 | `document_verified` | Content checks found sufficient evidence that the file covers the requested ticker or class. |
 | `manual_review_required` | Automated evidence is absent, conflicting, incomplete, or ambiguous. |
-| `rejected` | Content evidence shows that the file does not cover the requested ticker or class. |
+| `rejected` | Reserved for affirmative evidence that the file does not cover the requested ticker or class; absence alone routes to review. |
 
-Possible future evidence signals include the requested ticker, exact share-class
-name, class/contract ID, a class table containing that class, or language saying
-the document applies to all classes of the verified series. The validation policy
-will require a defensible combination rather than trusting one incidental string.
-A supplement must also be linked to a base prospectus that covers the class;
-form type alone is not enough.
+The current validator classifies visible HTML text as a summary prospectus,
+statutory prospectus, supplement, or unknown. A complete prospectus needs a
+recognized title plus at least two expected sections. Direct ticker or class-ID
+evidence must appear in the first 20,000 normalized visible characters; this
+reduces, but does not eliminate, incidental matches.
+
+A supplement is not treated as a standalone complete prospectus. The package
+builder exhausts the filing metadata exposed for the same identity scope,
+evaluates candidates nearest explicitly referenced prospectus dates first, and
+requires a complete base with direct identity evidence. The relationship is
+verified only when the supplement and base share the requested identity and a
+referenced prospectus date. Otherwise the package is
+`manual_review_required`.
+
+If the filing-designated primary document fails automatic-use rules, the
+package builder inventories the accession through `index.json`, uses the SEC
+filing document table to exclude indexes, XBRL renderings, exhibits, and
+unsupported forms, and validates every remaining sibling. A recovered sibling
+is selected automatically only when exactly one candidate qualifies. Zero or
+multiple qualifying siblings require manual review.
+
+The manifest records the resolved CIK/series/class identifiers, mapping source,
+SEC document URL, accession, filing date, byte size, and SHA-256 checksum for
+each saved artifact. Schema version 2 also records recovery search coverage,
+stopping reasons, and every evaluated candidate's evidence and disposition.
+
+SEC evidence is authoritative. Official issuer or exchange information may be
+used only as approved corroboration; it cannot override conflicting SEC evidence
+or independently establish an SEC class/series relationship.
 
 ## Strict invariants
 
@@ -58,18 +81,26 @@ form type alone is not enough.
 - Series-level relevance must not be described as exact share-class relevance.
 - Registrant-level selection must not be described as fund-specific when the registrant can contain multiple series.
 - Choosing the largest HTML file is a fallback heuristic and must remain visible as a warning.
+- File size and archive order must never break a sibling-recovery tie.
+- Recovery must not broaden class identity to series or registrant identity.
+- Exactly one sibling must satisfy direct-identity and content rules before automatic replacement.
 - Download success must not imply `document_verified`.
+- A malformed SEC response must not be interpreted as an empty feed or trigger a lower-confidence fallback.
+- A review-required package remains retrievable but must not produce the all-verified process exit code.
 
 ## Concrete examples
 
-- **VUSXX:** the resolver knows class `C000005732` and series `S000002233`. A successful class-feed selection now produces `class` identity while document status remains `not_checked`.
-- **SPY:** the fallback mapping provides only a registrant CIK. The current selection is `registrant` until filing metadata or document content establishes stronger evidence.
-- **QQQ:** its latest preferred `497K` can be a supplement. This demonstrates why form priority cannot replace content validation.
+- **VUSXX:** class `C000005732` selects the filing at `class` identity. Its HTML is classified as a summary prospectus and directly contains `VUSXX`, producing `document_verified`.
+- **SPY:** the fallback mapping provides only a registrant CIK, so identity remains `registrant`. Its complete 485BPOS directly contains `SPY`, allowing independent document verification without upgrading identity.
+- **QQQ:** the latest preferred `497K` is a supplement. The result package includes that supplement and the date-linked December 2025 summary prospectus, demonstrating why form priority cannot replace content validation.
 
 ## Milestone boundaries
 
 Milestone 1 introduced the vocabulary, model fields, and evidence containers.
-Milestone 2 implements class-first lookup, explicit series fallback, identity
-provenance, and regression tests. Milestone 3 will inspect filing metadata and
-document content, assign document verification, and route ambiguous cases to
-manual review.
+Milestone 2 implemented class-first lookup, explicit series fallback, identity
+provenance, and regression tests. Milestone 3 implements deterministic content
+classification, direct identity evidence, supplement/base packages, manifests,
+and manual-review routing. Milestone 4 validates every consumed SEC response
+shape and separates review-required output from success. Milestone 5 removes
+fixed discovery limits, follows SEC history pagination, searches supplement
+dates first, and implements strict accession sibling recovery with provenance.

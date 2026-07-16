@@ -30,6 +30,41 @@ class DocumentVerification(str, Enum):
     REJECTED = "rejected"
 
 
+class DocumentKind(str, Enum):
+    """Content classification derived from the downloaded document."""
+
+    UNKNOWN = "unknown"
+    SUMMARY_PROSPECTUS = "summary_prospectus"
+    STATUTORY_PROSPECTUS = "statutory_prospectus"
+    SUPPLEMENT = "supplement"
+
+
+class DocumentRole(str, Enum):
+    """A document's role inside the result package."""
+
+    PRIMARY_PROSPECTUS = "primary_prospectus"
+    SUPPLEMENT = "supplement"
+    BASE_PROSPECTUS = "base_prospectus"
+
+
+class CandidatePurpose(str, Enum):
+    """Why a non-output document was inspected."""
+
+    PRIMARY_RECOVERY = "primary_recovery"
+    SUPPLEMENT_BASE = "supplement_base"
+
+
+class CandidateDisposition(str, Enum):
+    """Outcome of evaluating one discovery or recovery candidate."""
+
+    CURRENT_PRIMARY = "current_primary"
+    EXCLUDED = "excluded"
+    REJECTED = "rejected"
+    QUALIFIED = "qualified"
+    SELECTED = "selected"
+    ERROR = "error"
+
+
 @dataclass
 class ResolvedFund:
     """
@@ -63,9 +98,67 @@ class Filing:
     selection_reason: str = ""          # why this filing/form won
     heuristic_used: bool = False        # True if the primary-doc size heuristic was needed
     identity_level: IdentityLevel = IdentityLevel.UNKNOWN
+    document_kind: DocumentKind = DocumentKind.UNKNOWN
     document_verification: DocumentVerification = DocumentVerification.NOT_CHECKED
     identity_evidence: List[str] = field(default_factory=list)
+    document_evidence: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+
+
+@dataclass
+class DocumentArtifact:
+    """One saved document and its evidence inside a result package."""
+
+    role: DocumentRole
+    kind: DocumentKind
+    accession: str
+    form: str
+    date: str
+    path: str
+    verification: DocumentVerification
+    source_url: Optional[str] = None
+    archive_index_url: Optional[str] = None
+    size_bytes: int = 0
+    sha256: str = ""
+    evidence: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+    referenced_dates: List[str] = field(default_factory=list)
+    base_prospectus_dates: List[str] = field(default_factory=list)
+    contradictions: List[str] = field(default_factory=list)
+
+
+@dataclass
+class DocumentCandidateEvaluation:
+    """Auditable outcome for a document inspected but not necessarily saved."""
+
+    purpose: CandidatePurpose
+    disposition: CandidateDisposition
+    accession: str
+    name: str
+    reason: str
+    source_url: Optional[str] = None
+    size_bytes: int = 0
+    sha256: str = ""
+    kind: DocumentKind = DocumentKind.UNKNOWN
+    verification: DocumentVerification = DocumentVerification.NOT_CHECKED
+    evidence: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+    referenced_dates: List[str] = field(default_factory=list)
+    base_prospectus_dates: List[str] = field(default_factory=list)
+    contradictions: List[str] = field(default_factory=list)
+
+
+@dataclass
+class CandidateSearchAudit:
+    """Coverage and stopping reason for one recovery candidate search."""
+
+    purpose: CandidatePurpose
+    identity_level: IdentityLevel
+    identifier: str
+    complete: bool
+    discovered_count: int = 0
+    evaluated_count: int = 0
+    stop_reason: str = ""
 
 
 @dataclass
@@ -81,9 +174,15 @@ class FetchResult:
     path: Optional[str] = None          # saved file path on success
     error: Optional[str] = None         # message on failure
     identity_level: IdentityLevel = IdentityLevel.UNKNOWN
+    document_kind: DocumentKind = DocumentKind.UNKNOWN
     document_verification: DocumentVerification = DocumentVerification.NOT_CHECKED
     identity_evidence: List[str] = field(default_factory=list)
+    document_evidence: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    documents: List[DocumentArtifact] = field(default_factory=list)
+    candidate_evaluations: List[DocumentCandidateEvaluation] = field(default_factory=list)
+    candidate_searches: List[CandidateSearchAudit] = field(default_factory=list)
+    manifest_path: Optional[str] = None
 
     @property
     def ok(self) -> bool:

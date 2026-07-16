@@ -9,10 +9,12 @@ from prospectus_fetcher.edgar import (
     FilingRef,
     base_form,
     parse_atom,
+    parse_filing_document_table,
     select_filing,
 )
-from prospectus_fetcher.models import DocumentVerification, IdentityLevel, ResolvedFund
+from prospectus_fetcher.models import DocumentVerification, Filing, IdentityLevel, ResolvedFund
 from prospectus_fetcher.sec_client import SECClient
+from prospectus_fetcher.sec_schema import SECResponseSchemaError
 
 
 # --- pure selection logic (no network) -------------------------------------
@@ -82,6 +84,67 @@ def test_parse_atom_extracts_filings():
     assert first.accession == "0001193125-25-325229"
     assert first.form == "497K"
     assert first.filing_href.endswith("-index.htm")
+
+
+def test_atom_history_follows_validated_next_links(edgar, monkeypatch):
+    next_url = (
+        "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+        "&CIK=C000005732&type=497K%25&output=atom&start=100"
+    )
+    first_page = ATOM.replace(
+        "</feed>",
+        f'<link rel="next" href="{next_url.replace("&", "&amp;")}" /></feed>',
+    )
+    second_page = ATOM.replace(
+        "0001193125-25-325229",
+        "0001193125-24-000001",
+    ).replace("2025-12-19", "2024-12-19")
+    calls = []
+
+    def get_text(url, params=None):
+        calls.append((url, params))
+        return first_page if params is not None else second_page
+
+    monkeypatch.setattr(edgar.client, "get_text", get_text)
+
+    refs = edgar._atom_form_history("C000005732", "497K", "2026-06-10")
+
+    assert [ref.accession for ref in refs if ref.form == "497K"] == [
+        "0001193125-25-325229",
+        "0001193125-24-000001",
+    ]
+    assert calls[1] == (next_url, None)
+
+
+def test_atom_history_rejects_next_link_that_changes_identity(edgar, monkeypatch):
+    bad_url = (
+        "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+        "&CIK=C000000001&type=497K&output=atom&start=100"
+    )
+    page = ATOM.replace(
+        "</feed>",
+        f'<link rel="next" href="{bad_url.replace("&", "&amp;")}" /></feed>',
+    )
+    monkeypatch.setattr(edgar.client, "get_text", lambda url, params=None: page)
+
+    with pytest.raises(SECResponseSchemaError, match="changed the class/series identifier"):
+        edgar._atom_form_history("C000005732", "497K", "")
+
+
+def test_parse_filing_document_table_extracts_type_and_description():
+    detail = """
+    <html><table summary="Document Format Files">
+      <tr><th>Seq</th><th>Description</th><th>Document</th><th>Type</th><th>Size</th></tr>
+      <tr><td>1</td><td>Summary prospectus</td>
+          <td><a href="/Archives/example/main.htm">main.htm</a></td>
+          <td>497K</td><td>1200</td></tr>
+    </table></html>
+    """
+
+    documents = parse_filing_document_table(detail)
+
+    assert documents["main.htm"].document_type == "497K"
+    assert documents["main.htm"].description == "Summary prospectus"
 
 
 # --- end-to-end lookup paths (HTTP mocked) ----------------------------------
@@ -271,6 +334,23 @@ def test_class_request_failure_does_not_silently_fall_back(edgar, monkeypatch):
         edgar.find_prospectus(fund)
 
 
+@responses.activate
+def test_malformed_class_feed_does_not_silently_fall_back(edgar):
+    malformed = """
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <entry><filing-date>2026-01-01</filing-date><filing-type>497K</filing-type></entry>
+    </feed>
+    """
+    responses.add(responses.GET, config.BROWSE_EDGAR_URL, body=malformed, status=200)
+    fund = ResolvedFund("VUSXX", 891190, "S000002233", "C000005732", "mf")
+
+    with pytest.raises(SECResponseSchemaError, match="missing accession-number"):
+        edgar.find_prospectus(fund)
+
+    assert len(responses.calls) == 1
+    assert "CIK=C000005732" in responses.calls[0].request.url
+
+
 def test_empty_class_and_series_feeds_do_not_broaden_to_registrant(edgar, monkeypatch):
     feed_calls = []
     form_calls = []
@@ -296,6 +376,159 @@ def test_empty_class_and_series_feeds_do_not_broaden_to_registrant(edgar, monkey
     assert filing is None
     assert feed_calls == ["C000005732", "S000002233"]
     assert form_calls == ["C000005732", "S000002233"]
+
+
+def test_related_candidates_stay_in_selected_class_scope(edgar, monkeypatch):
+    refs = [
+        FilingRef("497K", "2026-06-10", "selected", primary_document="selected.htm"),
+        FilingRef("497", "2026-07-01", "future", primary_document="future.htm"),
+        FilingRef("497K", "2025-12-19", "base", primary_document="base.htm"),
+        FilingRef("485BPOS", "2025-01-01", "older", primary_document="older.htm"),
+        FilingRef("NPORT-P", "2025-12-31", "not-prospectus", primary_document="x.htm"),
+    ]
+    calls = []
+
+    def all_refs(identifier, dateb):
+        calls.append((identifier, dateb))
+        return refs
+
+    monkeypatch.setattr(edgar, "_all_atom_prospectus_refs", all_refs)
+    fund = ResolvedFund("QQQ", 1, "S1", "C1", "mf")
+    selected = Filing(
+        registrant_cik=1,
+        accession="selected",
+        form="497K",
+        date="2026-06-10",
+        identity_level=IdentityLevel.CLASS,
+        identity_evidence=["class C1"],
+    )
+
+    candidates = edgar.related_prospectus_refs(fund, selected)
+
+    assert calls == [("C1", "2026-06-10")]
+    assert [candidate.accession for candidate in candidates] == ["base", "older"]
+    resolved = edgar.resolve_related_prospectus(fund, selected, candidates[0])
+    assert resolved.identity_level is IdentityLevel.CLASS
+    assert resolved.class_id == "C1"
+
+
+def test_related_candidates_have_no_fixed_limit_and_prioritize_target_date(
+    edgar, monkeypatch
+):
+    refs = [
+        FilingRef(
+            "497K",
+            f"2025-01-{day:02d}",
+            f"0000000001-25-{day:06d}",
+            primary_document=f"candidate-{day}.htm",
+        )
+        for day in range(1, 26)
+    ]
+    monkeypatch.setattr(
+        edgar,
+        "_all_atom_prospectus_refs",
+        lambda identifier, dateb: refs,
+    )
+    fund = ResolvedFund("QQQ", 1, "S1", "C1", "mf")
+    selected = Filing(
+        registrant_cik=1,
+        accession="0000000001-26-000001",
+        form="497K",
+        date="2026-06-10",
+        identity_level=IdentityLevel.CLASS,
+    )
+
+    candidates = edgar.related_prospectus_refs(
+        fund,
+        selected,
+        target_dates=["2025-01-15"],
+    )
+
+    assert len(candidates) == 25
+    assert candidates[0].date == "2025-01-15"
+
+
+def test_registrant_related_candidates_include_historical_submission_batches(
+    edgar, monkeypatch
+):
+    submissions = {
+        "filings": {
+            "recent": {
+                "accessionNumber": [],
+                "filingDate": [],
+                "form": [],
+            },
+            "files": [{"name": "CIK0000000001-submissions-001.json"}],
+        }
+    }
+    historical = {
+        "accessionNumber": ["0000000001-20-000001"],
+        "filingDate": ["2020-01-02"],
+        "form": ["485BPOS"],
+        "primaryDocument": ["historical.htm"],
+    }
+    monkeypatch.setattr(edgar, "_get_submissions", lambda cik: submissions)
+    monkeypatch.setattr(
+        edgar,
+        "_get_submission_batch",
+        lambda name: (historical, "historical batch"),
+    )
+    fund = ResolvedFund("SPY", 1, source="ticker_txt")
+    selected = Filing(
+        registrant_cik=1,
+        accession="0000000001-26-000001",
+        form="497K",
+        date="2026-06-10",
+        identity_level=IdentityLevel.REGISTRANT,
+    )
+
+    refs = edgar.related_prospectus_refs(fund, selected)
+
+    assert [ref.accession for ref in refs] == ["0000000001-20-000001"]
+
+
+def test_accession_inventory_uses_sec_document_types_to_exclude_exhibits(
+    edgar, monkeypatch
+):
+    index_payload = {
+        "directory": {
+            "item": [
+                {"name": "0000000001-26-000001-index.html", "size": 0},
+                {"name": "r1.htm", "size": 100},
+                {"name": "main.htm", "size": 2000},
+                {"name": "sibling.htm", "size": 1800},
+                {"name": "ex99.htm", "size": 900},
+                {"name": "graphic.htm", "size": 500},
+                {"name": "logo.jpg", "size": 300},
+            ]
+        }
+    }
+    detail = """
+    <html><table summary="Document Format Files">
+      <tr><th>Seq</th><th>Description</th><th>Document</th><th>Type</th><th>Size</th></tr>
+      <tr><td>1</td><td>Primary</td><td><a href="main.htm">main.htm</a></td><td>497K</td><td>2000</td></tr>
+      <tr><td>2</td><td>Sibling</td><td><a href="sibling.htm">sibling.htm</a></td><td>497K</td><td>1800</td></tr>
+      <tr><td>3</td><td>Exhibit</td><td><a href="ex99.htm">ex99.htm</a></td><td>EX-99</td><td>900</td></tr>
+      <tr><td>4</td><td>Graphic</td><td><a href="graphic.htm">graphic.htm</a></td><td>GRAPHIC</td><td>500</td></tr>
+    </table></html>
+    """
+    monkeypatch.setattr(edgar.client, "get_json", lambda url: index_payload)
+    monkeypatch.setattr(edgar.client, "get_text", lambda url: detail)
+    filing = Filing(
+        registrant_cik=1,
+        accession="0000000001-26-000001",
+        form="497K",
+        date="2026-01-01",
+    )
+
+    inventory = edgar.accession_document_inventory(filing)
+    eligible = [document.name for document in inventory.documents if document.eligible]
+    reasons = {document.name: document.exclusion_reason for document in inventory.documents}
+
+    assert eligible == ["main.htm", "sibling.htm"]
+    assert "exhibit" in reasons["ex99.htm"]
+    assert "not a supported prospectus" in reasons["graphic.htm"]
+    assert "XBRL" in reasons["r1.htm"]
 
 
 @responses.activate
@@ -326,6 +559,25 @@ def test_find_prospectus_registrant_path_picks_485bpos(edgar):
     assert filing.doc_url.endswith("/d77353d485bpos.htm")
     assert filing.identity_level is IdentityLevel.REGISTRANT
     assert filing.document_verification is DocumentVerification.NOT_CHECKED
+
+
+@responses.activate
+def test_registrant_lookup_rejects_misaligned_submissions_arrays(edgar):
+    malformed = {
+        "filings": {
+            "recent": {
+                "accessionNumber": ["0001193125-26-022316"],
+                "filingDate": [],
+                "form": ["485BPOS"],
+            },
+            "files": [],
+        }
+    }
+    url = config.SUBMISSIONS_URL.format(cik=884394)
+    responses.add(responses.GET, url, json=malformed, status=200)
+
+    with pytest.raises(SECResponseSchemaError, match="array length 0"):
+        edgar.find_prospectus(ResolvedFund("SPY", 884394, source="ticker_txt"))
 
 
 @responses.activate

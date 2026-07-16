@@ -20,6 +20,7 @@ from typing import Dict, Optional, Set
 from . import config
 from .models import ResolvedFund
 from .sec_client import SECClient
+from .sec_schema import validate_mf_tickers, validate_ticker_text
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class Resolver:
         if self._mf_by_symbol is not None:
             return
         data = self.client.get_json(config.MF_TICKERS_URL)
+        validate_mf_tickers(data)
         fields = data["fields"]
         i_cik, i_series, i_class, i_sym = (
             fields.index("cik"),
@@ -46,13 +48,15 @@ class Resolver:
         by_symbol: Dict[str, dict] = {}
         series_by_cik: Dict[int, Set[str]] = {}
         for row in data["data"]:
-            symbol = str(row[i_sym]).upper()
             cik = int(row[i_cik])
             series_id = row[i_series] or None
             class_id = row[i_class] or None
-            by_symbol[symbol] = {"cik": cik, "series_id": series_id, "class_id": class_id}
             if series_id:
                 series_by_cik.setdefault(cik, set()).add(series_id)
+            symbol = row[i_sym].strip().upper()
+            if not symbol:
+                continue
+            by_symbol[symbol] = {"cik": cik, "series_id": series_id, "class_id": class_id}
         self._mf_by_symbol = by_symbol
         self._series_by_cik = series_by_cik
         logger.debug("Loaded %d mutual-fund ticker rows.", len(by_symbol))
@@ -61,6 +65,7 @@ class Resolver:
         if self._ticker_txt is not None:
             return
         text = self.client.get_text(config.TICKER_TXT_URL)
+        validate_ticker_text(text)
         mapping: Dict[str, int] = {}
         for line in text.splitlines():
             parts = line.split("\t")

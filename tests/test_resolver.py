@@ -6,6 +6,7 @@ import responses
 from prospectus_fetcher import config
 from prospectus_fetcher.resolver import Resolver
 from prospectus_fetcher.sec_client import SECClient
+from prospectus_fetcher.sec_schema import SECResponseSchemaError
 
 MF_FIXTURE = {
     "fields": ["cik", "seriesId", "classId", "symbol"],
@@ -64,3 +65,41 @@ def test_reverse_index_detects_multi_series_registrant(resolver):
 
     assert len(resolver.series_for_cik(36405)) == 2  # VTSAX + VOO
     assert resolver.series_for_cik(884394) == set()  # standalone trust
+
+
+@responses.activate
+def test_class_without_ticker_is_valid_but_not_indexed(resolver):
+    fixture = {
+        "fields": ["cik", "seriesId", "classId", "symbol"],
+        "data": [[891190, "S000002233", "C000005732", ""]],
+    }
+    responses.add(responses.GET, config.MF_TICKERS_URL, json=fixture, status=200)
+
+    assert resolver.series_for_cik(891190) == {"S000002233"}
+
+
+@responses.activate
+def test_resolver_rejects_incompatible_mf_mapping(resolver):
+    responses.add(
+        responses.GET,
+        config.MF_TICKERS_URL,
+        json={"fields": ["cik", "symbol"], "data": []},
+        status=200,
+    )
+
+    with pytest.raises(SECResponseSchemaError, match="missing required field"):
+        resolver.resolve("VUSXX")
+
+
+@responses.activate
+def test_resolver_rejects_malformed_ticker_text(resolver):
+    responses.add(responses.GET, config.MF_TICKERS_URL, json=MF_FIXTURE, status=200)
+    responses.add(
+        responses.GET,
+        config.TICKER_TXT_URL,
+        body="spy\t884394\nmalformed-row\n",
+        status=200,
+    )
+
+    with pytest.raises(SECResponseSchemaError, match=r"ticker.txt at line 2"):
+        resolver.resolve("SPY")
