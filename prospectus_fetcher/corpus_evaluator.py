@@ -1,0 +1,199 @@
+"""Evaluate current and shadow policies against the versioned labeled corpus."""
+
+from __future__ import annotations
+
+import json
+import os
+from collections import Counter
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, Iterable, List, Optional, Union
+
+from .corpus import (
+    AutomaticUseLabel,
+    CorpusCache,
+    CorpusManifest,
+    RelevanceLabel,
+)
+from .evidence_policy import POLICY_VERSION, ShadowEvidencePolicy
+from .filing_identity import parse_filing_identity_header
+from .models import DocumentKind, DocumentVerification
+from .validator import DocumentValidator
+
+
+REPORT_SCHEMA_VERSION = 1
+
+
+def _confusion(expected: Iterable[str], actual: Iterable[str]) -> Dict[str, Dict[str, int]]:
+    pairs = Counter(zip(expected, actual))
+    expected_labels = sorted({left for left, _ in pairs})
+    actual_labels = sorted({right for _, right in pairs})
+    return {
+        left: {right: pairs[(left, right)] for right in actual_labels}
+        for left in expected_labels
+    }
+
+
+def _metrics(rows: List[dict], policy_key: str) -> dict:
+    expected_relevance = [row["expected"]["relevance"] for row in rows]
+    actual_relevance = [row[policy_key]["relevance"] for row in rows]
+    expected_kind = [row["expected"]["document_kind"] for row in rows]
+    actual_kind = [row[policy_key]["document_kind"] for row in rows]
+    expected_use = [row["expected"]["automatic_use"] for row in rows]
+    actual_use = [row[policy_key]["automatic_use"] for row in rows]
+
+    true_positive = sum(
+        left == RelevanceLabel.POSITIVE.value
+        and right == RelevanceLabel.POSITIVE.value
+        for left, right in zip(expected_relevance, actual_relevance)
+    )
+    false_positive = sum(
+        left != RelevanceLabel.POSITIVE.value
+        and right == RelevanceLabel.POSITIVE.value
+        for left, right in zip(expected_relevance, actual_relevance)
+    )
+    false_negative = sum(
+        left == RelevanceLabel.POSITIVE.value
+        and right != RelevanceLabel.POSITIVE.value
+        for left, right in zip(expected_relevance, actual_relevance)
+    )
+    precision = (
+        true_positive / (true_positive + false_positive)
+        if true_positive + false_positive
+        else None
+    )
+    recall = (
+        true_positive / (true_positive + false_negative)
+        if true_positive + false_negative
+        else None
+    )
+    false_positive_verification = sum(
+        expected != AutomaticUseLabel.ALLOWED.value
+        and actual == AutomaticUseLabel.ALLOWED.value
+        for expected, actual in zip(expected_use, actual_use)
+    )
+    false_negative_verification = sum(
+        expected == AutomaticUseLabel.ALLOWED.value
+        and actual != AutomaticUseLabel.ALLOWED.value
+        for expected, actual in zip(expected_use, actual_use)
+    )
+    review_count = sum(value == AutomaticUseLabel.REVIEW.value for value in actual_use)
+    return {
+        "case_count": len(rows),
+        "relevance_confusion_matrix": _confusion(expected_relevance, actual_relevance),
+        "document_kind_confusion_matrix": _confusion(expected_kind, actual_kind),
+        "automatic_use_confusion_matrix": _confusion(expected_use, actual_use),
+        "positive_precision": precision,
+        "positive_recall": recall,
+        "false_positive_verification_count": false_positive_verification,
+        "false_negative_verification_count": false_negative_verification,
+        "manual_review_count": review_count,
+        "manual_review_rate": review_count / len(rows) if rows else None,
+    }
+
+
+class CorpusEvaluator:
+    def __init__(
+        self,
+        cache: CorpusCache,
+        current: Optional[DocumentValidator] = None,
+        shadow: Optional[ShadowEvidencePolicy] = None,
+    ) -> None:
+        self.cache = cache
+        self.current = current or DocumentValidator()
+        self.shadow = shadow or ShadowEvidencePolicy()
+
+    def evaluate(self, manifest: CorpusManifest) -> dict:
+        rows: List[dict] = []
+        for case in manifest.cases:
+            content, header_page = self.cache.read_case(case)
+            metadata = parse_filing_identity_header(header_page)
+            if metadata.accession != case.accession:
+                raise ValueError(
+                    f"{case.case_id}: header accession {metadata.accession} does not "
+                    f"match manifest {case.accession}"
+                )
+
+            current = self.current.validate(content, case.ticker, case.class_id)
+            current_relevance = (
+                RelevanceLabel.POSITIVE
+                if current.ticker_found or current.class_id_found
+                else RelevanceLabel.AMBIGUOUS
+            )
+            if (
+                current.verification is DocumentVerification.VERIFIED
+                and current.complete
+            ):
+                current_use = AutomaticUseLabel.ALLOWED
+            elif current.kind is DocumentKind.SUPPLEMENT:
+                current_use = AutomaticUseLabel.DISALLOWED
+            else:
+                current_use = AutomaticUseLabel.REVIEW
+
+            shadow = self.shadow.evaluate(
+                content,
+                case.ticker,
+                case.class_id,
+                case.series_id,
+                metadata,
+            )
+            expected = {
+                "relevance": case.labels.relevance.value,
+                "document_kind": case.labels.document_kind.value,
+                "automatic_use": case.labels.automatic_use.value,
+            }
+            current_value = {
+                "relevance": current_relevance.value,
+                "document_kind": current.kind.value,
+                "automatic_use": current_use.value,
+                "evidence": current.evidence,
+                "warnings": current.warnings,
+            }
+            shadow_value = shadow.as_dict()
+            rows.append(
+                {
+                    "case_id": case.case_id,
+                    "ticker": case.ticker,
+                    "accession": case.accession,
+                    "document_url": case.document_url,
+                    "expected": expected,
+                    "label_reason": {
+                        "summary": case.reason.summary,
+                        "category": case.reason.category,
+                        "observed_evidence": case.reason.observed_evidence,
+                        "missing_evidence": case.reason.missing_evidence,
+                        "contradictory_evidence": case.reason.contradictory_evidence,
+                        "resolution_needed": case.reason.resolution_needed,
+                    },
+                    "current": current_value,
+                    "shadow": shadow_value,
+                    "disagreements": {
+                        "current": [
+                            key for key, value in expected.items() if current_value[key] != value
+                        ],
+                        "shadow": [
+                            key for key, value in expected.items() if shadow_value[key] != value
+                        ],
+                    },
+                }
+            )
+
+        return {
+            "schema_version": REPORT_SCHEMA_VERSION,
+            "corpus_version": manifest.corpus_version,
+            "shadow_policy_version": POLICY_VERSION,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "current_metrics": _metrics(rows, "current"),
+            "shadow_metrics": _metrics(rows, "shadow"),
+            "cases": rows,
+        }
+
+
+def save_report(report: dict, path: Union[str, Path]) -> None:
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_suffix(target.suffix + ".tmp")
+    with open(temporary, "w", encoding="utf-8") as handle:
+        json.dump(report, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+    os.replace(temporary, target)

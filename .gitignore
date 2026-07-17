@@ -4,6 +4,8 @@ logs/
 docs/
 ROADMAP.md
 TEST_MATRIX.md
+corpus/cache/
+corpus/reports/
 
 # Python
 __pycache__/

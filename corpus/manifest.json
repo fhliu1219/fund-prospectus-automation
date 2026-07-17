@@ -1,0 +1,1029 @@
+{
+  "schema_version": 1,
+  "corpus_version": "2026-07-16",
+  "target_case_count": 30,
+  "cases": [
+    {
+      "case_id": "vusxx-1-0000891190-26-000223",
+      "provider": "VANGUARD ADMIRAL FUNDS",
+      "ticker": "VUSXX",
+      "registrant_cik": 891190,
+      "requested_cik": 891190,
+      "series_id": "S000002233",
+      "class_id": "C000005732",
+      "accession": "0000891190-26-000223",
+      "form": "497K",
+      "filing_date": "2026-06-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/891190/000089119026000223/f45535d1.htm",
+      "document_sha256": "14e16449a459f2fbaba07b468d7f3a04585f2796a2a2b3ebe87db7682ca5cdce",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/891190/000089119026000223/0000891190-26-000223-index-headers.html",
+      "filing_header_sha256": "5ec985e96195fbdf5a6694d784b0f88dd81df0ef7800711a633545698cab3c6e",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000005732 to VUSXX.",
+          "The document names VUSXX, its legal class, or its exact fund in prospectus content.",
+          "The document identifies itself as a Summary Prospectus and contains core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vusxx-2-0000891190-26-000239",
+      "provider": "VANGUARD ADMIRAL FUNDS",
+      "ticker": "VUSXX",
+      "registrant_cik": 891190,
+      "requested_cik": 891190,
+      "series_id": "S000002233",
+      "class_id": "C000005732",
+      "accession": "0000891190-26-000239",
+      "form": "497",
+      "filing_date": "2026-06-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/891190/000089119026000239/f45593d1.htm",
+      "document_sha256": "1b1e208cac2f959fa71df0dfdca25bff4db6ef3ad75e0b13c6d270602c1c9103",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/891190/000089119026000239/0000891190-26-000239-index-headers.html",
+      "filing_header_sha256": "2b1b194140e690f15f9a23b9908fbfe39d7277cbcfb86ddfd7cf2a3bf6cbbd96",
+      "labels": {
+        "relevance": "ambiguous",
+        "document_kind": "supplement",
+        "automatic_use": "review"
+      },
+      "reason": {
+        "summary": "The SEC header associates the filing with the requested class, but the selected supplement does not establish document-level class coverage.",
+        "category": "supplement_scope_unclear",
+        "observed_evidence": [
+          "The SEC filing header includes C000005732 and maps it to VUSXX.",
+          "The document identifies itself as a supplement to prospectus or SAI materials."
+        ],
+        "missing_evidence": [
+          "No direct statement was confirmed that this document applies to VUSXX.",
+          "The base document needed for a complete standalone package is not part of this case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": "Confirm the supplement's applicability to the requested class and pair it with the class-verified base prospectus."
+      }
+    },
+    {
+      "case_id": "vusxx-3-0000891190-26-000222",
+      "provider": "VANGUARD ADMIRAL FUNDS",
+      "ticker": "VMFXX",
+      "registrant_cik": 891190,
+      "requested_cik": 106830,
+      "series_id": "S000004462",
+      "class_id": "C000012238",
+      "accession": "0000891190-26-000222",
+      "form": "497",
+      "filing_date": "2026-06-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/891190/000089119026000222/f45661d1.htm",
+      "document_sha256": "d50b6c2e0d50867c9a8de1854766216c8a45d4c68a0db3fc762d9ffc405d48e8",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/891190/000089119026000222/0000891190-26-000222-index-headers.html",
+      "filing_header_sha256": "2f7881e19cbde990def19753791e67ebdd6d3f8715741f27086f10591568db09",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The filing is for VUSXX, not the requested class identified by VMFXX.",
+        "category": "authoritative_class_mismatch",
+        "observed_evidence": [
+          "The document and filing header identify VUSXX or its fund as filing subjects.",
+          "The requested identity is VMFXX / C000012238 / S000004462."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "The SEC filing header does not include requested class C000012238.",
+          "The filing header does not map the requested ticker VMFXX to that class."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vtsax-1-0000036405-26-000214",
+      "provider": "VANGUARD INDEX FUNDS",
+      "ticker": "VOO",
+      "registrant_cik": 36405,
+      "requested_cik": 36405,
+      "series_id": "S000002839",
+      "class_id": "C000092055",
+      "accession": "0000036405-26-000214",
+      "form": "497K",
+      "filing_date": "2026-04-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/36405/000003640526000214/f44873d1.htm",
+      "document_sha256": "773a94467b7dd18009fbd99d88d9458a6eb3c263831d88238a63bdb748c63168",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/36405/000003640526000214/0000036405-26-000214-index-headers.html",
+      "filing_header_sha256": "4c29e9a7699aaba5c761eda3bfab5abb5f800b8aec7cef9ce986409924e072e6",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The filing is for VTSAX, not the requested class identified by VOO.",
+        "category": "authoritative_class_mismatch",
+        "observed_evidence": [
+          "The document and filing header identify VTSAX or its fund as filing subjects.",
+          "The requested identity is VOO / C000092055 / S000002839."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "The SEC filing header does not include requested class C000092055.",
+          "The filing header does not map the requested ticker VOO to that class."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vtsax-2-0000036405-26-000181",
+      "provider": "VANGUARD INDEX FUNDS",
+      "ticker": "VTSAX",
+      "registrant_cik": 36405,
+      "requested_cik": 36405,
+      "series_id": "S000002848",
+      "class_id": "C000007806",
+      "accession": "0000036405-26-000181",
+      "form": "485BPOS",
+      "filing_date": "2026-04-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/36405/000003640526000181/f45032d1.htm",
+      "document_sha256": "99aae578f3ae6d25c91cdfbfaf446ce821a9dd1320deaf0fac4d3fd7218609bd",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/36405/000003640526000181/0000036405-26-000181-index-headers.html",
+      "filing_header_sha256": "34b7070777e5e41d71851cda20412b903dd7cd59ea3c2181dd9cfbfa139a14b9",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000007806 to VTSAX.",
+          "The document names VTSAX, its legal class, or its exact fund in prospectus content.",
+          "The document contains a statutory prospectus or Form N-1A registration statement with core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vtsax-3-0001193125-26-045639",
+      "provider": "VANGUARD ADMIRAL FUNDS",
+      "ticker": "VTSAX",
+      "registrant_cik": 36405,
+      "requested_cik": 36405,
+      "series_id": "S000002848",
+      "class_id": "C000007806",
+      "accession": "0001193125-26-045639",
+      "form": "497",
+      "filing_date": "2026-02-11",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/36405/000119312526045639/f44014d1.htm",
+      "document_sha256": "5b61d44b2fb3e6402caee8f642d1fb87619243ef22125b0c57e43d17911f3cd2",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/36405/000119312526045639/0001193125-26-045639-index-headers.html",
+      "filing_header_sha256": "185c74a1a2785146a11a3abd8cd2518e1ba26c481f5f481e4ee4d728e08f81b4",
+      "labels": {
+        "relevance": "ambiguous",
+        "document_kind": "supplement",
+        "automatic_use": "review"
+      },
+      "reason": {
+        "summary": "The SEC header associates the filing with the requested class, but the selected supplement does not establish document-level class coverage.",
+        "category": "supplement_scope_unclear",
+        "observed_evidence": [
+          "The SEC filing header includes C000007806 and maps it to VTSAX.",
+          "The document identifies itself as a supplement to prospectus or SAI materials."
+        ],
+        "missing_evidence": [
+          "No direct statement was confirmed that this document applies to VTSAX.",
+          "The base document needed for a complete standalone package is not part of this case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": "Confirm the supplement's applicability to the requested class and pair it with the class-verified base prospectus."
+      }
+    },
+    {
+      "case_id": "vmfxx-1-0000106830-26-000009",
+      "provider": "VANGUARD MONEY MARKET RESERVES",
+      "ticker": "VMFXX",
+      "registrant_cik": 106830,
+      "requested_cik": 106830,
+      "series_id": "S000004462",
+      "class_id": "C000012238",
+      "accession": "0000106830-26-000009",
+      "form": "497K",
+      "filing_date": "2026-06-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/106830/000010683026000009/f45536d1.htm",
+      "document_sha256": "48d3a359c571b7d2442670d6151ab4d2d352900b561548378acb835e461afb6d",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/106830/000010683026000009/0000106830-26-000009-index-headers.html",
+      "filing_header_sha256": "d335c35c67a4483bca791634edffe3122ba12d6416476ede0c5dba1dd8f170ca",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000012238 to VMFXX.",
+          "The document names VMFXX, its legal class, or its exact fund in prospectus content.",
+          "The document identifies itself as a Summary Prospectus and contains core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vmfxx-2-0000106830-26-000008",
+      "provider": "VANGUARD MONEY MARKET RESERVES",
+      "ticker": "VUSXX",
+      "registrant_cik": 106830,
+      "requested_cik": 891190,
+      "series_id": "S000002233",
+      "class_id": "C000005732",
+      "accession": "0000106830-26-000008",
+      "form": "497",
+      "filing_date": "2026-06-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/106830/000010683026000008/f45672d1.htm",
+      "document_sha256": "4498820a8ba02a8859e5a88aecbacf6dd5597c96f12b653998095c5a8c0fb8c8",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/106830/000010683026000008/0000106830-26-000008-index-headers.html",
+      "filing_header_sha256": "9dc0bbe13126cd9fe103acf18e33622932e434e7f2a91ee18f7cbcc79a812760",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The filing is for VMFXX, not the requested class identified by VUSXX.",
+        "category": "authoritative_class_mismatch",
+        "observed_evidence": [
+          "The document and filing header identify VMFXX or its fund as filing subjects.",
+          "The requested identity is VUSXX / C000005732 / S000002233."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "The SEC filing header does not include requested class C000005732.",
+          "The filing header does not map the requested ticker VUSXX to that class."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vmfxx-3-0000891190-26-000095",
+      "provider": "VANGUARD ADMIRAL FUNDS",
+      "ticker": "VMFXX",
+      "registrant_cik": 106830,
+      "requested_cik": 106830,
+      "series_id": "S000004462",
+      "class_id": "C000012238",
+      "accession": "0000891190-26-000095",
+      "form": "497",
+      "filing_date": "2026-04-16",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/106830/000089119026000095/f44743d1.htm",
+      "document_sha256": "e108a2b472b7768617bb6896f1b164058da76a203ce55700b7107e2062ca0b99",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/106830/000089119026000095/0000891190-26-000095-index-headers.html",
+      "filing_header_sha256": "6d9f43fa1e691ca508924ca89af1d6f9008abb851da3526c8faacc92eff7891f",
+      "labels": {
+        "relevance": "ambiguous",
+        "document_kind": "supplement",
+        "automatic_use": "review"
+      },
+      "reason": {
+        "summary": "The SEC header associates the filing with the requested class, but the selected supplement does not establish document-level class coverage.",
+        "category": "supplement_scope_unclear",
+        "observed_evidence": [
+          "The SEC filing header includes C000012238 and maps it to VMFXX.",
+          "The document identifies itself as a supplement to prospectus or SAI materials."
+        ],
+        "missing_evidence": [
+          "No direct statement was confirmed that this document applies to VMFXX.",
+          "The base document needed for a complete standalone package is not part of this case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": "Confirm the supplement's applicability to the requested class and pair it with the class-verified base prospectus."
+      }
+    },
+    {
+      "case_id": "swppx-1-0000884546-26-000052",
+      "provider": "SCHWAB CAPITAL TRUST",
+      "ticker": "SWPPX",
+      "registrant_cik": 904333,
+      "requested_cik": 904333,
+      "series_id": "S000005911",
+      "class_id": "C000016166",
+      "accession": "0000884546-26-000052",
+      "form": "497K",
+      "filing_date": "2026-02-26",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/904333/000088454626000052/c497k.htm",
+      "document_sha256": "e8d182fd9fd774a16b827b9e475b3cfe3ea500c0195cc52901e07734c4861a9e",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/904333/000088454626000052/0000884546-26-000052-index-headers.html",
+      "filing_header_sha256": "10245796c739a800e4f78e7a180b3ff89755ee0870a7674fb113f07b2a7d4f25",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000016166 to SWPPX.",
+          "The document names SWPPX, its legal class, or its exact fund in prospectus content.",
+          "The document identifies itself as a Summary Prospectus and contains core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "swppx-2-0000884546-26-000041",
+      "provider": "SCHWAB CAPITAL TRUST",
+      "ticker": "SWPPX",
+      "registrant_cik": 904333,
+      "requested_cik": 904333,
+      "series_id": "S000005911",
+      "class_id": "C000016166",
+      "accession": "0000884546-26-000041",
+      "form": "485BPOS",
+      "filing_date": "2026-02-26",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/904333/000088454626000041/c485bpos.htm",
+      "document_sha256": "e3ee1f3db2665f84325435570a827ab254ba1b14c501c2358670a611631ea44e",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/904333/000088454626000041/0000884546-26-000041-index-headers.html",
+      "filing_header_sha256": "e3a53832da3be66a40e7b0e8d38f11dc2a69d716a07531d150c22eb87c315d18",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000016166 to SWPPX.",
+          "The document names SWPPX, its legal class, or its exact fund in prospectus content.",
+          "The document contains a statutory prospectus or Form N-1A registration statement with core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "swppx-3-0001104659-25-057429",
+      "provider": "SCHWAB CAPITAL TRUST",
+      "ticker": "SWVXX",
+      "registrant_cik": 904333,
+      "requested_cik": 857156,
+      "series_id": "S000004508",
+      "class_id": "C000012383",
+      "accession": "0001104659-25-057429",
+      "form": "497K",
+      "filing_date": "2025-06-09",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/904333/000110465925057429/tm2517154-2_497k.htm",
+      "document_sha256": "198517d568ba2c549514fecba706ba3b6d55057e788cb2bb119c3b2d33cb97f3",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/904333/000110465925057429/0001104659-25-057429-index-headers.html",
+      "filing_header_sha256": "436935354d3be608d8412275b00b48e801799785804420bfcda1f49d041c53a2",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The filing is for SWPPX, not the requested class identified by SWVXX.",
+        "category": "authoritative_class_mismatch",
+        "observed_evidence": [
+          "The document and filing header identify SWPPX or its fund as filing subjects.",
+          "The requested identity is SWVXX / C000012383 / S000004508."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "The SEC filing header does not include requested class C000012383.",
+          "The filing header does not map the requested ticker SWVXX to that class."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "trbcx-1-0001999371-26-004311",
+      "provider": "T. Rowe Price Blue Chip Growth Fund, Inc.",
+      "ticker": "TRBCX",
+      "registrant_cik": 902259,
+      "requested_cik": 902259,
+      "series_id": "S000002069",
+      "class_id": "C000005424",
+      "accession": "0001999371-26-004311",
+      "form": "497K",
+      "filing_date": "2026-02-26",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/902259/000199937126004311/bcg-497k_030126.htm",
+      "document_sha256": "ce69568700bef17d0e69626249446df7222562d73e82316750313042f8f9e53b",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/902259/000199937126004311/0001999371-26-004311-index-headers.html",
+      "filing_header_sha256": "83aa5b987b5c06d9bbae35148f4f83104cb8e7f62c41f01b8cb521d8d2df0ead",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000005424 to TRBCX.",
+          "The document names TRBCX, its legal class, or its exact fund in prospectus content.",
+          "The document identifies itself as a Summary Prospectus and contains core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "trbcx-2-0001999371-26-004097",
+      "provider": "T. Rowe Price Blue Chip Growth Fund, Inc.",
+      "ticker": "TRBCX",
+      "registrant_cik": 902259,
+      "requested_cik": 902259,
+      "series_id": "S000002069",
+      "class_id": "C000005424",
+      "accession": "0001999371-26-004097",
+      "form": "485BPOS",
+      "filing_date": "2026-02-25",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/902259/000199937126004097/bcg-485bpos_022526.htm",
+      "document_sha256": "036976799f534b7ffdbdec745f4f145acec4dce1ca3155ccee5b9b64c9508e6b",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/902259/000199937126004097/0001999371-26-004097-index-headers.html",
+      "filing_header_sha256": "3facb769284f2b44480261994eb25f8d606a9bba8f870ea9899c04bed49c262f",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000005424 to TRBCX.",
+          "The document names TRBCX, its legal class, or its exact fund in prospectus content.",
+          "The document contains a statutory prospectus or Form N-1A registration statement with core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "trbcx-3-0001999371-26-000004",
+      "provider": "T. Rowe Price All-Cap Opportunities Fund, Inc.",
+      "ticker": "TRBCX",
+      "registrant_cik": 902259,
+      "requested_cik": 902259,
+      "series_id": "S000002069",
+      "class_id": "C000005424",
+      "accession": "0001999371-26-000004",
+      "form": "497",
+      "filing_date": "2026-01-02",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/902259/000199937126000004/pricefunds-497_010126.htm",
+      "document_sha256": "0c2c7b948f7f206273a790576e25516a493aa796d26ac7d6139261307dc915c0",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/902259/000199937126000004/0001999371-26-000004-index-headers.html",
+      "filing_header_sha256": "8305f8ef727f45127086275e6cc46a2b66eedf95a4324bb337a303e4701eeea3",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "unknown",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The filing covers the requested class, but the selected document is a Statement of Additional Information rather than a prospectus.",
+        "category": "non_prospectus_material",
+        "observed_evidence": [
+          "The SEC filing header maps C000005424 to TRBCX.",
+          "The document's fund list explicitly includes TRBCX.",
+          "The document labels itself a Statement of Additional Information."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "spy-1-0001193125-26-022316",
+      "provider": "SPDR S&P 500 ETF TRUST",
+      "ticker": "SPY",
+      "registrant_cik": 884394,
+      "requested_cik": 884394,
+      "series_id": null,
+      "class_id": null,
+      "accession": "0001193125-26-022316",
+      "form": "485BPOS",
+      "filing_date": "2026-01-26",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/884394/000119312526022316/d77353d485bpos.htm",
+      "document_sha256": "05cf519441a6f019d4e310472a35112bce29b3cc1dbb5b2d018ca845252b528e",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/884394/000119312526022316/0001193125-26-022316-index-headers.html",
+      "filing_header_sha256": "f40333aefd7e868a21a34dd8667b51626cf399d0232cde6e873ef60c37997dff",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Registrant-level identity and direct document content both identify the SPDR S&P 500 ETF Trust and SPY.",
+        "category": "registrant_and_document_identity",
+        "observed_evidence": [
+          "The filing header names SPDR S&P 500 ETF Trust as the registrant.",
+          "The document directly names SPY or the SPDR S&P 500 ETF Trust in prospectus content.",
+          "The document contains statutory prospectus or registration-statement sections."
+        ],
+        "missing_evidence": [
+          "The SEC filing header provides no class ID or series ID for this trust."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "spy-2-0001193125-26-022775",
+      "provider": "SPDR S&P 500 ETF TRUST",
+      "ticker": "SPY",
+      "registrant_cik": 884394,
+      "requested_cik": 884394,
+      "series_id": null,
+      "class_id": null,
+      "accession": "0001193125-26-022775",
+      "form": "497",
+      "filing_date": "2026-01-26",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/884394/000119312526022775/d77353d497.htm",
+      "document_sha256": "a2ab78bb3fe3c8593e652c91a233aceda55a39874cd66b725ae56f3d84fe5579",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/884394/000119312526022775/0001193125-26-022775-index-headers.html",
+      "filing_header_sha256": "40b3b4528b8d49796cb4f1154788bc82400dd2718638ce7e914175a2f05105ca",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Registrant-level identity and direct document content both identify the SPDR S&P 500 ETF Trust and SPY.",
+        "category": "registrant_and_document_identity",
+        "observed_evidence": [
+          "The filing header names SPDR S&P 500 ETF Trust as the registrant.",
+          "The document directly names SPY or the SPDR S&P 500 ETF Trust in prospectus content.",
+          "The document contains statutory prospectus or registration-statement sections."
+        ],
+        "missing_evidence": [
+          "The SEC filing header provides no class ID or series ID for this trust."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "spy-3-0001193125-25-014030",
+      "provider": "SPDR S&P 500 ETF TRUST",
+      "ticker": "SPY",
+      "registrant_cik": 884394,
+      "requested_cik": 884394,
+      "series_id": null,
+      "class_id": null,
+      "accession": "0001193125-25-014030",
+      "form": "497",
+      "filing_date": "2025-01-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/884394/000119312525014030/d912756d497.htm",
+      "document_sha256": "417219bc90599e8f4f7634d56f389dfe2f92bdc4c7cd4d3e44b341214152fe4f",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/884394/000119312525014030/0001193125-25-014030-index-headers.html",
+      "filing_header_sha256": "984e70e34aa487b4a4f4efa06716388f69427bf79e75528cdb674dda992ece4e",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Registrant-level identity and direct document content both identify the SPDR S&P 500 ETF Trust and SPY.",
+        "category": "registrant_and_document_identity",
+        "observed_evidence": [
+          "The filing header names SPDR S&P 500 ETF Trust as the registrant.",
+          "The document directly names SPY or the SPDR S&P 500 ETF Trust in prospectus content.",
+          "The document contains statutory prospectus or registration-statement sections."
+        ],
+        "missing_evidence": [
+          "The SEC filing header provides no class ID or series ID for this trust."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "qqq-1-0001193125-26-265096",
+      "provider": "INVESCO QQQ TRUST, SERIES 1",
+      "ticker": "QQQ",
+      "registrant_cik": 1067839,
+      "requested_cik": 1067839,
+      "series_id": "S000101292",
+      "class_id": "C000271435",
+      "accession": "0001193125-26-265096",
+      "form": "497K",
+      "filing_date": "2026-06-10",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1067839/000119312526265096/d21745d497k.htm",
+      "document_sha256": "9fdffbaa8951dc8e3377b3e76d30838edc8abe8a5f44886f998f912a8f8d78d9",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1067839/000119312526265096/0001193125-26-265096-index-headers.html",
+      "filing_header_sha256": "dfdfd8fb7a9e06cfc1034b575d10c7646135f5783d25f7c7445ae061df2ee5dc",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The supplement explicitly covers the requested class but is not a complete standalone prospectus.",
+        "category": "direct_supplement_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000271435 to QQQ.",
+          "The document explicitly names QQQ or its exact trust/class.",
+          "The document identifies itself as a dated supplement."
+        ],
+        "missing_evidence": [
+          "The class-verified base prospectus is not included in this single-document case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "qqq-2-0001193125-26-264913",
+      "provider": "INVESCO EXCHANGE-TRADED FUND TRUST",
+      "ticker": "QQQ",
+      "registrant_cik": 1067839,
+      "requested_cik": 1067839,
+      "series_id": "S000101292",
+      "class_id": "C000271435",
+      "accession": "0001193125-26-264913",
+      "form": "497",
+      "filing_date": "2026-06-10",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1067839/000119312526264913/d21745d497.htm",
+      "document_sha256": "a12eb6fb0e7c93aa0ec0c727d6558a2f66f2a95fbc9e353b9b1edcff1bc55945",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1067839/000119312526264913/0001193125-26-264913-index-headers.html",
+      "filing_header_sha256": "ff5ab88e6996cce428d5ac095a971bd734ddc2c01c1be36c157da64eedf4a644",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The supplement explicitly covers the requested class but is not a complete standalone prospectus.",
+        "category": "direct_supplement_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000271435 to QQQ.",
+          "The document explicitly names QQQ or its exact trust/class.",
+          "The document identifies itself as a dated supplement."
+        ],
+        "missing_evidence": [
+          "The class-verified base prospectus is not included in this single-document case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "qqq-3-0001104659-26-052973",
+      "provider": "INVESCO QQQ TRUST, SERIES 1",
+      "ticker": "QQQ",
+      "registrant_cik": 1067839,
+      "requested_cik": 1067839,
+      "series_id": "S000101292",
+      "class_id": "C000271435",
+      "accession": "0001104659-26-052973",
+      "form": "497K",
+      "filing_date": "2026-04-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1067839/000110465926052973/tm2612890d3_497k.htm",
+      "document_sha256": "e6abc2a0031b0689a5e7a36795a2b32ef4a5ab3a4c89085dbe223d89e2406505",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1067839/000110465926052973/0001104659-26-052973-index-headers.html",
+      "filing_header_sha256": "8ca1bdf3aa467d451b339a6875f85fc6e5d387a2309078b76606842d5d5525a4",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The supplement explicitly covers the requested class but is not a complete standalone prospectus.",
+        "category": "direct_supplement_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000271435 to QQQ.",
+          "The document explicitly names QQQ or its exact trust/class.",
+          "The document identifies itself as a dated supplement."
+        ],
+        "missing_evidence": [
+          "The class-verified base prospectus is not included in this single-document case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "voo-1-0000036405-26-000183",
+      "provider": "VANGUARD INDEX FUNDS",
+      "ticker": "VTSAX",
+      "registrant_cik": 36405,
+      "requested_cik": 36405,
+      "series_id": "S000002848",
+      "class_id": "C000007806",
+      "accession": "0000036405-26-000183",
+      "form": "497K",
+      "filing_date": "2026-04-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/36405/000003640526000183/f44783d1.htm",
+      "document_sha256": "211d985163769962b52c25f1651512873a1a2ac495b2dda80ee24ec345608902",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/36405/000003640526000183/0000036405-26-000183-index-headers.html",
+      "filing_header_sha256": "f6a14ebeb50351032f8edd1245587e84b2da1e843733dcbca7a163f7bd35b020",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The filing is for VOO, not the requested class identified by VTSAX.",
+        "category": "authoritative_class_mismatch",
+        "observed_evidence": [
+          "The document and filing header identify VOO or its fund as filing subjects.",
+          "The requested identity is VTSAX / C000007806 / S000002848."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "The SEC filing header does not include requested class C000007806.",
+          "The filing header does not map the requested ticker VTSAX to that class."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "voo-2-0001193125-26-012319",
+      "provider": "VANGUARD ADMIRAL FUNDS",
+      "ticker": "VOO",
+      "registrant_cik": 36405,
+      "requested_cik": 36405,
+      "series_id": "S000002839",
+      "class_id": "C000092055",
+      "accession": "0001193125-26-012319",
+      "form": "497",
+      "filing_date": "2026-01-14",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/36405/000119312526012319/f43764d1.htm",
+      "document_sha256": "8f94264aee56b7b38fcd2ddcafdd8013428248e0b570ee698f7c77bf6f916a08",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/36405/000119312526012319/0001193125-26-012319-index-headers.html",
+      "filing_header_sha256": "1c1eb7d63c3302f5148f247a772c7e3c2aca7fac8b730b716cb876d8a810059e",
+      "labels": {
+        "relevance": "ambiguous",
+        "document_kind": "supplement",
+        "automatic_use": "review"
+      },
+      "reason": {
+        "summary": "The SEC header associates the filing with the requested class, but the selected supplement does not establish document-level class coverage.",
+        "category": "supplement_scope_unclear",
+        "observed_evidence": [
+          "The SEC filing header includes C000092055 and maps it to VOO.",
+          "The document identifies itself as a supplement to prospectus or SAI materials."
+        ],
+        "missing_evidence": [
+          "No direct statement was confirmed that this document applies to VOO.",
+          "The base document needed for a complete standalone package is not part of this case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": "Confirm the supplement's applicability to the requested class and pair it with the class-verified base prospectus."
+      }
+    },
+    {
+      "case_id": "voo-3-0001193125-26-009903",
+      "provider": "VANGUARD ADMIRAL FUNDS",
+      "ticker": "VOO",
+      "registrant_cik": 36405,
+      "requested_cik": 36405,
+      "series_id": "S000002839",
+      "class_id": "C000092055",
+      "accession": "0001193125-26-009903",
+      "form": "497",
+      "filing_date": "2026-01-12",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/36405/000119312526009903/f43758d1.htm",
+      "document_sha256": "3fb36c551f991fee16015b0a1585646660365318d313c12034191df61b6c8059",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/36405/000119312526009903/0001193125-26-009903-index-headers.html",
+      "filing_header_sha256": "bed22186e168308d3cb593eb03bc09cf42079080b6f7faead262a192a7a944e1",
+      "labels": {
+        "relevance": "ambiguous",
+        "document_kind": "supplement",
+        "automatic_use": "review"
+      },
+      "reason": {
+        "summary": "The SEC header associates the filing with the requested class, but the selected supplement does not establish document-level class coverage.",
+        "category": "supplement_scope_unclear",
+        "observed_evidence": [
+          "The SEC filing header includes C000092055 and maps it to VOO.",
+          "The document identifies itself as a supplement to prospectus or SAI materials."
+        ],
+        "missing_evidence": [
+          "No direct statement was confirmed that this document applies to VOO.",
+          "The base document needed for a complete standalone package is not part of this case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": "Confirm the supplement's applicability to the requested class and pair it with the class-verified base prospectus."
+      }
+    },
+    {
+      "case_id": "swvxx-1-0000884546-26-000181",
+      "provider": "CHARLES SCHWAB FAMILY OF FUNDS",
+      "ticker": "SWVXX",
+      "registrant_cik": 857156,
+      "requested_cik": 857156,
+      "series_id": "S000004508",
+      "class_id": "C000012383",
+      "accession": "0000884546-26-000181",
+      "form": "497K",
+      "filing_date": "2026-04-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/857156/000088454626000181/c497k.htm",
+      "document_sha256": "1f7d7ce9698a91641d2afc12c9d1e8e3ee94c521e3888bbc3d14d781f44ef7d8",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/857156/000088454626000181/0000884546-26-000181-index-headers.html",
+      "filing_header_sha256": "a147714bb39fe9954f7e136838e8099f2ce9e947283dd54bf7787a0849a49c09",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000012383 to SWVXX.",
+          "The document names SWVXX, its legal class, or its exact fund in prospectus content.",
+          "The document identifies itself as a Summary Prospectus and contains core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "swvxx-2-0000884546-26-000169",
+      "provider": "CHARLES SCHWAB FAMILY OF FUNDS",
+      "ticker": "SWVXX",
+      "registrant_cik": 857156,
+      "requested_cik": 857156,
+      "series_id": "S000004508",
+      "class_id": "C000012383",
+      "accession": "0000884546-26-000169",
+      "form": "485BPOS",
+      "filing_date": "2026-04-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/857156/000088454626000169/c485bpos.htm",
+      "document_sha256": "4012b5e00acb968d80b3057ad9a699f841c1f03248c2a721b26d565bc0e12268",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/857156/000088454626000169/0000884546-26-000169-index-headers.html",
+      "filing_header_sha256": "9a622d0a830a90e618f445527a5c84ad0d89577275c12fbcc297fad0b7b2c95d",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000012383 to SWVXX.",
+          "The document names SWVXX, its legal class, or its exact fund in prospectus content.",
+          "The document contains a statutory prospectus or Form N-1A registration statement with core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "swvxx-3-0001104659-26-020687",
+      "provider": "CHARLES SCHWAB FAMILY OF FUNDS",
+      "ticker": "SWVXX",
+      "registrant_cik": 857156,
+      "requested_cik": 857156,
+      "series_id": "S000004508",
+      "class_id": "C000012383",
+      "accession": "0001104659-26-020687",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/857156/000110465926020687/tm266449-4_497k.htm",
+      "document_sha256": "97c113d30b9b9f2af313fbab182060c6d4677420e93081613d5c986149911ff7",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/857156/000110465926020687/0001104659-26-020687-index-headers.html",
+      "filing_header_sha256": "5239798ad7d6a783a26da8dee722ac535dfe03a4dc82a9e344b4e41abd0c3036",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000012383 to SWVXX.",
+          "The document names SWVXX, its legal class, or its exact fund in prospectus content.",
+          "The document identifies itself as a Summary Prospectus and contains core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "fdrxx-1-0000278001-26-000021",
+      "provider": "FIDELITY PHILLIPS STREET TRUST",
+      "ticker": "FDRXX",
+      "registrant_cik": 278001,
+      "requested_cik": 278001,
+      "series_id": "S000007149",
+      "class_id": "C000019553",
+      "accession": "0000278001-26-000021",
+      "form": "497K",
+      "filing_date": "2026-01-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/278001/000027800126000021/filing10694.htm",
+      "document_sha256": "33a1678ceff3e58a9bf65bf3c95f98f49d68821a2091ea9900d51119d8df0da0",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/278001/000027800126000021/0000278001-26-000021-index-headers.html",
+      "filing_header_sha256": "6de12d16322804e4a1f15f936712b7bb6574a2f320f184fcbac04eab295dba2b",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000019553 to FDRXX.",
+          "The document names FDRXX, its legal class, or its exact fund in prospectus content.",
+          "The document identifies itself as a Summary Prospectus and contains core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "fdrxx-2-0000278001-26-000019",
+      "provider": "FIDELITY PHILLIPS STREET TRUST",
+      "ticker": "FDRXX",
+      "registrant_cik": 278001,
+      "requested_cik": 278001,
+      "series_id": "S000007149",
+      "class_id": "C000019553",
+      "accession": "0000278001-26-000019",
+      "form": "485BPOS",
+      "filing_date": "2026-01-26",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/278001/000027800126000019/filing10660.htm",
+      "document_sha256": "0128b220ff04504f6f4acf37949d13d7e15ea7700387bc027a81ee5741d009b4",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/278001/000027800126000019/0000278001-26-000019-index-headers.html",
+      "filing_header_sha256": "7a0d06a5cec785ba3d49dc6b92fd0a89171b2761a30b9ef5037ac64dee05fd5d",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000019553 to FDRXX.",
+          "The document names FDRXX, its legal class, or its exact fund in prospectus content.",
+          "The document contains a statutory prospectus or Form N-1A registration statement with core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "fdrxx-3-0000278001-25-000032",
+      "provider": "FIDELITY PHILLIPS STREET TRUST",
+      "ticker": "FDRXX",
+      "registrant_cik": 278001,
+      "requested_cik": 278001,
+      "series_id": "S000007149",
+      "class_id": "C000019553",
+      "accession": "0000278001-25-000032",
+      "form": "497K",
+      "filing_date": "2025-01-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/278001/000027800125000032/filing8344.htm",
+      "document_sha256": "899e075f33a98d5d5e60e3b00187c4a2e445819831cfb93ddee3b6af179a0abb",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/278001/000027800125000032/0000278001-25-000032-index-headers.html",
+      "filing_header_sha256": "1e200f3f02652d0e9235df97c434d04f9cf49ce56ec3ababca9ca242b313f7dc",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "Authoritative filing metadata and the document's own prospectus content independently support the requested class.",
+        "category": "direct_class_and_document_evidence",
+        "observed_evidence": [
+          "The SEC filing header maps C000019553 to FDRXX.",
+          "The document names FDRXX, its legal class, or its exact fund in prospectus content.",
+          "The document identifies itself as a Summary Prospectus and contains core prospectus sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    }
+  ]
+}

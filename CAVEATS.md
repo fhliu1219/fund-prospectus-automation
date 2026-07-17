@@ -34,9 +34,12 @@ Caveat statuses:
 | M1-C002 | mitigated | SEC availability and future schema changes remain outside project control. | Scheduled monitoring in Roadmap Milestone 7. |
 | M1-C003 | open | CIK-only resolution cannot establish a class or series relationship. | Identity enrichment in Roadmap Milestone 8. |
 | M2-C001 | mitigated | Live provider coverage exists, but class-to-series fallback remains mocked only. | Curated contract matrix maintenance. |
-| M3-C001 | open | Deterministic content rules can misclassify unfamiliar SEC documents. | Expand the versioned validation corpus. |
-| M3-C003 | mitigated | Position-limited identifier evidence reduces but cannot eliminate false positives/negatives. | Evidence policy in Roadmap Milestone 6. |
+| M3-C001 | mitigated | Deterministic content rules still misclassify unfamiliar SEC documents. | Expand the corpus from measured misses. |
+| M3-C003 | mitigated | The location-aware replacement is measured but remains shadow-only. | Explicit policy-activation decision. |
 | M5-C001 | mitigated | Real SEC archive parsing is live-tested, but no stable live fixture currently triggers sibling replacement. | Curated contract matrix maintenance. |
+| M6-C001 | mitigated | Thirty curated cases do not establish production-wide accuracy. | Expand by provider and observed failures. |
+| M6-C002 | mitigated | The shadow policy still misses three expected automatic approvals on the corpus. | Review misses before threshold changes. |
+| M6-C003 | mitigated | Submission headers parsed for all cases; filing-detail identity fallback remains unexercised. | Add a real fallback case when available. |
 
 ---
 
@@ -241,17 +244,18 @@ share class and whether it is a complete standalone prospectus.
 
 #### M3-C001: Deterministic classifier coverage
 
-- **Status:** open
+- **Status:** mitigated in Milestone 6
 - **Risk:** Unusual titles, section names, encodings, combined filings, or new
   SEC document layouts can produce false `unknown`, summary, statutory, or
   supplement classifications.
-- **Evidence:** Deterministic fixtures cover each branch and live validation
-  covers VUSXX, QQQ, and SPY, but this is not a representative fund universe.
+- **Evidence:** Deterministic fixtures cover each branch; live validation covers
+  VUSXX, QQQ, and SPY; and Milestone 6 measures 30 checksum-pinned documents.
+  The corpus exposed remaining inline-XBRL and registrant-only misses.
 - **Current mitigation:** Unknown or incomplete evidence routes to
   `manual_review_required`; no language model is allowed to silently upgrade
   confidence.
-- **Exit condition:** Build a versioned, provider-diverse labeled corpus and
-  measure false-positive and false-negative rates before changing thresholds.
+- **Next review:** Expand the corpus using measured misses and production review
+  outcomes before changing control thresholds.
 
 #### M3-C002: Bounded supplement-base discovery
 
@@ -278,8 +282,11 @@ share class and whether it is a complete standalone prospectus.
   long.
 - **Current mitigation:** Verification also requires a recognized complete
   document shape. Missing evidence routes to review rather than rejection.
-- **Exit condition:** Add exact fund/share-class names, structured class tables,
-  cover-page locality, and negative examples to a measured evidence policy.
+- **Milestone 6 result:** `m6-shadow-v1` adds filing-header identity, legal names,
+  structured class tables, cover/front-matter locality, negative examples, and
+  explicit missing/contradictory evidence. It remains shadow-only.
+- **Next review:** Decide whether to revise and activate the policy after its
+  measured misses are reviewed.
 
 #### M3-C004: No sibling-document recovery
 
@@ -594,6 +601,177 @@ route to review under M3-C001 rather than creating an inferred relationship.
 - Add a stable real sibling-replacement case to the curated matrix if one becomes
   available; do not manufacture a mutable live dependency merely to remove
   M5-C001.
+
+---
+
+## Milestone 6: Evidence Policy and Validation Corpus
+
+**Status:** complete; shadow policy not activated
+
+**Goal:** Replace position-limited identifier matching with a measured,
+location-aware evidence policy while keeping the existing validator in control
+until shadow results have been reviewed.
+
+This milestone owns M3-C001 and M3-C003.
+
+### Caveats register
+
+#### M6-C001: Limited corpus representativeness
+
+- **Status:** mitigated
+- **Risk:** Thirty deliberately difficult cases across 9 registrant CIKs and 11
+  filing-header name labels do not represent every provider, filing layout,
+  historical format, or future form.
+- **Evidence:** The corpus is balanced for learning rather than statistically
+  sampled: 20 positive, 5 negative, and 5 ambiguous relevance labels.
+- **Current mitigation:** Every label is checksum-pinned and reasoned; ratios are
+  documented as corpus measurements, not production accuracy estimates.
+- **Next review:** Add cases from new providers, observed review outcomes, and
+  classifier disagreements rather than inflating the corpus randomly.
+
+#### M6-C002: Measured shadow-policy misses
+
+- **Status:** mitigated
+- **Risk:** `m6-shadow-v1` can still withhold valid automatic output or
+  misclassify unusual document structure.
+- **Evidence:** It produced zero false automatic approvals but missed three
+  expected automatic approvals and had a 30% review rate. Two registrant-only
+  SPY filings lacked strong location-aware ticker evidence; one inline-XBRL Fidelity filing
+  was not classified as statutory. A relevant SAI safely routed to review rather
+  than the expected disallowed state.
+- **Current mitigation:** The policy is shadow-only, reports every disagreement,
+  and cannot alter packages or exit codes.
+- **Next review:** Inspect these cases and add general rules only when they do not
+  reduce automatic-verification precision.
+
+#### M6-C003: Filing-detail identity fallback not exercised
+
+- **Status:** mitigated
+- **Risk:** A filing with a missing or incompatible submission header would stop
+  corpus evaluation because the filing-detail series/class table is not yet an
+  exercised fallback path.
+- **Evidence:** All 30 SEC submission headers fetched, checksum-verified, and
+  parsed successfully, including providers with and without fund class blocks.
+- **Current mitigation:** Header incompatibility fails explicitly; it cannot be
+  mistaken for absent identity evidence.
+- **Next review:** Add and test a real filing-detail fallback case when one is
+  available or before activating the shadow policy in production.
+
+### Assumptions register
+
+#### M6-A001: Corpus checksums identify labeled bytes
+
+The corpus label applies to the exact document bytes identified by its SHA-256
+checksum. A checksum mismatch is corpus drift or retrieval incompatibility, not
+a classifier result.
+
+#### M6-A002: Filing identity metadata and file evidence remain separate
+
+SEC submission-header series/class declarations are authoritative filing-level
+identity metadata. They do not prove that every sibling file in the accession
+covers every declared class, so direct document evidence remains required.
+
+#### M6-A003: Legal names are corroborating evidence
+
+Legal series and class names can bind a ticker occurrence to the document's
+subject, but they are not mandatory when stronger exact class/ticker evidence
+exists. A missing name is missing evidence rather than a contradiction.
+
+#### M6-A004: Label axes are independent
+
+Relevance, document kind, and automatic-use eligibility are labeled separately.
+A relevant supplement can be `positive` for ticker coverage while remaining
+ineligible for standalone automatic use.
+
+#### M6-A005: Ambiguity must be explained
+
+An ambiguous corpus label records observed evidence, missing evidence,
+contradictions, and the fact or review action needed to resolve the case.
+Ambiguity without a reason is not accepted ground truth.
+
+### Decisions register
+
+#### M6-D001: Start with a curated 30-case corpus
+
+- **Status:** accepted and implemented
+- **Decision:** Select 30 provider- and form-diverse SEC documents including
+  complete prospectuses, supplements, combined filings, incidental ticker
+  mentions, negative cases, and ambiguous cases.
+- **Rationale:** Difficult and representative cases provide more useful initial
+  evidence than a random sample dominated by straightforward documents.
+
+#### M6-D002: Use manifest plus checksum-verified local cache
+
+- **Status:** accepted and implemented
+- **Decision:** Commit URLs, accessions, checksums, labels, and reasons in a
+  versioned manifest. Download through an opt-in tool and cache raw documents in
+  an ignored local directory. Keep compact synthetic fixtures in Git.
+- **Rationale:** This preserves exact labeled bytes and repeatable evaluation
+  without committing large SEC documents or requiring network access on every
+  run.
+
+#### M6-D003: Use SEC filing-specific legal names
+
+- **Status:** primary path implemented; fallback deferred under M6-C003
+- **Decision:** Use the accession's `-index-headers.html` submission header as
+  the primary source of series/class IDs, names, and ticker relationships. Use
+  the SEC filing-detail table as fallback/cross-check. Issuer and exchange data
+  remain corroborating only.
+- **Rationale:** Filing-specific metadata reflects the identity declared for
+  that accession and avoids applying a later name to a historical filing.
+
+#### M6-D004: Preserve missing and contradictory evidence separately
+
+- **Status:** accepted and implemented
+- **Decision:** Missing evidence means relevance cannot be proved;
+  contradictory evidence requires an explicit incompatible relationship. Other
+  tickers in a combined filing are not contradictions by themselves. Both
+  unresolved states route to review, but reports preserve the distinction.
+
+#### M6-D005: Optimize automatic-verification precision first
+
+- **Status:** accepted and implemented
+- **Decision:** Initial acceptance prioritizes no known false-positive
+  verification, no supplement treated as a complete standalone prospectus, and
+  no regression in existing verified cases. Report precision, recall,
+  false-positive/false-negative counts, review rate, and confusion matrices.
+- **Boundary:** Thirty cases support iteration but cannot establish a universal
+  production error rate.
+
+#### M6-D006: Shadow the new policy before activation
+
+- **Status:** accepted and implemented
+- **Decision:** The current validator continues to control packages, recovery,
+  exit codes, and manifests. The new policy initially emits an evaluation report
+  with structured evidence and disagreements only.
+- **Activation gate:** Review the corpus baseline and shadow report before
+  selecting thresholds or changing control behavior. AI may assist review but
+  may not silently upgrade deterministic verification.
+
+### Evidence at completion
+
+- The manifest validates 30 cases with 30 unique document checksums and 30
+  unique submission-header checksums.
+- Live corpus fetch verified every SEC resource against its committed checksum.
+- The corpus contains 9 registrant CIKs, 11 filing-header name labels, and
+  summary, statutory, supplement, and unknown document-kind labels.
+- The current validator measured 94.1% positive precision, 80.0% positive
+  recall, zero false automatic approvals, six missed automatic approvals, and a
+  40% review rate on this corpus.
+- `m6-shadow-v1` measured 100% positive precision, 90.0% positive recall, zero
+  false automatic approvals, three missed automatic approvals, and a 30% review
+  rate on this corpus.
+- Offline suite: 103 passed with the one opt-in live test skipped normally; the
+  live SEC integration test passed separately. Coverage includes manifest
+  contracts, checksums, submission-header parsing, location-aware evidence,
+  ambiguity, contradictions, and report metrics.
+
+### Planned work handed forward
+
+- Keep the current validator authoritative until a separate activation review.
+- Investigate the specific M6-C002 misses before changing thresholds.
+- Expand the corpus from new provider layouts and real review outcomes.
+- Exercise filing-detail identity fallback before production activation.
 
 ---
 

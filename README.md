@@ -293,6 +293,9 @@ docker run --rm -v "$PWD/output:/app/output" prospectus VTSAX,VMFXX --pdf
 pip install -r requirements-dev.txt
 pytest                         # offline, deterministic (HTTP mocked)
 RUN_LIVE_TESTS=1 pytest tests/test_integration_live.py   # optional live EDGAR check
+
+# Optional: download and evaluate the checksum-verified 30-case corpus
+python -m prospectus_fetcher.corpus_cli all
 ```
 
 The live EDGAR integration test is skipped by default so the normal test suite
@@ -306,6 +309,12 @@ classification, exact-identifier evidence, date-first supplement/base linkage,
 manifest serialization, archive-URL construction, and the graceful-error path.
 The single opt-in live contract test exercises VUSXX, QQQ, and SPY across
 class-level and registrant-level paths, including a real SEC filing inventory.
+
+The separate [validation corpus](corpus/README.md) measures the current
+validator against the location-aware `m6-shadow-v1` evidence policy without
+changing production CLI behavior. Raw SEC bytes and detailed reports remain
+local; the committed manifest preserves exact URLs, checksums, labels, and
+human reasons.
 
 ---
 
@@ -321,6 +330,11 @@ prospectus_fetcher/
   edgar.py                  # PROSPECTUS_FORM_PRIORITY; filing selection; doc resolution
   downloader.py             # save the document to disk
   validator.py              # classify content and collect verification evidence
+  filing_identity.py        # parse filing-specific SEC series/class metadata
+  evidence_policy.py        # location-aware Milestone 6 shadow policy
+  corpus.py                 # versioned corpus schema and checksum cache
+  corpus_evaluator.py       # current-vs-shadow metrics and disagreements
+  corpus_cli.py             # opt-in corpus fetch/evaluate commands
   package.py                # assemble documents and write the evidence manifest
   converter.py              # optional, best-effort HTML -> PDF
   models.py                 # ResolvedFund, Filing, FetchResult
@@ -329,6 +343,7 @@ CORRECTNESS_MODEL.md         # V2 identity and document-verification rules
 CAVEATS.md                   # residual risks, assumptions, and decision log
 ROADMAP.md                   # prioritized accuracy-first future milestones
 TEST_MATRIX.md               # curated live and deterministic contract cases
-tests/                      # pytest suite (HTTP mocked) + optional live test
+corpus/manifest.json         # 30 labeled SEC cases; raw bytes stay ignored
+tests/                       # pytest suite (HTTP mocked) + optional live test
 Dockerfile
 ```
