@@ -9,7 +9,7 @@ It handles mutual funds, money-market funds, and ETFs across multiple providers,
 narrows filing lookup to the fund class when SEC identifiers allow it, and
 explains **why** each filing was chosen.
 
-The V2 branch is evolving this CLI into a production-minded retrieval and
+The project is evolving this CLI into a production-minded retrieval and
 verification tool for fund-operations workflows. Its strict
 [correctness model](CORRECTNESS_MODEL.md) separates registrant, series,
 and class identity from verification of the downloaded document itself. The
@@ -190,7 +190,7 @@ One SEC registrant (CIK) holds **many funds**. For example, "Vanguard Admiral
 Funds" filed **12 different funds' 497Ks on the same day**, so naively taking the
 registrant's "most recent 497K" can silently return the **wrong series'**
 document. Series filtering reduces that risk, but one series can still contain
-multiple ticker-bearing share classes. V2 therefore queries the requested
+multiple ticker-bearing share classes. The tool therefore queries the requested
 `classId` first.
 
 **Proof it matters:** VUSXX resolves to class `C000005732` inside series
@@ -406,7 +406,7 @@ prospectus_fetcher/
   converter.py              # optional, best-effort HTML -> PDF
   models.py                 # ResolvedFund, Filing, FetchResult
   cli.py                    # orchestration, summary table, logging
-CORRECTNESS_MODEL.md         # V2 identity and document-verification rules
+CORRECTNESS_MODEL.md         # Stable identity and document-verification contract
 CAVEATS.md                   # residual risks, assumptions, and decision log
 ROADMAP.md                   # prioritized accuracy-first future milestones
 TEST_MATRIX.md               # curated live and deterministic contract cases

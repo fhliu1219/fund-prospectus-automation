@@ -1076,7 +1076,7 @@ activation candidate against both adversarial and representative data.
 - **Exit condition:** Define the intended instrument/form universe and add
   effective-dated CIK-only identity and form rules with independent evidence.
 
-#### M6.2-C004: Scope classification is useful but not activation-critical yet
+#### M6.2-C004: Scope classification remains a bounded reporting risk
 
 - **Status:** open; reporting-quality issue
 - **Risk:** Phrases such as `each Fund` can make a closed multi-fund list appear
@@ -1084,11 +1084,15 @@ activation candidate against both adversarial and representative data.
   even though the narrowest enum value is named `ticker_specific`.
 - **Evidence:** Several challenge and representative supplements were correctly
   disallowed but disagreed only on `multi_fund` versus `registrant_wide`.
-- **Current mitigation:** Scope is a separate report field and does not upgrade
-  an incomplete document. `ticker_specific` is documented as the narrowest
-  one-fund/series bucket, not proof that no sibling ticker appears.
-- **Exit condition:** Tighten scope grammar against fresh reviewed examples
-  before scope affects control behavior.
+- **Current mitigation:** Scope is a separate evidence-policy dimension and
+  cannot upgrade incomplete or contradictory content. V7 requires a known
+  scope for automatic use, while `ticker_specific` remains the narrowest
+  one-fund/series bucket rather than proof that no sibling ticker appears.
+  Corpus reports expose the exact scope; package manifests currently preserve
+  the evidence and decision but not a top-level `document_scope` field.
+- **Exit condition:** Tighten scope grammar against fresh reviewed examples and
+  expose the exact scope in package and operations records before downstream
+  consumers depend on the distinction.
 
 #### M6.2-C005: Both v6 evaluation sets are now consumed
 
@@ -1146,7 +1150,10 @@ defined representative sample.
 - **Status:** approved and implemented
 - **Decision:** Classify scope as `ticker_specific`, `multi_fund`,
   `registrant_wide`, or `unknown`. Filing-level class metadata alone cannot make
-  a file ticker-specific.
+  a file ticker-specific. Corpus manifests and evaluation reports expose this
+  value; V7 consumes it internally, while the current result-package schema
+  exposes the resulting evidence and decision rather than a top-level scope
+  field.
 
 #### M6.2-D004: Use only demonstrably closed lists as contradictions
 
