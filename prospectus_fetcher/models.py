@@ -36,8 +36,23 @@ class DocumentKind(str, Enum):
     UNKNOWN = "unknown"
     SUMMARY_PROSPECTUS = "summary_prospectus"
     STATUTORY_PROSPECTUS = "statutory_prospectus"
+    COMBINED_PROSPECTUS_PACKAGE = "combined_prospectus_package"
     SUPPLEMENT = "supplement"
     STATEMENT_OF_ADDITIONAL_INFORMATION = "statement_of_additional_information"
+
+
+class DocumentScope(str, Enum):
+    """How narrowly the document is scoped, independent of request relevance.
+
+    ``TICKER_SPECIFIC`` is the narrowest product bucket: one fund or series
+    containing the requested class. The document may still cover sibling share
+    classes and their tickers.
+    """
+
+    UNKNOWN = "unknown"
+    TICKER_SPECIFIC = "ticker_specific"
+    MULTI_FUND = "multi_fund"
+    REGISTRANT_WIDE = "registrant_wide"
 
 
 class DocumentRole(str, Enum):

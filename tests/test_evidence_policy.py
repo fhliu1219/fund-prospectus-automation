@@ -1,9 +1,14 @@
 """Tests for location-aware shadow evidence and explicit contradictions."""
 
 from prospectus_fetcher.corpus import AutomaticUseLabel, RelevanceLabel
-from prospectus_fetcher.evidence_policy import ShadowEvidencePolicy
+from prospectus_fetcher.evidence_policy import (
+    ShadowCandidate,
+    ShadowEvidencePolicy,
+    ShadowSelectionStatus,
+    select_shadow_candidate,
+)
 from prospectus_fetcher.filing_identity import parse_filing_identity_header
-from prospectus_fetcher.models import DocumentKind
+from prospectus_fetcher.models import DocumentKind, DocumentScope
 
 
 def metadata(ticker="EXMXX", class_id="C000000001"):
@@ -415,3 +420,204 @@ def test_declared_form_alone_does_not_establish_document_kind():
         signal.code == "declared_filing_form" for signal in result.signals
     )
     assert result.automatic_use is AutomaticUseLabel.REVIEW
+
+
+def test_mixed_registration_package_preserves_complete_prospectus_and_sai():
+    content = html(
+        "<h1>Prospectus</h1>"
+        "<table><tr><td>Example Treasury Fund</td><td>EXMXX</td></tr></table>"
+        "<h2>Statement of Additional Information</h2>"
+        "<p>Investment Advisory and Other Services</p>"
+        "<h2>Investment Objective</h2><h2>Fees and Expenses</h2>"
+        "<h2>Principal Investment Strategies</h2><h2>Principal Risks</h2>"
+    )
+
+    result = ShadowEvidencePolicy().evaluate(
+        content,
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+        declared_form="485BPOS",
+    )
+
+    assert (
+        result.document_kind
+        is DocumentKind.COMBINED_PROSPECTUS_PACKAGE
+    )
+    assert result.content_profile.contains_statutory_prospectus
+    assert result.content_profile.contains_sai
+    assert not result.content_profile.is_supplement
+    assert result.document_scope is DocumentScope.TICKER_SPECIFIC
+    assert result.automatic_use is AutomaticUseLabel.ALLOWED
+
+
+def test_summary_reference_does_not_claim_substantive_sai_content():
+    result = ShadowEvidencePolicy().evaluate(
+        complete(
+            "<p>Example Treasury Fund (EXMXX)</p>"
+            "<p>The Statement of Additional Information is incorporated "
+            "by reference.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.document_kind is DocumentKind.SUMMARY_PROSPECTUS
+    assert not result.content_profile.contains_sai
+    assert not result.content_profile.contains_statutory_prospectus
+
+
+def test_prospectus_supplement_phrase_is_top_level_supplement():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>Prospectus Supplement</h1>"
+            "<p>Example Treasury Fund EXMXX is updated.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.content_profile.is_supplement
+    assert result.document_kind is DocumentKind.SUPPLEMENT
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+
+
+def test_appendix_a_fund_list_establishes_multi_fund_supplement_scope():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>Supplement dated July 1, 2026</h1>"
+            "<p>This change applies to the Funds listed in Appendix A.</p>"
+            "<h2>Appendix A</h2>"
+            "<p>Other Fund</p><p>Example Treasury Fund</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert result.document_scope is DocumentScope.MULTI_FUND
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+    assert any(
+        signal.code == "supplement_appendix_subject"
+        for signal in result.signals
+    )
+
+
+def test_exhaustive_fund_list_can_prove_requested_fund_exclusion():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>Prospectus Supplement</h1>"
+            "<p>For the following funds: Other Income Fund; Other Bond Fund "
+            "1. The principal risk disclosure is replaced.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.relevance is RelevanceLabel.NEGATIVE
+    assert result.document_scope is DocumentScope.MULTI_FUND
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+    assert any("exhaustive covered-fund list" in item for item in result.contradictions)
+
+
+def test_non_exhaustive_fund_mentions_do_not_prove_exclusion():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>Prospectus Supplement</h1>"
+            "<p>Other Income Fund and Other Bond Fund are discussed below.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.relevance is RelevanceLabel.AMBIGUOUS
+    assert not result.contradictions
+    assert result.automatic_use is AutomaticUseLabel.REVIEW
+
+
+def _qualified_for_scope(scope):
+    evaluation = ShadowEvidencePolicy().evaluate(
+        complete("<h1>Example Treasury Fund EXMXX</h1>"),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+    evaluation.document_scope = scope
+    return evaluation
+
+
+def test_shadow_candidate_selection_prefers_unique_ticker_specific_sibling():
+    selection = select_shadow_candidate(
+        [
+            ShadowCandidate(
+                "combined.htm",
+                _qualified_for_scope(DocumentScope.MULTI_FUND),
+            ),
+            ShadowCandidate(
+                "narrow.htm",
+                _qualified_for_scope(DocumentScope.TICKER_SPECIFIC),
+            ),
+        ]
+    )
+
+    assert selection.status is ShadowSelectionStatus.SELECTED
+    assert selection.selected_name == "narrow.htm"
+
+
+def test_shadow_candidate_selection_accepts_multi_fund_fallback():
+    selection = select_shadow_candidate(
+        [
+            ShadowCandidate(
+                "combined.htm",
+                _qualified_for_scope(DocumentScope.MULTI_FUND),
+            )
+        ]
+    )
+
+    assert selection.status is ShadowSelectionStatus.SELECTED
+    assert selection.selected_name == "combined.htm"
+
+
+def test_shadow_candidate_selection_keeps_equal_scope_tie_in_review():
+    selection = select_shadow_candidate(
+        [
+            ShadowCandidate(
+                "one.htm",
+                _qualified_for_scope(DocumentScope.TICKER_SPECIFIC),
+            ),
+            ShadowCandidate(
+                "two.htm",
+                _qualified_for_scope(DocumentScope.TICKER_SPECIFIC),
+            ),
+        ]
+    )
+
+    assert selection.status is ShadowSelectionStatus.REVIEW
+    assert selection.selected_name is None
+
+
+def test_shadow_candidate_selection_error_prevents_uniqueness_claim():
+    selection = select_shadow_candidate(
+        [
+            ShadowCandidate(
+                "combined.htm",
+                _qualified_for_scope(DocumentScope.MULTI_FUND),
+            ),
+            ShadowCandidate("broken.htm", error="timeout"),
+        ]
+    )
+
+    assert selection.status is ShadowSelectionStatus.REVIEW
+    assert "could not be evaluated" in selection.reason

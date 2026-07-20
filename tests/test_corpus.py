@@ -1,6 +1,7 @@
 """Tests for the versioned corpus schema and checksum cache."""
 
 import hashlib
+import json
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import Mock
@@ -61,12 +62,69 @@ def payload():
     }
 
 
+def payload_v2():
+    value = payload()
+    value["schema_version"] = 2
+    value["cases"][0]["labels"].update(
+        {
+            "document_scope": "ticker_specific",
+            "content_profile": {
+                "contains_summary_prospectus": True,
+                "contains_statutory_prospectus": False,
+                "contains_sai": False,
+                "is_supplement": False,
+            },
+        }
+    )
+    return value
+
+
 def test_manifest_parses_independent_label_axes():
     manifest = parse_manifest(payload())
 
     assert manifest.target_case_count == 1
     assert manifest.cases[0].labels.relevance is RelevanceLabel.POSITIVE
     assert manifest.cases[0].class_id == "C000000001"
+
+
+def test_manifest_v2_parses_scope_and_content_profile():
+    manifest = parse_manifest(payload_v2())
+
+    assert manifest.schema_version == 2
+    assert manifest.cases[0].labels.document_scope.value == "ticker_specific"
+    assert manifest.cases[0].labels.content_profile.contains_summary_prospectus
+
+
+def test_manifest_v2_requires_scope_and_content_profile():
+    value = payload()
+    value["schema_version"] = 2
+
+    with pytest.raises(CorpusSchemaError, match="content_profile"):
+        parse_manifest(value)
+
+
+def test_manifest_v2_rejects_incoherent_combined_package():
+    value = payload_v2()
+    value["cases"][0]["labels"]["document_kind"] = (
+        "combined_prospectus_package"
+    )
+
+    with pytest.raises(CorpusSchemaError, match="combined package requires"):
+        parse_manifest(value)
+
+
+def test_manifest_v2_rejects_allowed_incomplete_content():
+    value = payload_v2()
+    value["cases"][0]["labels"]["document_kind"] = "unknown"
+    value["cases"][0]["labels"]["content_profile"].update(
+        {
+            "contains_summary_prospectus": False,
+            "contains_statutory_prospectus": False,
+        }
+    )
+
+    with pytest.raises(CorpusSchemaError, match="allowed use requires"):
+        parse_manifest(value)
 
 
 def test_manifest_requires_reasoned_ambiguity():
@@ -216,3 +274,66 @@ def test_v5_followup_is_disjoint_from_all_prior_corpora():
         assert {case.document_sha256 for case in followup.cases}.isdisjoint(
             case.document_sha256 for case in prior.cases
         )
+
+
+def test_v6_challenge_is_disjoint_from_all_prior_corpora():
+    corpus_dir = Path(__file__).resolve().parents[1] / "corpus"
+    challenge = load_manifest(corpus_dir / "v6_challenge_manifest.json")
+    prior_corpora = (
+        load_manifest(corpus_dir / "manifest.json"),
+        load_manifest(corpus_dir / "holdout_manifest.json"),
+        load_manifest(corpus_dir / "v5_followup_manifest.json"),
+    )
+
+    assert len(challenge.cases) == 30
+    assert len({case.accession for case in challenge.cases}) == 30
+    assert len({case.document_sha256 for case in challenge.cases}) == 30
+    for prior in prior_corpora:
+        assert {case.accession for case in challenge.cases}.isdisjoint(
+            case.accession for case in prior.cases
+        )
+        assert {case.document_sha256 for case in challenge.cases}.isdisjoint(
+            case.document_sha256 for case in prior.cases
+        )
+
+
+def test_v6_representative_is_disjoint_from_all_prior_corpora():
+    corpus_dir = Path(__file__).resolve().parents[1] / "corpus"
+    representative = load_manifest(corpus_dir / "v6_representative_manifest.json")
+    prior_corpora = (
+        load_manifest(corpus_dir / "manifest.json"),
+        load_manifest(corpus_dir / "holdout_manifest.json"),
+        load_manifest(corpus_dir / "v5_followup_manifest.json"),
+        load_manifest(corpus_dir / "v6_challenge_manifest.json"),
+    )
+
+    assert len(representative.cases) == 50
+    assert len({case.accession for case in representative.cases}) == 50
+    assert len({case.document_sha256 for case in representative.cases}) == 50
+    for prior in prior_corpora:
+        assert {case.accession for case in representative.cases}.isdisjoint(
+            case.accession for case in prior.cases
+        )
+        assert {case.document_sha256 for case in representative.cases}.isdisjoint(
+            case.document_sha256 for case in prior.cases
+        )
+
+
+def test_v6_representative_provenance_matches_manifest():
+    corpus_dir = Path(__file__).resolve().parents[1] / "corpus"
+    representative = load_manifest(corpus_dir / "v6_representative_manifest.json")
+    with open(
+        corpus_dir / "v6_representative_provenance.json",
+        encoding="utf-8",
+    ) as handle:
+        provenance = json.load(handle)
+
+    mutual_funds = provenance["mutual_fund_sampling"]["accepted_tickers"]
+    cik_only = provenance["cik_only_sampling"]["accepted_tickers"]
+    assert provenance["policy_blind_collection"] is True
+    assert len(mutual_funds) == 45
+    assert len(cik_only) == 5
+    assert set(mutual_funds).isdisjoint(cik_only)
+    assert set(mutual_funds + cik_only) == {
+        case.ticker for case in representative.cases
+    }

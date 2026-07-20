@@ -92,6 +92,24 @@ def manifest_payload():
     }
 
 
+def manifest_payload_v2():
+    value = manifest_payload()
+    value["schema_version"] = 2
+    value["corpus_version"] = "test-v2"
+    value["cases"][0]["labels"].update(
+        {
+            "document_scope": "ticker_specific",
+            "content_profile": {
+                "contains_summary_prospectus": True,
+                "contains_statutory_prospectus": False,
+                "contains_sai": False,
+                "is_supplement": False,
+            },
+        }
+    )
+    return value
+
+
 def test_report_compares_current_and_shadow_policies(tmp_path):
     manifest = parse_manifest(manifest_payload())
     client = Mock()
@@ -102,7 +120,7 @@ def test_report_compares_current_and_shadow_policies(tmp_path):
     assert report["shadow_metrics"]["false_positive_verification_count"] == 0
     assert report["shadow_metrics"]["positive_precision"] == 1.0
     assert report["cases"][0]["disagreements"]["shadow"] == []
-    assert report["schema_version"] == 2
+    assert report["schema_version"] == 3
     assert report["cases"][0]["scenario"]["requested_identity_scope"] == "class"
     assert (
         report["cases"][0]["scenario"]["filing_metadata_breadth"]
@@ -121,7 +139,33 @@ def test_report_compares_current_and_shadow_policies(tmp_path):
     save_report(report, path)
     with open(path, encoding="utf-8") as handle:
         saved = json.load(handle)
-    assert saved["shadow_policy_version"] == "m6.1-shadow-v5"
+    assert saved["shadow_policy_version"] == "m6.2-shadow-v6"
+
+
+def test_report_v2_measures_scope_and_content_characteristics(tmp_path):
+    manifest = parse_manifest(manifest_payload_v2())
+    client = Mock()
+    client.get_bytes.side_effect = [DOCUMENT, HEADER]
+
+    report = CorpusEvaluator(CorpusCache(client, tmp_path / "cache")).evaluate(
+        manifest
+    )
+
+    row = report["cases"][0]
+    assert row["expected"]["document_scope"] == "ticker_specific"
+    assert row["shadow"]["document_scope"] == "ticker_specific"
+    assert row["shadow"]["content_profile"] == row["expected"]["content_profile"]
+    assert row["disagreements"]["shadow"] == []
+    assert (
+        report["shadow_metrics"]["document_scope_confusion_matrix"]
+        ["ticker_specific"]["ticker_specific"]
+        == 1
+    )
+    assert (
+        report["shadow_metrics"]["content_profile_confusion_matrices"]
+        ["contains_summary_prospectus"]["true"]["true"]
+        == 1
+    )
 
 
 def test_report_uses_filing_detail_when_header_is_technically_invalid(tmp_path):

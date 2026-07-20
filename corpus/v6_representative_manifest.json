@@ -1,0 +1,2077 @@
+{
+  "schema_version": 2,
+  "corpus_version": "m6.2-v6-representative-2026-07-19",
+  "target_case_count": 50,
+  "cases": [
+    {
+      "case_id": "gaakx-0001193125-26-290654",
+      "provider": "GMO TRUST",
+      "ticker": "GAAKX",
+      "registrant_cik": 772129,
+      "requested_cik": 772129,
+      "series_id": "S000065268",
+      "class_id": "C000213405",
+      "known_series_count": 33,
+      "accession": "0001193125-26-290654",
+      "form": "497K",
+      "filing_date": "2026-06-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/772129/000119312526290654/d137178d497k.htm",
+      "document_sha256": "c0ab123e562df3b828a5b10202d2384812c074d4e39ddd125cba119fd680d0b0",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/772129/000119312526290654/0001193125-26-290654-index-headers.html",
+      "filing_header_sha256": "656caf780d46770276301f8ef0d229e9e38bd371e86af1bef15cce16334e3bca",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mxxix-0001104659-26-006901",
+      "provider": "MARSICO INVESTMENT FUND",
+      "ticker": "MXXIX",
+      "registrant_cik": 1047112,
+      "requested_cik": 1047112,
+      "series_id": "S000007712",
+      "class_id": "C000020962",
+      "known_series_count": 5,
+      "accession": "0001104659-26-006901",
+      "form": "485BPOS",
+      "filing_date": "2026-01-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1047112/000110465926006901/tm261709d2_485bpos.htm",
+      "document_sha256": "8764bfe863e00b195dc0cb2321e8b1d5c07e37f248785f782b02705620eb2930",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1047112/000110465926006901/0001104659-26-006901-index-headers.html",
+      "filing_header_sha256": "8407932f78c2f07c96731ad126894795f01015719b7a841527007b39e5139b76",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "combined_prospectus_package",
+        "automatic_use": "allowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": true,
+          "contains_sai": true,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The multi-fund registration document covers the requested class and contains a complete prospectus plus substantive SAI.",
+        "category": "complete_combined_package",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker or exact fund.",
+          "The document contains complete prospectus sections and a separate substantive Statement of Additional Information.",
+          "The filing and document cover multiple fund series."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "aieax-0001133228-26-002455",
+      "provider": "AMERICAN BEACON FUNDS",
+      "ticker": "AIEAX",
+      "registrant_cik": 809593,
+      "requested_cik": 809593,
+      "series_id": "S000001825",
+      "class_id": "C000089428",
+      "known_series_count": 28,
+      "accession": "0001133228-26-002455",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/809593/000113322826002455/abief-efp23065_497k.htm",
+      "document_sha256": "1a326fa9327bfa5d579b6d0bf872b782abf6c1776ba3f6bcffdfe83bd16f9e18",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/809593/000113322826002455/0001133228-26-002455-index-headers.html",
+      "filing_header_sha256": "69c2d12080da5c109830c04b8072b40a608b1dece96d33af60418fb46ded4797",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "psgfx-0000898745-26-000257",
+      "provider": "PRINCIPAL FUNDS, INC.",
+      "ticker": "PSGFX",
+      "registrant_cik": 898745,
+      "requested_cik": 898745,
+      "series_id": "S000014236",
+      "class_id": "C000039358",
+      "known_series_count": 77,
+      "accession": "0000898745-26-000257",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/898745/000089874526000257/samstrategicgrowthportfolio.htm",
+      "document_sha256": "ddfda569f3d293b459ee3c8eaf443a2a20031df727b78c2d4abcdfceba3edb40",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/898745/000089874526000257/0000898745-26-000257-index-headers.html",
+      "filing_header_sha256": "a99ee05bb67c456f78f77aaa4f1771623a9eb5c2739b4694a63a3077e65964ad",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "gmhpx-0001193125-26-083463",
+      "provider": "GOLDMAN SACHS TRUST",
+      "ticker": "GMHPX",
+      "registrant_cik": 822977,
+      "requested_cik": 822977,
+      "series_id": "S000036119",
+      "class_id": "C000201721",
+      "known_series_count": 87,
+      "accession": "0001193125-26-083463",
+      "form": "497K",
+      "filing_date": "2026-03-02",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/822977/000119312526083463/d45154d497k.htm",
+      "document_sha256": "756966eef6e4ef2d2ba6af82c1d9089a1ff303e905e0fbd12b5c2b8704386bae",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/822977/000119312526083463/0001193125-26-083463-index-headers.html",
+      "filing_header_sha256": "f81c63b6bf891b8d5a57185f1b664625bd36d74bd4d6b5ec594b091bacc7e342",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "hwscx-0000894189-26-020919",
+      "provider": "HOTCHKIS & WILEY FUNDS /DE/",
+      "ticker": "HWSCX",
+      "registrant_cik": 1145022,
+      "requested_cik": 1145022,
+      "series_id": "S000006215",
+      "class_id": "C000017136",
+      "known_series_count": 12,
+      "accession": "0000894189-26-020919",
+      "form": "497K",
+      "filing_date": "2026-07-01",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1145022/000089418926020919/hwsmallcapvaluefundsummary.htm",
+      "document_sha256": "f69ae1fce354318c2f5f5f5f46ad22e02d56a45265dc3271f295166125cd9d55",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1145022/000089418926020919/0000894189-26-020919-index-headers.html",
+      "filing_header_sha256": "a37e39204e99325df34fa04c979e5e9c93c4e752355e821bd615f42ff332d381",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mcbex-0000912938-26-000298",
+      "provider": "MFS SERIES TRUST XII",
+      "ticker": "MCBEX",
+      "registrant_cik": 1330967,
+      "requested_cik": 1330967,
+      "series_id": "S000076470",
+      "class_id": "C000236389",
+      "known_series_count": 12,
+      "accession": "0000912938-26-000298",
+      "form": "497K",
+      "filing_date": "2026-03-05",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1330967/000091293826000298/c497k.htm",
+      "document_sha256": "a5034aff092c2ca6adae9e998988a417cf1aa01947d29c3a7f89824c67761f2a",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1330967/000091293826000298/0000912938-26-000298-index-headers.html",
+      "filing_header_sha256": "517e51163b32593bf2672605b0fd59e47f0cd5992f67cff9f1cff59fbecb5d23",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": true
+        }
+      },
+      "reason": {
+        "summary": "The supplement applies to the requested fund but is not a complete standalone prospectus.",
+        "category": "applicable_supplement",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "A closed fund list in the document includes the requested fund.",
+          "The document explicitly identifies itself as a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "cwbcx-0000051931-26-000246",
+      "provider": "CAPITAL WORLD BOND FUND",
+      "ticker": "CWBCX",
+      "registrant_cik": 812303,
+      "requested_cik": 812303,
+      "series_id": "S000009240",
+      "class_id": "C000025182",
+      "known_series_count": 1,
+      "accession": "0000051931-26-000246",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/812303/000005193126000246/wbf497k.htm",
+      "document_sha256": "90c837eec87b9f84aac41415592e9787711dcb5fa49beed2dcd27dcf877a591e",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/812303/000005193126000246/0000051931-26-000246-index-headers.html",
+      "filing_header_sha256": "0bd426e1ce287dcd2e11296ac65507332b15dac85e7d2d2dd25fb8913d5e77ae",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "emoax-0001133228-25-012774",
+      "provider": "Eaton Vance Municipals Trust",
+      "ticker": "EMOAX",
+      "registrant_cik": 778365,
+      "requested_cik": 778365,
+      "series_id": "S000032714",
+      "class_id": "C000100969",
+      "known_series_count": 18,
+      "accession": "0001133228-25-012774",
+      "form": "497K",
+      "filing_date": "2025-11-25",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/778365/000113322825012774/evmof-efp19866_497k.htm",
+      "document_sha256": "a3228581ac9eb733d9380db6448f44ac64c0cbd65e39eb5fad82e13e3b06aa66",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/778365/000113322825012774/0001133228-25-012774-index-headers.html",
+      "filing_header_sha256": "5e9c48d593afb7a0868a9a7a39663b9064555cbd73b8991c34762eb7511ce8a4",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "iemlx-0001193125-26-081306",
+      "provider": "Voya MUTUAL FUNDS",
+      "ticker": "IEMLX",
+      "registrant_cik": 895430,
+      "requested_cik": 895430,
+      "series_id": "S000034101",
+      "class_id": "C000107877",
+      "known_series_count": 6,
+      "accession": "0001193125-26-081306",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/895430/000119312526081306/f44235d1.htm",
+      "document_sha256": "d171eb918c5eed50f0dbe622998158f93a346fa9b74a64f95d921e69013034a9",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/895430/000119312526081306/0001193125-26-081306-index-headers.html",
+      "filing_header_sha256": "81de52575b58024d29192f076c54abcab0614722ed6826a7f18c01388f739798",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "ggizx-0001193125-26-192347",
+      "provider": "GuideStone Funds",
+      "ticker": "GGIZX",
+      "registrant_cik": 1131013,
+      "requested_cik": 1131013,
+      "series_id": "S000001162",
+      "class_id": "C000003111",
+      "known_series_count": 28,
+      "accession": "0001193125-26-192347",
+      "form": "497K",
+      "filing_date": "2026-04-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1131013/000119312526192347/d94175d497k.htm",
+      "document_sha256": "44eb8fab75514fc0944512834e5f6505b3b087df86aa4ea38a875b990a53624f",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1131013/000119312526192347/0001193125-26-192347-index-headers.html",
+      "filing_header_sha256": "81e9c8d15713fc9b8a842758110243056ad49401daff7170307a779f0adeae7f",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "rclo-0000894189-25-004841",
+      "provider": "Advisor Managed Portfolios",
+      "ticker": "RCLO",
+      "registrant_cik": 1970751,
+      "requested_cik": 1970751,
+      "series_id": "S000093691",
+      "class_id": "C000262127",
+      "known_series_count": 25,
+      "accession": "0000894189-25-004841",
+      "form": "497K",
+      "filing_date": "2025-06-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1970751/000089418925004841/reckonerbbb-brclo497ksumma.htm",
+      "document_sha256": "2ae7d0f19b600dabcdf0092e3b61448783ee88b3f452c56b8b01a245b9d199da",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1970751/000089418925004841/0000894189-25-004841-index-headers.html",
+      "filing_header_sha256": "cbabcdf7d250ee52fab74ddad5003a26af02b4a57d45ae17bce7c7324a6c4b47",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "sarm-0001999371-26-000546",
+      "provider": "Tidal Trust II",
+      "ticker": "SARM",
+      "registrant_cik": 1924868,
+      "requested_cik": 1924868,
+      "series_id": "S000099415",
+      "class_id": "C000269191",
+      "known_series_count": 259,
+      "accession": "0001999371-26-000546",
+      "form": "485BPOS",
+      "filing_date": "2026-01-09",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1924868/000199937126000546/defiance-485bpos_010926.htm",
+      "document_sha256": "c70a0b39f6792f7b2886d1a9c5f2aa8f67d008a5a9e9d6798f9e7d3f6593caca",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1924868/000199937126000546/0001999371-26-000546-index-headers.html",
+      "filing_header_sha256": "2fa1110b4b220f91879fe8d7a4349326c78d73fd3df3846bfa64fe710295e0ed",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "combined_prospectus_package",
+        "automatic_use": "allowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": true,
+          "contains_sai": true,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The multi-fund registration document covers the requested class and contains a complete prospectus plus substantive SAI.",
+        "category": "complete_combined_package",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker or exact fund.",
+          "The document contains complete prospectus sections and a separate substantive Statement of Additional Information.",
+          "The filing and document cover multiple fund series."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "eieax-0001133228-26-002484",
+      "provider": "Eaton Vance Mutual Funds Trust",
+      "ticker": "EIEAX",
+      "registrant_cik": 745463,
+      "requested_cik": 745463,
+      "series_id": "S000005292",
+      "class_id": "C000162692",
+      "known_series_count": 31,
+      "accession": "0001133228-26-002484",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/745463/000113322826002484/evtmeaaf-efp22995_497k.htm",
+      "document_sha256": "e7c3977cac7977cf55a658a0b39158499aa765ee0214029fbe01ac1d1f5e7d54",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/745463/000113322826002484/0001133228-26-002484-index-headers.html",
+      "filing_header_sha256": "70b0821151d437b89a1186e3897bb7656f2fbea1931c009f15b891af20129a6b",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "fnitx-0000024238-26-000029",
+      "provider": "FIDELITY CONTRAFUND",
+      "ticker": "FNITX",
+      "registrant_cik": 24238,
+      "requested_cik": 24238,
+      "series_id": "S000006036",
+      "class_id": "C000016599",
+      "known_series_count": 4,
+      "accession": "0000024238-26-000029",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/24238/000002423826000029/filing10989.htm",
+      "document_sha256": "83bc5129e72a65aef7cd60d1cd087e8d6df801b2f8f95f91dae6f7596f2d2d81",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/24238/000002423826000029/0000024238-26-000029-index-headers.html",
+      "filing_header_sha256": "6080cd94ccf7dfad1d150bf054dc7c2673bbccbf3a832f9a681dd0becf9a5b56",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "pcvax-0000930413-25-003332",
+      "provider": "Virtus Investment Trust",
+      "ticker": "PCVAX",
+      "registrant_cik": 867297,
+      "requested_cik": 867297,
+      "series_id": "S000007966",
+      "class_id": "C000021621",
+      "known_series_count": 13,
+      "accession": "0000930413-25-003332",
+      "form": "497K",
+      "filing_date": "2025-10-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/867297/000093041325003332/c114219_497k.htm",
+      "document_sha256": "964dcc1a9543233d8cd67a3b8a97021358e2f3d29d58cafb4075c5d0f710ace8",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/867297/000093041325003332/0000930413-25-003332-index-headers.html",
+      "filing_header_sha256": "a403faa6e819b90ec9f464427bf2292133e24a5c2d4cd7539026c1915c6db509",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "temz-0001213900-26-005484",
+      "provider": "Investment Managers Series Trust II",
+      "ticker": "TEMZ",
+      "registrant_cik": 1587982,
+      "requested_cik": 1587982,
+      "series_id": "S000100823",
+      "class_id": "C000270679",
+      "known_series_count": 165,
+      "accession": "0001213900-26-005484",
+      "form": "485BPOS",
+      "filing_date": "2026-01-20",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1587982/000121390026005484/ea0272665-01_485bpos.htm",
+      "document_sha256": "6b5c56db8a2d6f6e516caf244e7c2bcf5f16fcddba192d4bb9c566d2a76c290b",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1587982/000121390026005484/0001213900-26-005484-index-headers.html",
+      "filing_header_sha256": "b0dce0e35f1924df09bd9f74eefe8437d6e4a1700c35d9ecc87f10da959994f7",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "combined_prospectus_package",
+        "automatic_use": "allowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": true,
+          "contains_sai": true,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The multi-fund registration document covers the requested class and contains a complete prospectus plus substantive SAI.",
+        "category": "complete_combined_package",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker or exact fund.",
+          "The document contains complete prospectus sections and a separate substantive Statement of Additional Information.",
+          "The filing and document cover multiple fund series."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "salxx-0001193125-26-191836",
+      "provider": "STATE STREET INSTITUTIONAL INVESTMENT TRUST",
+      "ticker": "SALXX",
+      "registrant_cik": 1107414,
+      "requested_cik": 1107414,
+      "series_id": "S000010701",
+      "class_id": "C000143776",
+      "known_series_count": 37,
+      "accession": "0001193125-26-191836",
+      "form": "497K",
+      "filing_date": "2026-04-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1107414/000119312526191836/d134679d497k.htm",
+      "document_sha256": "dfb993e8d582616eeaae3b1a7df5fda4967a9f4f33561c05ce31d33c891e9f19",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1107414/000119312526191836/0001193125-26-191836-index-headers.html",
+      "filing_header_sha256": "0ee9534408ee0e6bbcc42f0d4613959a74781983053dd9a818e9715df863f3d8",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mmbrx-0001133228-25-010034",
+      "provider": "MASSMUTUAL PREMIER FUNDS",
+      "ticker": "MMBRX",
+      "registrant_cik": 927972,
+      "requested_cik": 927972,
+      "series_id": "S000003776",
+      "class_id": "C000137066",
+      "known_series_count": 11,
+      "accession": "0001133228-25-010034",
+      "form": "497K",
+      "filing_date": "2025-09-23",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/927972/000113322825010034/mmbf-efp17781_497k.htm",
+      "document_sha256": "ec2baf49c0aaf45d968956feb35489264f9a0f35659a01bf3a515b5057db96d0",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/927972/000113322825010034/0001133228-25-010034-index-headers.html",
+      "filing_header_sha256": "48ac2201233f58bf1bcae5fc7b2080e445dfee599d8d68dfd480546e419e3363",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": true
+        }
+      },
+      "reason": {
+        "summary": "The supplement applies to the requested fund but is not a complete standalone prospectus.",
+        "category": "applicable_supplement",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The supplement identifies the requested single fund.",
+          "The document explicitly identifies itself as a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "shag-0001214659-25-018669",
+      "provider": "WisdomTree Trust",
+      "ticker": "SHAG",
+      "registrant_cik": 1350487,
+      "requested_cik": 1350487,
+      "series_id": "S000057664",
+      "class_id": "C000184315",
+      "known_series_count": 93,
+      "accession": "0001214659-25-018669",
+      "form": "497K",
+      "filing_date": "2025-12-31",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1350487/000121465925018669/shag497k1225.htm",
+      "document_sha256": "9a8a192ce15d5f09a65f9f3a9e3665ec831ee9a127954100e33e823e71e619d9",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1350487/000121465925018669/0001214659-25-018669-index-headers.html",
+      "filing_header_sha256": "9c4bb0bad59e66b3aaa3479caece28a1be91013aed69e906df3ddc1a44a63d6d",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mappx-0001133228-26-007592",
+      "provider": "MORGAN STANLEY INSTITUTIONAL FUND INC",
+      "ticker": "MAPPX",
+      "registrant_cik": 836487,
+      "requested_cik": 836487,
+      "series_id": "S000027993",
+      "class_id": "C000085093",
+      "known_series_count": 27,
+      "accession": "0001133228-26-007592",
+      "form": "497K",
+      "filing_date": "2026-04-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/836487/000113322826007592/msifap-efp24493_497k.htm",
+      "document_sha256": "a0b4ebdbb2e76a2636d8912b03227580df7c3e5c1f1cc7e868f0a7ffc1d5bfbc",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/836487/000113322826007592/0001133228-26-007592-index-headers.html",
+      "filing_header_sha256": "08cd53def21c413bc68a01688bcf6953fb197c13da743700a0127838060f6cf4",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "xhb-0001193125-25-256785",
+      "provider": "SPDR SERIES TRUST",
+      "ticker": "XHB",
+      "registrant_cik": 1064642,
+      "requested_cik": 1064642,
+      "series_id": "S000010019",
+      "class_id": "C000027707",
+      "known_series_count": 91,
+      "accession": "0001193125-25-256785",
+      "form": "497K",
+      "filing_date": "2025-10-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1064642/000119312525256785/d35585d497k.htm",
+      "document_sha256": "b57d7bfe596714514566ef54f9ad1801836f1746a5d9bcc808326e22570202a4",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1064642/000119312525256785/0001193125-25-256785-index-headers.html",
+      "filing_header_sha256": "26fe82c52b700d42206160c680d7e8fff6c3d243b744a01eb2864ce4303a7c0f",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "ndasx-0001193125-26-071620",
+      "provider": "NATIONWIDE MUTUAL FUNDS",
+      "ticker": "NDASX",
+      "registrant_cik": 1048702,
+      "requested_cik": 1048702,
+      "series_id": "S000005001",
+      "class_id": "C000013581",
+      "known_series_count": 45,
+      "accession": "0001193125-26-071620",
+      "form": "497K",
+      "filing_date": "2026-02-25",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1048702/000119312526071620/d85460d497k.htm",
+      "document_sha256": "9c0c89378a89fbe88b9b33f78a5a4b1032e37d3b8e0795ba7960fde5174428fd",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1048702/000119312526071620/0001193125-26-071620-index-headers.html",
+      "filing_header_sha256": "699fa761c9f9c1dfc78a5b19155f2bd5f3789a7972c1df009a428f20e47e79d1",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mxtfx-0001193125-26-196274",
+      "provider": "EMPOWER FUNDS, INC.",
+      "ticker": "MXTFX",
+      "registrant_cik": 356476,
+      "requested_cik": 356476,
+      "series_id": "S000023729",
+      "class_id": "C000155756",
+      "known_series_count": 44,
+      "accession": "0001193125-26-196274",
+      "form": "497K",
+      "filing_date": "2026-04-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/356476/000119312526196274/d914443d497k.htm",
+      "document_sha256": "ecf5589cc2bac382dbabd93473764d576a20ca9bb96b68e0e3075b3b044b104e",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/356476/000119312526196274/0001193125-26-196274-index-headers.html",
+      "filing_header_sha256": "c4c13b6f2768bb1c4abc9a240025ad6ec3a46753fccb0397b140b5c8d462083e",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "aatrx-0001580642-26-003601",
+      "provider": "AMERICAN PENSION INVESTORS TRUST",
+      "ticker": "AATRX",
+      "registrant_cik": 764859,
+      "requested_cik": 764859,
+      "series_id": "S000069169",
+      "class_id": "C000221013",
+      "known_series_count": 5,
+      "accession": "0001580642-26-003601",
+      "form": "497K",
+      "filing_date": "2026-06-05",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/764859/000158064226003601/yorktown-tatr_sumpro.htm",
+      "document_sha256": "4e67fe2bd1ed8b1aa37e01e447b72a61873f302ced8208a5a41ce04cb4242696",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/764859/000158064226003601/0001580642-26-003601-index-headers.html",
+      "filing_header_sha256": "9a7d1817a29379668282e28fddb6a32f52364009b98bbdd39e7a8ec079854d8c",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "miegx-0000030146-25-000188",
+      "provider": "BNY MELLON FUNDS TRUST",
+      "ticker": "MIEGX",
+      "registrant_cik": 1111565,
+      "requested_cik": 1111565,
+      "series_id": "S000000373",
+      "class_id": "C000000964",
+      "known_series_count": 17,
+      "accession": "0000030146-25-000188",
+      "form": "485BPOS",
+      "filing_date": "2025-12-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1111565/000003014625000188/c485bpos.htm",
+      "document_sha256": "11d69a9e54cf0eb4a980603e4dfe48abe31b2505842053a56431349dfb235bbf",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1111565/000003014625000188/0000030146-25-000188-index-headers.html",
+      "filing_header_sha256": "0fbe5c8bb457f75b9b98cb182ffbae23fc8d3d5f666a5b3fcc98f5cac996dd83",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "combined_prospectus_package",
+        "automatic_use": "allowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": true,
+          "contains_sai": true,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The multi-fund registration document covers the requested class and contains a complete prospectus plus substantive SAI.",
+        "category": "complete_combined_package",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker or exact fund.",
+          "The document contains complete prospectus sections and a separate substantive Statement of Additional Information.",
+          "The filing and document cover multiple fund series."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "dabjx-0001591556-25-000005",
+      "provider": "BNY Mellon Investment Funds II, Inc.",
+      "ticker": "DABJX",
+      "registrant_cik": 1591556,
+      "requested_cik": 1591556,
+      "series_id": "S000044141",
+      "class_id": "C000137217",
+      "known_series_count": 2,
+      "accession": "0001591556-25-000005",
+      "form": "497K",
+      "filing_date": "2025-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1591556/000159155625000005/c6327bnymyieldenha-022820251.htm",
+      "document_sha256": "867127f89e99f3d4660cc85cf6f8783d4cffbe38511901457cb977f47d838f2b",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1591556/000159155625000005/0001591556-25-000005-index-headers.html",
+      "filing_header_sha256": "b22193b31ef1f585ae2904c2a7786c9dc2e4f62a5869c67f07eb320ede00f661",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mmzwx-0001133228-26-001187",
+      "provider": "MassMutual Advantage Funds",
+      "ticker": "MMZWX",
+      "registrant_cik": 1859808,
+      "requested_cik": 1859808,
+      "series_id": "S000083941",
+      "class_id": "C000248056",
+      "known_series_count": 7,
+      "accession": "0001133228-26-001187",
+      "form": "497K",
+      "filing_date": "2026-01-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1859808/000113322826001187/mmcmf-efp22590_497k.htm",
+      "document_sha256": "66cb41bf070eb7e5e42c42914e06a009fbe07b683b663f3addc5d45f01c9c597",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1859808/000113322826001187/0001133228-26-001187-index-headers.html",
+      "filing_header_sha256": "1824cab5856e368c5a340782e0fca34945f03c86d2db6e9bd53ecce55895b879",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "smayx-0001104659-26-010972",
+      "provider": "SEI INSTITUTIONAL MANAGED TRUST",
+      "ticker": "SMAYX",
+      "registrant_cik": 804239,
+      "requested_cik": 804239,
+      "series_id": "S000006670",
+      "class_id": "C000147386",
+      "known_series_count": 27,
+      "accession": "0001104659-26-010972",
+      "form": "497K",
+      "filing_date": "2026-02-05",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/804239/000110465926010972/tm262173d14_497k.htm",
+      "document_sha256": "8583b4e01861bb672054fdb8081fd1459b0553c7c4cb5b7adf827cd4700882da",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/804239/000110465926010972/0001104659-26-010972-index-headers.html",
+      "filing_header_sha256": "a6cffd9c290067e1b631705d59610187a3df9df08e88a08d63bed5198f670d93",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "saosx-0001193125-24-150420",
+      "provider": "GUGGENHEIM FUNDS TRUST",
+      "ticker": "SAOSX",
+      "registrant_cik": 88525,
+      "requested_cik": 88525,
+      "series_id": "S000008806",
+      "class_id": "C000155960",
+      "known_series_count": 23,
+      "accession": "0001193125-24-150420",
+      "form": "497K",
+      "filing_date": "2024-05-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/88525/000119312524150420/d770877d497k.htm",
+      "document_sha256": "04627ec8cc51af518f712b165cd62c9816b1c08bd4fd66f01272f39b4e7fbdf0",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/88525/000119312524150420/0001193125-24-150420-index-headers.html",
+      "filing_header_sha256": "70ddbf6447fb3d7fab0e49926b4a42e5e8c0d4424cba850273bb4f1d485e640a",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": true
+        }
+      },
+      "reason": {
+        "summary": "The supplement applies to the requested fund but is not a complete standalone prospectus.",
+        "category": "applicable_supplement",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "A closed fund list in the document includes the requested fund.",
+          "The document explicitly identifies itself as a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "rropx-0000051931-25-001513",
+      "provider": "American Funds Retirement Income Portfolio Series",
+      "ticker": "RROPX",
+      "registrant_cik": 1640102,
+      "requested_cik": 1640102,
+      "series_id": "S000050187",
+      "class_id": "C000164836",
+      "known_series_count": 3,
+      "accession": "0000051931-25-001513",
+      "form": "497K",
+      "filing_date": "2025-12-31",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1640102/000005193125001513/afris-c497k.htm",
+      "document_sha256": "45d24de760967b91b1adc11c532e273d68b13e9d63f9265ee7793239c91b85cc",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1640102/000005193125001513/0000051931-25-001513-index-headers.html",
+      "filing_header_sha256": "79a1c94eb198a510587ec03a9f616459be5014ad2daa68244c03746ac1e6b7ec",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "pfcjx-0001193125-25-166845",
+      "provider": "PIMCO FUNDS",
+      "ticker": "PFCJX",
+      "registrant_cik": 810893,
+      "requested_cik": 810893,
+      "series_id": "S000048447",
+      "class_id": "C000152878",
+      "known_series_count": 74,
+      "accession": "0001193125-25-166845",
+      "form": "497K",
+      "filing_date": "2025-07-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/810893/000119312525166845/d71284d497k.htm",
+      "document_sha256": "43f5f475e90fb38949781b694a38d0b37cd4bcd1dfb76904c9d2f54ec780651e",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/810893/000119312525166845/0001193125-25-166845-index-headers.html",
+      "filing_header_sha256": "424a9b49b3e3c435db2a9b346bbb60ddc0a5b667d65f53d0a6b51d46cf39c43b",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "lansx-0000930413-26-000276",
+      "provider": "LORD ABBETT MUNICIPAL INCOME FUND INC",
+      "ticker": "LANSX",
+      "registrant_cik": 737800,
+      "requested_cik": 737800,
+      "series_id": "S000007537",
+      "class_id": "C000020589",
+      "known_series_count": 9,
+      "accession": "0000930413-26-000276",
+      "form": "497K",
+      "filing_date": "2026-01-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/737800/000093041326000276/c114917_497k.htm",
+      "document_sha256": "557f2794c6b6f8258500e0cb3d85a64ebd68fda4d17313c1ff97843b59deffb1",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/737800/000093041326000276/0000930413-26-000276-index-headers.html",
+      "filing_header_sha256": "e8797cf6a8c3ed064dc4ea70fe91cf36edfedc4f3af8475a9808d26af9fe2147",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "andix-0001193125-26-130992",
+      "provider": "AQR Funds",
+      "ticker": "ANDIX",
+      "registrant_cik": 1444822,
+      "requested_cik": 1444822,
+      "series_id": "S000037430",
+      "class_id": "C000115556",
+      "known_series_count": 26,
+      "accession": "0001193125-26-130992",
+      "form": "497K",
+      "filing_date": "2026-03-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1444822/000119312526130992/d33992d497k.htm",
+      "document_sha256": "5bb1e953fad3be2b4735d49b53a8ab53611b729659acfa27e6ae259cc3f481c5",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1444822/000119312526130992/0001193125-26-130992-index-headers.html",
+      "filing_header_sha256": "bfa35e6157f192df21bdefb9deafcd3d76b73812ae3cdfe5d4715eefa73ba41c",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": true
+        }
+      },
+      "reason": {
+        "summary": "The supplement applies to the requested fund but is not a complete standalone prospectus.",
+        "category": "applicable_supplement",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "A closed fund list in the document includes the requested fund.",
+          "The document explicitly identifies itself as a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "jffix-0001193125-26-005666",
+      "provider": "JPMorgan Trust I",
+      "ticker": "JFFIX",
+      "registrant_cik": 1217286,
+      "requested_cik": 1217286,
+      "series_id": "S000035832",
+      "class_id": "C000109818",
+      "known_series_count": 59,
+      "accession": "0001193125-26-005666",
+      "form": "497K",
+      "filing_date": "2026-01-07",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1217286/000119312526005666/d62649d497k.htm",
+      "document_sha256": "2cc5995a7442845f4e3cb38a1145f36e8d0a598b933c8ef6b7a534ceb555388d",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1217286/000119312526005666/0001193125-26-005666-index-headers.html",
+      "filing_header_sha256": "45aaf842960b7b88fc79193e1330674ddcf9f0add8fc09a87ba33b5c835cdf21",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": true
+        }
+      },
+      "reason": {
+        "summary": "The supplement applies to the requested fund but is not a complete standalone prospectus.",
+        "category": "applicable_supplement",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "A closed fund list in the document includes the requested fund.",
+          "The document explicitly identifies itself as a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "fervx-0000930413-23-000879",
+      "provider": "FIRST EAGLE FUNDS",
+      "ticker": "FERVX",
+      "registrant_cik": 906352,
+      "requested_cik": 906352,
+      "series_id": "S000011213",
+      "class_id": "C000179772",
+      "known_series_count": 11,
+      "accession": "0000930413-23-000879",
+      "form": "497K",
+      "filing_date": "2023-02-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/906352/000093041323000879/c105107_497k.htm",
+      "document_sha256": "2f50c76a22fafa8a42bc79744a7dbed29145ca6881eaed07d799ac8018fc9986",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/906352/000093041323000879/0000930413-23-000879-index-headers.html",
+      "filing_header_sha256": "c6775f5bb35f314316ec32cc066f01b71ecf4fafde67503b29dcd209264f74d2",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "wsicx-0001081400-25-000611",
+      "provider": "ALLSPRING FUNDS TRUST",
+      "ticker": "WSICX",
+      "registrant_cik": 1081400,
+      "requested_cik": 1081400,
+      "series_id": "S000039677",
+      "class_id": "C000122978",
+      "known_series_count": 75,
+      "accession": "0001081400-25-000611",
+      "form": "497K",
+      "filing_date": "2025-11-17",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1081400/000108140025000611/incomeplusfund.htm",
+      "document_sha256": "90dda4d8715772e39ea20eac703bcff793be764bc9c446b64b547927df25de1a",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1081400/000108140025000611/0001081400-25-000611-index-headers.html",
+      "filing_header_sha256": "070e0fae3495ebd1df0e0feff2b28481a76c5da467d02e42c225c28964c09752",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "disallowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The document is a complete one-fund summary, but its closed share-class list omits the requested Class C.",
+        "category": "document_class_list_excludes_request",
+        "observed_evidence": [
+          "The filing header associates the accession with the requested SEC class and series.",
+          "The document title and fee tables explicitly cover only Class A and Institutional Class."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "The requested ticker WSICX is absent from the document.",
+          "The requested Class C is absent from the document's class list."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "zgfix-0001133228-25-014381",
+      "provider": "AMERICAN BEACON FUNDS",
+      "ticker": "ZGFIX",
+      "registrant_cik": 809593,
+      "requested_cik": 809593,
+      "series_id": "S000088560",
+      "class_id": "C000254862",
+      "known_series_count": 28,
+      "accession": "0001133228-25-014381",
+      "form": "497K",
+      "filing_date": "2025-12-31",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/809593/000113322825014381/abnogff-efp21819_497k.htm",
+      "document_sha256": "f9bbc4ac7f41783b4b319aa30f1fc5a906cf9fd93f526911d9f7cff19cc40383",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/809593/000113322825014381/0001133228-25-014381-index-headers.html",
+      "filing_header_sha256": "5b3b6dbb0bb6e64b358a9413b88259fdc34e7683eaa6666b3893e3a518094a29",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "viopx-0001193125-26-215002",
+      "provider": "VALIC Co I",
+      "ticker": "VIOPX",
+      "registrant_cik": 719423,
+      "requested_cik": 719423,
+      "series_id": "S000069820",
+      "class_id": "C000222581",
+      "known_series_count": 37,
+      "accession": "0001193125-26-215002",
+      "form": "497K",
+      "filing_date": "2026-05-08",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/719423/000119312526215002/d71814d497k.htm",
+      "document_sha256": "31114dba8515da6b520d6ecfa2cabb028d250d577798040acca07aebf3fa9a73",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/719423/000119312526215002/0001193125-26-215002-index-headers.html",
+      "filing_header_sha256": "5733700017ef7743fb7b38d61971518b7c4e966e3bce4d1862c3bf02b0344a7c",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed",
+        "document_scope": "registrant_wide",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": true
+        }
+      },
+      "reason": {
+        "summary": "The supplement applies to the requested fund but is not a complete standalone prospectus.",
+        "category": "applicable_supplement",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document states that it applies to each series of the exact registrant.",
+          "The document explicitly identifies itself as a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vmsb-0001999371-25-018992",
+      "provider": "Tidal Trust IV",
+      "ticker": "VMSB",
+      "registrant_cik": 2043390,
+      "requested_cik": 2043390,
+      "series_id": "S000096084",
+      "class_id": "C000264871",
+      "known_series_count": 11,
+      "accession": "0001999371-25-018992",
+      "form": "497K",
+      "filing_date": "2025-12-01",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/2043390/000199937125018992/vmsb-497k_120125.htm",
+      "document_sha256": "ac994815ac7cc33229c6c702bf84ac31d8d480a2732540a7d309589d73d430d9",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/2043390/000199937125018992/0001999371-25-018992-index-headers.html",
+      "filing_header_sha256": "477d07219be81318bfaa6181e59088ffbb8b3d30d288a90d5b64e234ade450d2",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "btmfx-0001398344-26-007839",
+      "provider": "BOSTON TRUST WALDEN FUNDS",
+      "ticker": "BTMFX",
+      "registrant_cik": 882748,
+      "requested_cik": 882748,
+      "series_id": "S000019041",
+      "class_id": "C000052650",
+      "known_series_count": 10,
+      "accession": "0001398344-26-007839",
+      "form": "497K",
+      "filing_date": "2026-04-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/882748/000139834426007839/fp0098118-5_497k.htm",
+      "document_sha256": "5861863aaa9d95d8875f5906235bcdfdb92f584d7da0c237f2737712c462a5d5",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/882748/000139834426007839/0001398344-26-007839-index-headers.html",
+      "filing_header_sha256": "d27b757a9e2001fcf599ef9eb73d50a9b91e480ee3836fd575cdc5ae9c0fff18",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "lsirx-0001193125-26-083388",
+      "provider": "LEGG MASON PARTNERS INVESTMENT TRUST",
+      "ticker": "LSIRX",
+      "registrant_cik": 880366,
+      "requested_cik": 880366,
+      "series_id": "S000004162",
+      "class_id": "C000066225",
+      "known_series_count": 21,
+      "accession": "0001193125-26-083388",
+      "form": "497K",
+      "filing_date": "2026-03-02",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/880366/000119312526083388/d90484d497k.htm",
+      "document_sha256": "075130c9f1c9d1c95935eeb9944b3dbd06461a80147a2110e8f4235545078468",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/880366/000119312526083388/0001193125-26-083388-index-headers.html",
+      "filing_header_sha256": "1aad946d2bde54fd7ea76cc5e684ed85dc76d30190d66ba853d17ec6ba5d903f",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "jhqtx-0001193125-26-079384",
+      "provider": "JPMORGAN TRUST IV",
+      "ticker": "JHQTX",
+      "registrant_cik": 1659326,
+      "requested_cik": 1659326,
+      "series_id": "S000070949",
+      "class_id": "C000225324",
+      "known_series_count": 14,
+      "accession": "0001193125-26-079384",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1659326/000119312526079384/d70113d497k.htm",
+      "document_sha256": "4f581f8988e87d876c6a613bd49aae409f89647bcf5619cd100295514a95fc59",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1659326/000119312526079384/0001193125-26-079384-index-headers.html",
+      "filing_header_sha256": "49e4f92f177a159a35bb4c4247d71d6fd0ac67bc50b278ae9b5be92f2db140b2",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": true
+        }
+      },
+      "reason": {
+        "summary": "The supplement applies to the requested fund but is not a complete standalone prospectus.",
+        "category": "applicable_supplement",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "A closed fund list in the document includes the requested fund.",
+          "The document explicitly identifies itself as a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "smeix-0001193125-26-196678",
+      "provider": "AIM FUNDS GROUP (INVESCO FUNDS GROUP)",
+      "ticker": "SMEIX",
+      "registrant_cik": 19034,
+      "requested_cik": 19034,
+      "series_id": "S000000218",
+      "class_id": "C000022917",
+      "known_series_count": 4,
+      "accession": "0001193125-26-196678",
+      "form": "497K",
+      "filing_date": "2026-04-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/19034/000119312526196678/d128203d497k.htm",
+      "document_sha256": "0688e70693f7b9d7ae2d8c11e0f6e05fe931c7879cd803a99b9272d01b85fbe1",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/19034/000119312526196678/0001193125-26-196678-index-headers.html",
+      "filing_header_sha256": "2db44f6364bcdd1dee799227f15a886625b4608445d7d73970a7099915443b7b",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "fsnox-0000880195-26-000409",
+      "provider": "FIDELITY ABERDEEN STREET TRUST",
+      "ticker": "FSNOX",
+      "registrant_cik": 880195,
+      "requested_cik": 880195,
+      "series_id": "S000004871",
+      "class_id": "C000179005",
+      "known_series_count": 85,
+      "accession": "0000880195-26-000409",
+      "form": "497K",
+      "filing_date": "2026-05-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/880195/000088019526000409/filing12324.htm",
+      "document_sha256": "8b89f505f6cebf973423c1b3667e4d67dde3381982a4a713058bce325760edf0",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/880195/000088019526000409/0000880195-26-000409-index-headers.html",
+      "filing_header_sha256": "4ed8cb83820fc91f5f81f62ea20cf092c7e7cfd350c38f1a85de095e45c58853",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": true,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The filing and document directly cover the requested class and provide a complete one-fund summary prospectus.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing header includes the requested SEC class and series.",
+          "The document names the requested ticker and exact fund.",
+          "The document contains the expected complete fund-summary sections."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "awf-0000919574-09-012469",
+      "provider": "ALLIANCEBERNSTEIN GLOBAL HIGH INCOME FUND INC",
+      "ticker": "AWF",
+      "registrant_cik": 906013,
+      "requested_cik": 906013,
+      "series_id": null,
+      "class_id": null,
+      "known_series_count": 0,
+      "accession": "0000919574-09-012469",
+      "form": "497",
+      "filing_date": "2009-06-25",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/906013/000091957409012469/d979401a_497.txt",
+      "document_sha256": "0f6733e0593f0c710fb2693c4e30053e9f941c0a1bcc3ac2b57afe241fafb69e",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/906013/000091957409012469/0000919574-09-012469.txt",
+      "filing_header_sha256": "c9a1ae4b3c14a253f618533bf911f4303fde870f6b20abea24a535c4ff8ab6e2",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "combined_prospectus_package",
+        "automatic_use": "allowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": true,
+          "contains_sai": true,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The CIK-only filing names the requested standalone fund and contains a complete prospectus plus substantive SAI.",
+        "category": "cik_only_complete_combined_package",
+        "observed_evidence": [
+          "The filing-detail metadata matches the requested registrant CIK.",
+          "The document names the requested ticker and exact registrant fund.",
+          "The transaction prospectus and SAI cover the requested fund and one other fund.",
+          "The document contains a complete statutory prospectus and a separate substantive Statement of Additional Information."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      },
+      "filing_detail_url": "https://www.sec.gov/Archives/edgar/data/906013/000091957409012469/0000919574-09-012469-index.html",
+      "filing_detail_sha256": "3c433b2ef75f27bbd34daa01436dcf5be897e02c91c62b18399e5e884923c4b3"
+    },
+    {
+      "case_id": "afb-0000919574-07-000062",
+      "provider": "ALLIANCE NATIONAL MUNICIPAL INCOME FUND",
+      "ticker": "AFB",
+      "registrant_cik": 1162027,
+      "requested_cik": 1162027,
+      "series_id": null,
+      "class_id": null,
+      "known_series_count": 0,
+      "accession": "0000919574-07-000062",
+      "form": "497",
+      "filing_date": "2007-01-10",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1162027/000091957407000062/d7089966b_497.txt",
+      "document_sha256": "07bf93b398b7abff31525cceb160b239d7a5fe764818714464a66c4fcc167aa4",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1162027/000091957407000062/0000919574-07-000062.txt",
+      "filing_header_sha256": "648beb5d47895c45ced3971603df9db35a0df6df93948b5f857b7039b1ef3e1e",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "combined_prospectus_package",
+        "automatic_use": "allowed",
+        "document_scope": "multi_fund",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": true,
+          "contains_sai": true,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The CIK-only filing names the requested standalone fund and contains a complete prospectus plus substantive SAI.",
+        "category": "cik_only_complete_combined_package",
+        "observed_evidence": [
+          "The filing-detail metadata matches the requested registrant CIK.",
+          "The document names the requested ticker and exact registrant fund.",
+          "The transaction prospectus and SAI cover the requested fund and one other fund.",
+          "The document contains a complete statutory prospectus and a separate substantive Statement of Additional Information."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      },
+      "filing_detail_url": "https://www.sec.gov/Archives/edgar/data/1162027/000091957407000062/0000919574-07-000062-index.html",
+      "filing_detail_sha256": "2aa2917496161bf4f9da25927c21a3498d00b2791f93863af6cb71e8f15375b0"
+    },
+    {
+      "case_id": "eod-0001169232-07-001598",
+      "provider": "Evergreen Global Dividend Opportunity Fund",
+      "ticker": "EOD",
+      "registrant_cik": 1386067,
+      "requested_cik": 1386067,
+      "series_id": null,
+      "class_id": null,
+      "known_series_count": 0,
+      "accession": "0001169232-07-001598",
+      "form": "497",
+      "filing_date": "2007-03-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1386067/000116923207001598/d71419_497.htm",
+      "document_sha256": "0afcf9838420b733f048bf0c962d7e958edff2d0cdbe8cda2502a0637df33601",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1386067/000116923207001598/0001169232-07-001598.txt",
+      "filing_header_sha256": "ce365b44dc6ece01e774cd54e13e281756f5b8ea4a5a4f09ae6898b0a9b4b6b0",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "combined_prospectus_package",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": true,
+          "contains_sai": true,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The CIK-only filing names the requested standalone fund and contains a complete prospectus plus substantive SAI.",
+        "category": "cik_only_complete_combined_package",
+        "observed_evidence": [
+          "The filing-detail metadata matches the requested registrant CIK.",
+          "The document names the requested ticker and exact registrant fund.",
+          "The offering prospectus and SAI cover the requested standalone fund.",
+          "The document contains a complete statutory prospectus and a separate substantive Statement of Additional Information."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      },
+      "filing_detail_url": "https://www.sec.gov/Archives/edgar/data/1386067/000116923207001598/0001169232-07-001598-index.html",
+      "filing_detail_sha256": "e0a01cfbb115cef5ad8878aedc00831e471772350d707988ac01b3c19a26d7e5"
+    },
+    {
+      "case_id": "ead-0000908737-03-000225",
+      "provider": "EVERGREEN INCOME ADVANTAGE FUND",
+      "ticker": "EAD",
+      "registrant_cik": 1210123,
+      "requested_cik": 1210123,
+      "series_id": null,
+      "class_id": null,
+      "known_series_count": 0,
+      "accession": "0000908737-03-000225",
+      "form": "497",
+      "filing_date": "2003-05-06",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1210123/000090873703000225/stickertosai.txt",
+      "document_sha256": "36328d536ff1e33c1c1ba6bd464058a895d9d5c99963ab735cf172881baffa78",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1210123/000090873703000225/0000908737-03-000225.txt",
+      "filing_header_sha256": "41faf2f36126513635d2cd689aacfdbd449157ee892f12ae873e6e68ca38caa4",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": false,
+          "contains_sai": false,
+          "is_supplement": true
+        }
+      },
+      "reason": {
+        "summary": "The supplement applies to the requested fund but is not a complete standalone prospectus.",
+        "category": "applicable_supplement",
+        "observed_evidence": [
+          "The filing-detail metadata and exact document registrant name match the requested standalone fund.",
+          "The supplement identifies the requested single fund.",
+          "The document explicitly identifies itself as a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      },
+      "filing_detail_url": "https://www.sec.gov/Archives/edgar/data/1210123/000090873703000225/0000908737-03-000225-index.html",
+      "filing_detail_sha256": "b3a29927758d9be8e0253479c24241792c8fc12c83e9099a7c281975dc053bcb"
+    },
+    {
+      "case_id": "erc-0000908737-03-000398",
+      "provider": "EVERGREEN MANAGED INCOME FUND",
+      "ticker": "ERC",
+      "registrant_cik": 1227073,
+      "requested_cik": 1227073,
+      "series_id": null,
+      "class_id": null,
+      "known_series_count": 0,
+      "accession": "0000908737-03-000398",
+      "form": "497",
+      "filing_date": "2003-08-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1227073/000090873703000398/filing.txt",
+      "document_sha256": "9b5d7fb341212711327699fde07019674ff746ae1abd75107d6593c5a239e81f",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1227073/000090873703000398/0000908737-03-000398.txt",
+      "filing_header_sha256": "37a121bb8ddbeb52068b12fa184c147789296b0dcb186725e089128be49a02f1",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "combined_prospectus_package",
+        "automatic_use": "allowed",
+        "document_scope": "ticker_specific",
+        "content_profile": {
+          "contains_summary_prospectus": false,
+          "contains_statutory_prospectus": true,
+          "contains_sai": true,
+          "is_supplement": false
+        }
+      },
+      "reason": {
+        "summary": "The CIK-only filing names the requested standalone fund and contains a complete prospectus plus substantive SAI.",
+        "category": "cik_only_complete_combined_package",
+        "observed_evidence": [
+          "The filing-detail metadata matches the requested registrant CIK.",
+          "The document names the requested ticker and exact registrant fund.",
+          "The offering prospectus and SAI cover the requested standalone fund.",
+          "The document contains a complete statutory prospectus and a separate substantive Statement of Additional Information."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      },
+      "filing_detail_url": "https://www.sec.gov/Archives/edgar/data/1227073/000090873703000398/0000908737-03-000398-index.html",
+      "filing_detail_sha256": "b25e42db0ea2652d490948bbf96af5c79a42638cf30ec31fd15382ba4439a3de"
+    }
+  ]
+}

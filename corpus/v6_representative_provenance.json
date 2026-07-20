@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "corpus_version": "m6.2-v6-representative-2026-07-19",
+  "collection_date": "2026-07-19",
+  "policy_blind_collection": true,
+  "prior_corpora_excluded": [
+    "corpus/manifest.json",
+    "corpus/holdout_manifest.json",
+    "corpus/v5_followup_manifest.json",
+    "corpus/v6_challenge_manifest.json"
+  ],
+  "overlap_keys": [
+    "accession",
+    "document_url",
+    "document_sha256"
+  ],
+  "target": {
+    "total": 50,
+    "mutual_fund": 45,
+    "cik_only": 5
+  },
+  "mutual_fund_sampling": {
+    "source": "SEC company_tickers_mf.json",
+    "seed": 6202,
+    "method": "Sort unique symbols, shuffle with Python random.Random(seed), then accept the first 45 resolvable latest selections that do not overlap a prior corpus.",
+    "accepted_tickers": [
+      "GAAKX",
+      "MXXIX",
+      "AIEAX",
+      "PSGFX",
+      "GMHPX",
+      "HWSCX",
+      "MCBEX",
+      "CWBCX",
+      "EMOAX",
+      "IEMLX",
+      "GGIZX",
+      "RCLO",
+      "SARM",
+      "EIEAX",
+      "FNITX",
+      "PCVAX",
+      "TEMZ",
+      "SALXX",
+      "MMBRX",
+      "SHAG",
+      "MAPPX",
+      "XHB",
+      "NDASX",
+      "MXTFX",
+      "AATRX",
+      "MIEGX",
+      "DABJX",
+      "MMZWX",
+      "SMAYX",
+      "SAOSX",
+      "RROPX",
+      "PFCJX",
+      "LANSX",
+      "ANDIX",
+      "JFFIX",
+      "FERVX",
+      "WSICX",
+      "ZGFIX",
+      "VIOPX",
+      "VMSB",
+      "BTMFX",
+      "LSIRX",
+      "JHQTX",
+      "SMEIX",
+      "FSNOX"
+    ]
+  },
+  "cik_only_sampling": {
+    "source": "SEC ticker.txt",
+    "initial_unsupported_controls": [
+      {
+        "ticker": "GLD",
+        "outcome": "no_selected_document",
+        "reason": "The registrant does not expose a filing in the project's five accepted prospectus forms."
+      },
+      {
+        "ticker": "SLV",
+        "outcome": "no_selected_document",
+        "reason": "The registrant does not expose a filing in the project's five accepted prospectus forms."
+      },
+      {
+        "ticker": "USO",
+        "outcome": "no_selected_document",
+        "reason": "The registrant does not expose a filing in the project's five accepted prospectus forms."
+      },
+      {
+        "ticker": "UNG",
+        "outcome": "no_selected_document",
+        "reason": "The registrant does not expose a filing in the project's five accepted prospectus forms."
+      },
+      {
+        "ticker": "UUP",
+        "outcome": "no_selected_document",
+        "reason": "The registrant does not expose a filing in the project's five accepted prospectus forms."
+      }
+    ],
+    "ordered_replacement_attempts": [
+      {
+        "ticker": "QQQ",
+        "outcome": "excluded",
+        "reason": "now resolves through company_tickers_mf.json"
+      },
+      {
+        "ticker": "ADX",
+        "outcome": "no_selected_document"
+      },
+      {
+        "ticker": "PEO",
+        "outcome": "no_selected_document"
+      },
+      {
+        "ticker": "AWF",
+        "outcome": "accepted"
+      },
+      {
+        "ticker": "AFB",
+        "outcome": "accepted"
+      },
+      {
+        "ticker": "EOD",
+        "outcome": "accepted"
+      },
+      {
+        "ticker": "EAD",
+        "outcome": "accepted"
+      },
+      {
+        "ticker": "ERC",
+        "outcome": "accepted"
+      }
+    ],
+    "accepted_tickers": [
+      "AWF",
+      "AFB",
+      "EOD",
+      "EAD",
+      "ERC"
+    ]
+  },
+  "label_freeze": {
+    "manifest": "corpus/v6_representative_manifest.json",
+    "occurred_before_first_policy_evaluation": true,
+    "first_report": "corpus/reports/v6-representative-first-run.json"
+  }
+}

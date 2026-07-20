@@ -18,12 +18,29 @@ document-checksum overlap against either earlier corpus. It was labeled before
 `m6.1-shadow-v5` was evaluated and is the independent activation check for that
 policy version.
 
+`v6_challenge_manifest.json` contains 30 new, policy-blind challenge cases. It
+adds mixed prospectus/SAI packages, Appendix and closed-list supplements,
+same-registrant class mismatches, and explicit scope labels.
+
+`v6_representative_manifest.json` contains 50 separately labeled latest
+pipeline selections: 45 symbols sampled deterministically from
+`company_tickers_mf.json` and five supported CIK-only symbols. Its sampling
+method and unsupported attempts are recorded in
+`v6_representative_provenance.json`. Both v6 manifests are disjoint from all
+earlier corpora and from each other by accession and document checksum.
+
 ## Labels
 
 - `relevance`: `positive`, `negative`, or `ambiguous` ticker/class coverage.
 - `document_kind`: `summary_prospectus`, `statutory_prospectus`, `supplement`,
-  `statement_of_additional_information`, or `unknown`.
+  `combined_prospectus_package`, `statement_of_additional_information`, or
+  `unknown`.
 - `automatic_use`: `allowed`, `disallowed`, or `review` as a standalone result.
+- `document_scope`: `ticker_specific`, `multi_fund`, `registrant_wide`, or
+  `unknown`. Here `ticker_specific` is the narrowest one-fund/series bucket; it
+  may still include sibling share classes.
+- `content_profile`: independent booleans for summary, statutory, SAI, and
+  top-level supplement content.
 
 An applicable supplement can therefore be relevant while still being
 disallowed for standalone use. Every ambiguous case identifies what evidence is
@@ -50,14 +67,22 @@ python -m prospectus_fetcher.corpus_cli all \
 python -m prospectus_fetcher.corpus_cli all \
   --manifest corpus/v5_followup_manifest.json \
   --report corpus/reports/v5-followup-evaluation.json
+
+# Evaluate the frozen v6 challenge and representative sets
+python -m prospectus_fetcher.corpus_cli all \
+  --manifest corpus/v6_challenge_manifest.json \
+  --report corpus/reports/v6-challenge-evaluation.json
+python -m prospectus_fetcher.corpus_cli all \
+  --manifest corpus/v6_representative_manifest.json \
+  --report corpus/reports/v6-representative-evaluation.json
 ```
 
 The cache is written under `corpus/cache/`. The detailed report is written to
 `corpus/reports/evaluation.json`; it includes per-case evidence, disagreements,
 confusion matrices, precision, recall, false-verification counts, and review
-rate. Report schema v2 also includes per-scenario metrics for provider, form,
+rate. Report schema v3 also includes per-scenario metrics for provider, form,
 requested identity scope, filing metadata breadth, document encoding, reason
-category, and each expected label.
+category, each expected label, scope, and every content-profile characteristic.
 
 ## Initial Baseline
 
@@ -165,3 +190,36 @@ The remaining four disagreements are actionable rather than aggregate noise:
 
 `v5` remains shadow-only. The combined PIMCO miss is an activation blocker even
 though no false automatic approval occurred.
+
+## V6 Activation-Readiness Result
+
+`m6.2-shadow-v6` separates content characteristics from a derived document
+kind, reports document scope, recognizes guarded Appendix/closed-list evidence,
+and deterministically prefers one uniquely qualified narrow candidate over a
+broader complete package.
+
+The 30-case challenge contains 25 relevance-positive and 5 negative cases,
+including 17 complete usable packages and 13 disallowed supplements, SAIs, or
+class mismatches. The 50-case representative set contains 49
+relevance-positive cases, one natural class-list mismatch, 41 complete usable
+packages, and 9 disallowed cases.
+
+First-run independent measurements:
+
+| Corpus | False approvals | Complete docs disallowed | Complete auto-allow recall | Review rate |
+|---|---:|---:|---:|---:|
+| V6 challenge (30) | 0 | 0 | 15/17 (88.2%) | 10.0% |
+| V6 representative (50) | 0 | 0 | 35/41 (85.4%) | 18.0% |
+
+Both safety gates passed. The approved activation gates also require at least
+95% complete-document recall and at most 10% review on the representative
+sample, so v6 remains shadow-only.
+
+The misses cluster around complete `485BPOS` variants, `Fund Summary` and
+multi-class summary layouts, historical prospectus/proxy or offering packages,
+and CIK-only supplements. Several additional disagreements affect only content
+facets or scope, not automatic-use safety.
+
+These two sets are now consumed. Their disagreements may guide a successor,
+but any changed policy requires a new accession- and checksum-disjoint
+evaluation set before making an activation claim.

@@ -994,6 +994,175 @@ therefore remains shadow-only.
 
 ---
 
+## Milestone 6.2: Activation Readiness
+
+**Status:** complete; activation gates not met and all behavior remains
+shadow-only
+
+**Goal:** Represent mixed SEC document packages and document scope without
+losing safety, prefer narrower verified files when available, and measure an
+activation candidate against both adversarial and representative data.
+
+### Caveats register
+
+#### M6.2-C001: The v6 activation candidate misses the recall and review gates
+
+- **Status:** open; activation blocker
+- **Risk:** Activating `m6.2-shadow-v6` would send valid complete packages to
+  manual review more often than the approved operating target.
+- **Independent evidence:** On the 30-case challenge set, v6 produced zero false
+  approvals and never disallowed a valid complete package, but automatically
+  allowed only 15 of 17 expected complete packages and reviewed 10% of cases.
+  On the 50-case representative sample it allowed 35 of 41 expected complete
+  packages and reviewed 18% of cases. The approved gates require at least 95%
+  valid-complete recall and at most 10% representative review.
+- **Current mitigation:** v6 remains report-only. The existing validator still
+  controls packages, manifests, and exit codes.
+- **Exit condition:** A generalized successor must meet every gate on a new
+  accession- and checksum-disjoint evaluation set.
+
+#### M6.2-C002: Historical and alternate prospectus layouts remain under-detected
+
+- **Status:** open
+- **Risk:** Complete `485BPOS`, closed-end offering, prospectus/proxy, appended
+  SAI, and heading variants such as `Fund Summary` can be classified as
+  incomplete even when their requested identity evidence is sound.
+- **Evidence:** The independent reviews include complete LQD and DODFX
+  `485BPOS` packages, BTMFX's `Fund Summary`, a multi-class Fidelity summary,
+  and four CIK-only 2003-2009 combined packages.
+- **Current mitigation:** Every miss routes to review; none is automatically
+  rejected or presented as ready.
+- **Exit condition:** Add provider-independent structural evidence, then
+  evaluate the changed policy on fresh data rather than reusing the consumed
+  v6 corpora as holdouts.
+
+#### M6.2-C003: CIK-only form coverage is narrower than the public ticker map
+
+- **Status:** open; owned by Milestone 8 where identity enrichment is required
+- **Risk:** A ticker can resolve through `ticker.txt` while exposing no filing
+  in the project's five accepted prospectus forms.
+- **Evidence:** GLD, SLV, USO, UNG, and UUP all resolved to a CIK but produced
+  no selected document during representative-sample construction. Supported
+  historical CIK-only cases also required a filing-detail identity fallback
+  because modern `-index-headers.html` resources were absent.
+- **Current mitigation:** Unsupported cases fail closed. No other SEC form is
+  treated as an equivalent prospectus without an explicit policy decision.
+- **Exit condition:** Define the intended instrument/form universe and add
+  effective-dated CIK-only identity and form rules with independent evidence.
+
+#### M6.2-C004: Scope classification is useful but not activation-critical yet
+
+- **Status:** open; reporting-quality issue
+- **Risk:** Phrases such as `each Fund` can make a closed multi-fund list appear
+  registrant-wide, and one-fund documents can include several share classes
+  even though the narrowest enum value is named `ticker_specific`.
+- **Evidence:** Several challenge and representative supplements were correctly
+  disallowed but disagreed only on `multi_fund` versus `registrant_wide`.
+- **Current mitigation:** Scope is a separate report field and does not upgrade
+  an incomplete document. `ticker_specific` is documented as the narrowest
+  one-fund/series bucket, not proof that no sibling ticker appears.
+- **Exit condition:** Tighten scope grammar against fresh reviewed examples
+  before scope affects control behavior.
+
+#### M6.2-C005: Both v6 evaluation sets are now consumed
+
+- **Status:** permanent evaluation boundary
+- **Risk:** Tuning from these disagreements and reporting a rerun on the same
+  cases as independent evidence would overstate generalization.
+- **Current mitigation:** The first-run reports are retained locally, labels
+  and checksums are committed, and all v6 behavior remains shadow-only.
+- **Exit condition:** Freeze a new disjoint corpus before evaluating any
+  successor policy intended for activation.
+
+### Assumptions register
+
+#### M6.2-A001: A complete multi-fund package can satisfy the request
+
+A combined SEC file is an acceptable fallback when it contains complete
+prospectus material, has strong evidence for the requested class or instrument,
+and no uniquely verified narrower sibling is available. It must be reported as
+`multi_fund`, not ticker-specific.
+
+#### M6.2-A002: Document characteristics are not mutually exclusive
+
+One file may contain summary prospectus, statutory prospectus, SAI, and
+supplement material. Completeness and automatic-use decisions must use
+independent content characteristics rather than whichever phrase appears first.
+
+#### M6.2-A003: Review-rate denominators have different meanings
+
+The difficult curated corpus measures correctness under stress. It does not
+estimate operational review volume. Activation therefore reports valid-complete
+document recall on labeled challenge data and review rate on a separately
+defined representative sample.
+
+### Decisions register
+
+#### M6.2-D001: Prefer a uniquely verified narrow sibling
+
+- **Status:** approved and implemented in shadow policy
+- **Decision:** Rank a verified ticker-specific file above a verified multi-fund
+  package. Use the multi-fund package only when no uniquely qualified narrower
+  sibling exists.
+- **Safety boundary:** Zero or multiple equally narrow qualified siblings remain
+  review. Candidate evaluation errors prevent a uniqueness claim.
+
+#### M6.2-D002: Add a backward-compatible content profile
+
+- **Status:** approved and implemented in corpus schema v2 and report schema v3
+- **Decision:** Preserve `document_kind` for compatibility while adding explicit
+  flags for summary prospectus, statutory prospectus, SAI, and top-level
+  supplement content. Add a combined-package kind as a derived reporting label,
+  not as a replacement for the underlying flags.
+
+#### M6.2-D003: Report document scope explicitly
+
+- **Status:** approved and implemented
+- **Decision:** Classify scope as `ticker_specific`, `multi_fund`,
+  `registrant_wide`, or `unknown`. Filing-level class metadata alone cannot make
+  a file ticker-specific.
+
+#### M6.2-D004: Use only demonstrably closed lists as contradictions
+
+- **Status:** approved and implemented
+- **Decision:** A structured Appendix or fund list can establish positive scope
+  when it contains the requested exact ticker or SEC series name. Absence is a
+  contradiction only when the document itself clearly defines the list as
+  exhaustive. Otherwise the result remains review.
+
+#### M6.2-D005: Keep v6 shadow-only through independent validation
+
+- **Status:** approved and upheld
+- **Decision:** The existing validator and package builder remain authoritative.
+  Any `v6` policy is evaluated on new accession- and checksum-disjoint data
+  before an activation decision.
+- **Activation gates:** zero false automatic approvals, zero valid complete
+  documents automatically disallowed, at least 95% valid-complete-document
+  recall, and at most 10% review on a representative operational sample.
+
+### Verification at completion
+
+- Corpus schema v2 records independent content characteristics and document
+  scope while continuing to parse all schema-v1 manifests.
+- Focused tests cover mixed packages, pure SAI, Appendix and exhaustive lists,
+  scope, candidate preference, ties, errors, and report confusion matrices.
+- Historical development, holdout, and v5-follow-up results were used only as
+  diagnostics.
+- `v6_challenge_manifest.json` freezes 30 new cases with no accession or
+  document-checksum overlap against the prior 90 cases.
+- `v6_representative_manifest.json` freezes 50 additional cases with no overlap
+  against the prior 120. Its committed provenance records seed 6202, the
+  45-case mutual-fund sample, the five CIK-only cases, and unsupported attempts.
+- Both manifests were labeled before their first v6 evaluation. No v6 rule was
+  changed after either first-run report.
+- v6 passed both safety gates but failed both coverage gates, so it was not
+  activated.
+- Full deterministic suite: 145 passed, with the one opt-in live test skipped.
+- Opt-in VUSXX/QQQ/SPY SEC contract: 1 passed.
+- All 34 project and test Python files parse under Python 3.9 grammar.
+
+---
+
 ## Future milestone template
 
 For each new milestone, add:

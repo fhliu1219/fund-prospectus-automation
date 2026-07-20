@@ -321,7 +321,10 @@ An accession- and checksum-disjoint 30-case holdout is committed separately so
 development tuning and independent evaluation are not conflated. A second
 disjoint 30-case follow-up evaluates the resulting `m6.1-shadow-v5` policy; its
 measured activation blockers and the decision to keep `v5` shadow-only are
-documented in the corpus guide.
+documented in the corpus guide. Milestone 6.2 adds a disjoint 30-case challenge,
+a separately sampled 50-case representative set, mixed-content profiles, and
+document scope. `m6.2-shadow-v6` passed both safety gates but missed the approved
+recall and representative-review gates, so it also remains report-only.
 
 ---
 
@@ -351,6 +354,8 @@ CAVEATS.md                   # residual risks, assumptions, and decision log
 ROADMAP.md                   # prioritized accuracy-first future milestones
 TEST_MATRIX.md               # curated live and deterministic contract cases
 corpus/manifest.json         # 30 labeled SEC cases; raw bytes stay ignored
+corpus/v6_challenge_manifest.json       # independent mixed-content challenge
+corpus/v6_representative_manifest.json  # separately sampled operating profile
 tests/                       # pytest suite (HTTP mocked) + optional live test
 Dockerfile
 ```

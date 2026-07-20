@@ -17,11 +17,11 @@ from .corpus import (
 )
 from .evidence_policy import POLICY_VERSION, ShadowEvidencePolicy
 from .filing_identity import FilingIdentityMetadata, resolve_filing_identity
-from .models import DocumentKind, DocumentVerification
+from .models import DocumentKind, DocumentScope, DocumentVerification
 from .validator import DocumentValidator
 
 
-REPORT_SCHEMA_VERSION = 2
+REPORT_SCHEMA_VERSION = 3
 SCENARIO_DIMENSIONS = (
     "provider",
     "form",
@@ -31,6 +31,7 @@ SCENARIO_DIMENSIONS = (
     "reason_category",
     "expected_relevance",
     "expected_document_kind",
+    "expected_document_scope",
     "expected_automatic_use",
 )
 
@@ -89,7 +90,7 @@ def _metrics(rows: List[dict], policy_key: str) -> dict:
         for expected, actual in zip(expected_use, actual_use)
     )
     review_count = sum(value == AutomaticUseLabel.REVIEW.value for value in actual_use)
-    return {
+    result = {
         "case_count": len(rows),
         "relevance_confusion_matrix": _confusion(expected_relevance, actual_relevance),
         "document_kind_confusion_matrix": _confusion(expected_kind, actual_kind),
@@ -101,6 +102,38 @@ def _metrics(rows: List[dict], policy_key: str) -> dict:
         "manual_review_count": review_count,
         "manual_review_rate": review_count / len(rows) if rows else None,
     }
+    scope_rows = [
+        row for row in rows if "document_scope" in row["expected"]
+    ]
+    if scope_rows:
+        result["document_scope_confusion_matrix"] = _confusion(
+            [row["expected"]["document_scope"] for row in scope_rows],
+            [row[policy_key]["document_scope"] for row in scope_rows],
+        )
+    profile_rows = [
+        row for row in rows if "content_profile" in row["expected"]
+    ]
+    if profile_rows:
+        profile_fields = (
+            "contains_summary_prospectus",
+            "contains_statutory_prospectus",
+            "contains_sai",
+            "is_supplement",
+        )
+        result["content_profile_confusion_matrices"] = {
+            field: _confusion(
+                [
+                    str(row["expected"]["content_profile"][field]).lower()
+                    for row in profile_rows
+                ],
+                [
+                    str(row[policy_key]["content_profile"][field]).lower()
+                    for row in profile_rows
+                ],
+            )
+            for field in profile_fields
+        }
+    return result
 
 
 def _requested_identity_scope(class_id: Optional[str], series_id: Optional[str]) -> str:
@@ -119,6 +152,21 @@ def _filing_metadata_breadth(metadata: FilingIdentityMetadata) -> str:
     if len(metadata.series[0].classes) > 1:
         return "single_series_multiple_classes"
     return "single_series_single_class"
+
+
+def _current_content_profile(kind: DocumentKind) -> dict:
+    return {
+        "contains_summary_prospectus": (
+            kind is DocumentKind.SUMMARY_PROSPECTUS
+        ),
+        "contains_statutory_prospectus": (
+            kind is DocumentKind.STATUTORY_PROSPECTUS
+        ),
+        "contains_sai": (
+            kind is DocumentKind.STATEMENT_OF_ADDITIONAL_INFORMATION
+        ),
+        "is_supplement": kind is DocumentKind.SUPPLEMENT,
+    }
 
 
 def _scenario_slices(rows: List[dict], policy_key: str) -> dict:
@@ -189,10 +237,27 @@ class CorpusEvaluator:
                 "document_kind": case.labels.document_kind.value,
                 "automatic_use": case.labels.automatic_use.value,
             }
+            if (
+                case.labels.document_scope is not None
+                and case.labels.content_profile is not None
+            ):
+                expected["document_scope"] = case.labels.document_scope.value
+                expected["content_profile"] = {
+                    "contains_summary_prospectus": (
+                        case.labels.content_profile.contains_summary_prospectus
+                    ),
+                    "contains_statutory_prospectus": (
+                        case.labels.content_profile.contains_statutory_prospectus
+                    ),
+                    "contains_sai": case.labels.content_profile.contains_sai,
+                    "is_supplement": case.labels.content_profile.is_supplement,
+                }
             current_value = {
                 "relevance": current_relevance.value,
                 "document_kind": current.kind.value,
                 "automatic_use": current_use.value,
+                "document_scope": DocumentScope.UNKNOWN.value,
+                "content_profile": _current_content_profile(current.kind),
                 "evidence": current.evidence,
                 "warnings": current.warnings,
             }
@@ -211,6 +276,11 @@ class CorpusEvaluator:
                 "reason_category": case.reason.category,
                 "expected_relevance": case.labels.relevance.value,
                 "expected_document_kind": case.labels.document_kind.value,
+                "expected_document_scope": (
+                    case.labels.document_scope.value
+                    if case.labels.document_scope is not None
+                    else "not_labeled"
+                ),
                 "expected_automatic_use": case.labels.automatic_use.value,
             }
             rows.append(
@@ -234,10 +304,14 @@ class CorpusEvaluator:
                     "shadow": shadow_value,
                     "disagreements": {
                         "current": [
-                            key for key, value in expected.items() if current_value[key] != value
+                            key
+                            for key, value in expected.items()
+                            if current_value.get(key) != value
                         ],
                         "shadow": [
-                            key for key, value in expected.items() if shadow_value[key] != value
+                            key
+                            for key, value in expected.items()
+                            if shadow_value.get(key) != value
                         ],
                     },
                 }

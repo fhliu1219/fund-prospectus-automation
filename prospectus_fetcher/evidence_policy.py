@@ -10,12 +10,13 @@ from typing import List, Optional, Set
 
 from .corpus import AutomaticUseLabel, RelevanceLabel
 from .filing_identity import FilingIdentityMetadata, IdentityMetadataSource
-from .models import DocumentKind
+from .models import DocumentKind, DocumentScope
 
 
-POLICY_VERSION = "m6.1-shadow-v5"
+POLICY_VERSION = "m6.2-shadow-v6"
 
 _SUPPLEMENT_SIGNALS = (
+    "prospectus supplement",
     "supplement dated",
     "supplement to",
     "this supplement amends",
@@ -67,6 +68,24 @@ _UNIVERSAL_FUND_SCOPE_RE = re.compile(
     r"\bfor\s+each\s+(?:fund|series)\b",
     re.IGNORECASE,
 )
+_CLOSED_FUND_SCOPE_START_RE = re.compile(
+    r"\bfor\s+the\s+following\s+funds?\b[^:]{0,180}:",
+    re.IGNORECASE,
+)
+_CLOSED_FUND_SCOPE_END_RE = re.compile(
+    r"\s(?:effective\s+(?:immediately|on)|accordingly|"
+    r"\d{1,2}\.\s+[A-Z])",
+    re.IGNORECASE,
+)
+_SAI_SUBSTANTIVE_SIGNALS = (
+    "investment advisory and other services",
+    "control persons and principal holders",
+    "portfolio transactions and brokerage",
+    "description of the trust",
+    "additional purchase and redemption information",
+    "distribution and service plans",
+)
+_REGISTRATION_FORMS = {"485BPOS", "485APOS", "N-1A"}
 
 
 class EvidenceStrength(str, Enum):
@@ -84,6 +103,21 @@ class EvidenceLocation(str, Enum):
 
 
 @dataclass(frozen=True)
+class DocumentContentProfile:
+    contains_summary_prospectus: bool
+    contains_statutory_prospectus: bool
+    contains_sai: bool
+    is_supplement: bool
+
+    @property
+    def contains_complete_prospectus(self) -> bool:
+        return (
+            self.contains_summary_prospectus
+            or self.contains_statutory_prospectus
+        )
+
+
+@dataclass(frozen=True)
 class EvidenceSignal:
     code: str
     strength: EvidenceStrength
@@ -96,6 +130,8 @@ class ShadowEvaluation:
     policy_version: str
     relevance: RelevanceLabel
     document_kind: DocumentKind
+    document_scope: DocumentScope
+    content_profile: DocumentContentProfile
     automatic_use: AutomaticUseLabel
     signals: List[EvidenceSignal] = field(default_factory=list)
     missing_evidence: List[str] = field(default_factory=list)
@@ -105,11 +141,103 @@ class ShadowEvaluation:
         value = asdict(self)
         value["relevance"] = self.relevance.value
         value["document_kind"] = self.document_kind.value
+        value["document_scope"] = self.document_scope.value
         value["automatic_use"] = self.automatic_use.value
         for index, signal in enumerate(self.signals):
             value["signals"][index]["strength"] = signal.strength.value
             value["signals"][index]["location"] = signal.location.value
         return value
+
+
+class ShadowSelectionStatus(str, Enum):
+    SELECTED = "selected"
+    REVIEW = "review"
+
+
+@dataclass(frozen=True)
+class ShadowCandidate:
+    name: str
+    evaluation: Optional[ShadowEvaluation] = None
+    error: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class ShadowCandidateSelection:
+    status: ShadowSelectionStatus
+    selected_name: Optional[str]
+    reason: str
+    qualified_names: List[str] = field(default_factory=list)
+
+
+_SCOPE_RANK = {
+    DocumentScope.TICKER_SPECIFIC: 0,
+    DocumentScope.MULTI_FUND: 1,
+    DocumentScope.REGISTRANT_WIDE: 2,
+    DocumentScope.UNKNOWN: 3,
+}
+
+
+def select_shadow_candidate(
+    candidates: List[ShadowCandidate],
+) -> ShadowCandidateSelection:
+    """Prefer one uniquely qualified candidate at the narrowest proven scope."""
+    errors = [candidate for candidate in candidates if candidate.error]
+    if errors:
+        return ShadowCandidateSelection(
+            status=ShadowSelectionStatus.REVIEW,
+            selected_name=None,
+            reason=(
+                f"{len(errors)} eligible candidate(s) could not be evaluated; "
+                "narrowest-candidate uniqueness is unproven"
+            ),
+        )
+
+    qualified = [
+        candidate
+        for candidate in candidates
+        if candidate.evaluation
+        and candidate.evaluation.automatic_use is AutomaticUseLabel.ALLOWED
+    ]
+    if not qualified:
+        return ShadowCandidateSelection(
+            status=ShadowSelectionStatus.REVIEW,
+            selected_name=None,
+            reason="no candidate is eligible for automatic use",
+        )
+
+    best_rank = min(
+        _SCOPE_RANK[candidate.evaluation.document_scope]
+        for candidate in qualified
+        if candidate.evaluation is not None
+    )
+    best = [
+        candidate
+        for candidate in qualified
+        if candidate.evaluation
+        and _SCOPE_RANK[candidate.evaluation.document_scope] == best_rank
+    ]
+    qualified_names = [candidate.name for candidate in qualified]
+    if len(best) != 1:
+        return ShadowCandidateSelection(
+            status=ShadowSelectionStatus.REVIEW,
+            selected_name=None,
+            reason=(
+                f"{len(best)} equally narrow candidates qualify; automatic "
+                "selection would be ambiguous"
+            ),
+            qualified_names=qualified_names,
+        )
+
+    selected = best[0]
+    return ShadowCandidateSelection(
+        status=ShadowSelectionStatus.SELECTED,
+        selected_name=selected.name,
+        reason=(
+            f"selected the only qualified {selected.evaluation.document_scope.value} "
+            "candidate"
+        ),
+        qualified_names=qualified_names,
+    )
 
 
 class _StructureParser(HTMLParser):
@@ -284,6 +412,162 @@ def _contexts(text: str, identifier: str, radius: int = 160) -> List[str]:
     ]
 
 
+def _closed_fund_scope_region(text: str) -> Optional[str]:
+    """Return a document-declared exhaustive fund list near the cover."""
+    cover = text[:30_000]
+    start = _CLOSED_FUND_SCOPE_START_RE.search(cover)
+    if start is None:
+        return None
+    remainder = cover[start.end() :]
+    end = _CLOSED_FUND_SCOPE_END_RE.search(remainder)
+    region = remainder[: end.start()] if end else remainder[:10_000]
+    normalized = _normalize_space(region)
+    if normalized.lower().count("fund") < 2:
+        return None
+    return normalized
+
+
+def _appendix_contains_subject(
+    text: str,
+    ticker: str,
+    expected_series_name: Optional[str],
+) -> bool:
+    lower = text.lower()
+    starts = [match.start() for match in re.finditer(r"\bappendix\s+a\b", lower)]
+    return any(
+        _contains_identifier(text[start : start + 500_000], ticker)
+        or _contains_name(text[start : start + 500_000], expected_series_name)
+        for start in starts
+    )
+
+
+def _document_content_profile(
+    parser: _StructureParser,
+    text: str,
+    kind_region: str,
+    supplement_signal: Optional[str],
+    declared_form: Optional[str],
+) -> DocumentContentProfile:
+    lower = text.lower()
+    sections = _section_matches(lower)
+    title_and_headings = (parser.title + " " + " ".join(parser.headings)).lower()
+    sai_position = kind_region.find("statement of additional information")
+    complete_marker_positions = [
+        kind_region.find(marker)
+        for marker in (
+            "summary prospectus",
+            "statutory prospectus",
+            "prospectus dated",
+        )
+        if kind_region.find(marker) >= 0
+    ]
+    if "prospectus" in parser.title.lower():
+        complete_marker_positions.append(0)
+    top_level_sai = bool(
+        sai_position >= 0
+        and (
+            not complete_marker_positions
+            or sai_position < min(complete_marker_positions)
+        )
+    )
+    body_sai_position = lower.find("statement of additional information")
+    sai_tail = lower[sai_position : sai_position + 1_000_000] if sai_position >= 0 else ""
+    if body_sai_position >= 0:
+        sai_tail = lower[body_sai_position : body_sai_position + 1_000_000]
+    substantive_sai_count = sum(
+        signal in sai_tail for signal in _SAI_SUBSTANTIVE_SIGNALS
+    )
+    contains_sai = bool(
+        body_sai_position >= 0
+        and (
+            top_level_sai
+            or (
+                "statement of additional information" in title_and_headings
+                and substantive_sai_count >= 1
+            )
+            or substantive_sai_count >= 2
+        )
+    )
+
+    normalized_form = (declared_form or "").strip().upper()
+    base_form = normalized_form.removesuffix("/A")
+    xbrl_types = {
+        value.strip().upper().removesuffix("/A")
+        for value in parser.xbrl_facts.get("dei:documenttype", [])
+    }
+    registration_form = (
+        base_form in _REGISTRATION_FORMS
+        or bool(xbrl_types.intersection(_REGISTRATION_FORMS))
+    )
+    explicit_statutory_marker = (
+        "statutory prospectus" in kind_region
+        or "prospectus dated" in kind_region
+        or any(signal in lower[:100_000] for signal in _REGISTRATION_SIGNALS)
+        or (
+            "prospectus" in parser.title.lower()
+            and "summary prospectus" not in kind_region
+        )
+    )
+
+    is_supplement = supplement_signal is not None
+    contains_summary = bool(
+        not is_supplement
+        and "summary prospectus" in kind_region
+        and len(sections) >= 2
+    )
+    contains_statutory = bool(
+        not is_supplement
+        and not (contains_summary and not registration_form)
+        and len(sections) >= 2
+        and (
+            explicit_statutory_marker
+            or (
+                registration_form
+                and len(sections) >= 4
+                and "prospectus" in lower
+            )
+        )
+    )
+    return DocumentContentProfile(
+        contains_summary_prospectus=contains_summary,
+        contains_statutory_prospectus=contains_statutory,
+        contains_sai=contains_sai,
+        is_supplement=is_supplement,
+    )
+
+
+def _derived_document_kind(profile: DocumentContentProfile) -> DocumentKind:
+    if profile.is_supplement:
+        return DocumentKind.SUPPLEMENT
+    content_type_count = sum(
+        (
+            profile.contains_summary_prospectus,
+            profile.contains_statutory_prospectus,
+            profile.contains_sai,
+        )
+    )
+    if profile.contains_complete_prospectus and content_type_count >= 2:
+        return DocumentKind.COMBINED_PROSPECTUS_PACKAGE
+    if profile.contains_summary_prospectus:
+        return DocumentKind.SUMMARY_PROSPECTUS
+    if profile.contains_statutory_prospectus:
+        return DocumentKind.STATUTORY_PROSPECTUS
+    if profile.contains_sai:
+        return DocumentKind.STATEMENT_OF_ADDITIONAL_INFORMATION
+    return DocumentKind.UNKNOWN
+
+
+def _matched_series_ids(
+    metadata: FilingIdentityMetadata,
+    text: str,
+) -> Set[str]:
+    return {
+        series.series_id
+        for series in metadata.series
+        if series.name and _contains_name(text, series.name)
+    }
+
+
 class ShadowEvidencePolicy:
     """Produce a non-controlling structured evidence recommendation."""
 
@@ -317,6 +601,14 @@ class ShadowEvidencePolicy:
             ),
             None,
         )
+        content_profile = _document_content_profile(
+            parser,
+            text,
+            kind_region,
+            supplement_signal,
+            declared_form,
+        )
+        kind = _derived_document_kind(content_profile)
 
         signals: List[EvidenceSignal] = []
         missing: List[str] = []
@@ -468,6 +760,10 @@ class ShadowEvidencePolicy:
                 or _contains_name(parser.title, expected_series_name)
             )
         )
+        supplement_appendix_subject = bool(
+            supplement_signal
+            and _appendix_contains_subject(text, ticker, expected_series_name)
+        )
         if expected_series_name and _contains_name(text, expected_series_name):
             if series_name_rows:
                 series_location = EvidenceLocation.CLASS_TABLE
@@ -477,28 +773,58 @@ class ShadowEvidencePolicy:
                 series_location = EvidenceLocation.FRONT_MATTER
             else:
                 series_location = EvidenceLocation.BODY
+            signal_code = (
+                "supplement_appendix_subject"
+                if supplement_appendix_subject
+                else (
+                    "supplement_series_subject"
+                    if supplement_series_subject
+                    else "series_name_match"
+                )
+            )
             signals.append(
                 EvidenceSignal(
-                    (
-                        "supplement_series_subject"
-                        if supplement_series_subject
-                        else "series_name_match"
-                    ),
+                    signal_code,
                     (
                         EvidenceStrength.STRONG
-                        if supplement_series_subject
+                        if supplement_series_subject or supplement_appendix_subject
                         else EvidenceStrength.SUPPORTING
                     ),
-                    series_location,
+                    (
+                        EvidenceLocation.CLASS_TABLE
+                        if supplement_appendix_subject
+                        else series_location
+                    ),
                     f"document contains SEC series name {expected_series_name!r}",
                 )
             )
-            if supplement_series_subject:
+            if supplement_series_subject or supplement_appendix_subject:
                 strong_document_identity = True
         elif expected_series_name:
-            missing.append(
-                f"document does not contain SEC series name {expected_series_name!r}"
+            if supplement_appendix_subject:
+                signals.append(
+                    EvidenceSignal(
+                        "supplement_appendix_subject",
+                        EvidenceStrength.STRONG,
+                        EvidenceLocation.CLASS_TABLE,
+                        f"Appendix A contains requested ticker {ticker}",
+                    )
+                )
+                strong_document_identity = True
+            else:
+                missing.append(
+                    f"document does not contain SEC series name {expected_series_name!r}"
+                )
+        elif supplement_appendix_subject:
+            signals.append(
+                EvidenceSignal(
+                    "supplement_appendix_subject",
+                    EvidenceStrength.STRONG,
+                    EvidenceLocation.CLASS_TABLE,
+                    f"Appendix A contains requested ticker {ticker}",
+                )
             )
+            strong_document_identity = True
 
         class_name_paired = bool(
             expected_class_name
@@ -532,6 +858,26 @@ class ShadowEvidencePolicy:
                     f"document uses exclusionary language near ticker {ticker}"
                 )
                 break
+
+        closed_fund_scope = (
+            _closed_fund_scope_region(text) if supplement_signal else None
+        )
+        if closed_fund_scope:
+            signals.append(
+                EvidenceSignal(
+                    "closed_fund_scope_list",
+                    EvidenceStrength.SUPPORTING,
+                    EvidenceLocation.FRONT_MATTER,
+                    "document declares an exhaustive list of covered funds",
+                )
+            )
+            if not _contains_identifier(
+                closed_fund_scope, ticker
+            ) and not _contains_name(closed_fund_scope, expected_series_name):
+                contradictions.append(
+                    "document's exhaustive covered-fund list excludes requested "
+                    f"ticker {ticker} and SEC series {expected_series_name!r}"
+                )
 
         registrant_name_in_front = _contains_name(front, metadata.registrant_name)
         registrant_name_in_heading = _contains_name(
@@ -578,17 +924,6 @@ class ShadowEvidencePolicy:
             )
             strong_document_identity = True
 
-        sections = _section_matches(lower)
-        sai_position = kind_region.find("statement of additional information")
-        complete_prospectus_positions = [
-            kind_region.find(signal)
-            for signal in (
-                "summary prospectus",
-                "statutory prospectus",
-                "prospectus dated",
-            )
-            if kind_region.find(signal) >= 0
-        ]
         xbrl_document_types = parser.xbrl_facts.get("dei:documenttype", [])
         normalized_form = declared_form.strip().upper() if declared_form else ""
         if normalized_form:
@@ -618,33 +953,40 @@ class ShadowEvidencePolicy:
                     f"HTML title identifies prospectus content: {parser.title!r}",
                 )
             )
+        profile_signals = (
+            (
+                content_profile.contains_summary_prospectus,
+                "contains_summary_prospectus",
+                "document contains complete summary-prospectus structure",
+            ),
+            (
+                content_profile.contains_statutory_prospectus,
+                "contains_statutory_prospectus",
+                "document contains complete statutory-prospectus structure",
+            ),
+            (
+                content_profile.contains_sai,
+                "contains_sai",
+                "document contains substantive SAI material",
+            ),
+            (
+                content_profile.is_supplement,
+                "is_top_level_supplement",
+                "document presents itself as a top-level supplement",
+            ),
+        )
+        for present, code, detail in profile_signals:
+            if present:
+                signals.append(
+                    EvidenceSignal(
+                        code,
+                        EvidenceStrength.SUPPORTING,
+                        EvidenceLocation.HEADING,
+                        detail,
+                    )
+                )
 
-        if supplement_signal:
-            kind = DocumentKind.SUPPLEMENT
-        elif sai_position >= 0 and (
-            not complete_prospectus_positions
-            or sai_position < min(complete_prospectus_positions)
-        ):
-            kind = DocumentKind.STATEMENT_OF_ADDITIONAL_INFORMATION
-        elif "summary prospectus" in kind_region and len(sections) >= 2:
-            kind = DocumentKind.SUMMARY_PROSPECTUS
-        elif (
-            "statutory prospectus" in kind_region or "prospectus dated" in kind_region
-            or any(signal in lower[:10_000] for signal in _REGISTRATION_SIGNALS)
-            or "prospectus" in title_lower
-            or (
-                "prospectus" in lower[:10_000]
-                and len(sections) >= 4
-            )
-        ) and len(sections) >= 2:
-            kind = DocumentKind.STATUTORY_PROSPECTUS
-        else:
-            kind = DocumentKind.UNKNOWN
-
-        complete_kind = kind in {
-            DocumentKind.SUMMARY_PROSPECTUS,
-            DocumentKind.STATUTORY_PROSPECTUS,
-        }
+        complete_kind = content_profile.contains_complete_prospectus
         if (
             not class_id
             and not series_id
@@ -678,6 +1020,7 @@ class ShadowEvidencePolicy:
                 "metadata_ticker_match",
                 "series_name_match",
                 "supplement_series_subject",
+                "supplement_appendix_subject",
                 "supplement_universal_registrant_scope",
                 "class_name_paired_with_ticker",
                 "registrant_name_match",
@@ -697,19 +1040,44 @@ class ShadowEvidencePolicy:
             if not compatible_identity:
                 missing.append("no independent compatible identity signal")
 
+        signal_codes = {signal.code for signal in signals}
+        matched_series = _matched_series_ids(metadata, text)
+        appendix_multi_fund_scope = bool(
+            supplement_signal
+            and re.search(
+                r"\bfunds?\s+listed\s+in\s+appendix\s+a\b",
+                lower[:30_000],
+            )
+        )
+        if "supplement_universal_registrant_scope" in signal_codes:
+            document_scope = DocumentScope.REGISTRANT_WIDE
+        elif (
+            len(matched_series) > 1
+            or closed_fund_scope
+            or appendix_multi_fund_scope
+        ):
+            document_scope = DocumentScope.MULTI_FUND
+        elif len(matched_series) == 1:
+            document_scope = DocumentScope.TICKER_SPECIFIC
+        elif relevance is RelevanceLabel.POSITIVE and strong_document_identity:
+            document_scope = DocumentScope.TICKER_SPECIFIC
+        else:
+            document_scope = DocumentScope.UNKNOWN
+
         if relevance is RelevanceLabel.NEGATIVE:
             automatic_use = AutomaticUseLabel.DISALLOWED
         elif relevance is RelevanceLabel.AMBIGUOUS:
             automatic_use = AutomaticUseLabel.REVIEW
-        elif kind in {
-            DocumentKind.SUPPLEMENT,
-            DocumentKind.STATEMENT_OF_ADDITIONAL_INFORMATION,
-        }:
+        elif content_profile.is_supplement or (
+            content_profile.contains_sai
+            and not content_profile.contains_complete_prospectus
+        ):
             automatic_use = AutomaticUseLabel.DISALLOWED
-        elif relevance is RelevanceLabel.POSITIVE and kind in {
-            DocumentKind.SUMMARY_PROSPECTUS,
-            DocumentKind.STATUTORY_PROSPECTUS,
-        }:
+        elif (
+            relevance is RelevanceLabel.POSITIVE
+            and content_profile.contains_complete_prospectus
+            and document_scope is not DocumentScope.UNKNOWN
+        ):
             automatic_use = AutomaticUseLabel.ALLOWED
         else:
             automatic_use = AutomaticUseLabel.REVIEW
@@ -718,6 +1086,8 @@ class ShadowEvidencePolicy:
             policy_version=POLICY_VERSION,
             relevance=relevance,
             document_kind=kind,
+            document_scope=document_scope,
+            content_profile=content_profile,
             automatic_use=automatic_use,
             signals=signals,
             missing_evidence=list(dict.fromkeys(missing)),

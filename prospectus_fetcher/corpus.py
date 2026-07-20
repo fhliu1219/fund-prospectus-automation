@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlsplit
 
-from .models import DocumentKind
+from .models import DocumentKind, DocumentScope
 from .sec_client import SECClient
 
 
@@ -44,6 +44,16 @@ class CorpusLabels:
     relevance: RelevanceLabel
     document_kind: DocumentKind
     automatic_use: AutomaticUseLabel
+    document_scope: Optional[DocumentScope] = None
+    content_profile: Optional["CorpusContentProfile"] = None
+
+
+@dataclass(frozen=True)
+class CorpusContentProfile:
+    contains_summary_prospectus: bool
+    contains_statutory_prospectus: bool
+    contains_sai: bool
+    is_supplement: bool
 
 
 @dataclass(frozen=True)
@@ -134,8 +144,8 @@ def parse_manifest(payload: Any) -> CorpusManifest:
     if not isinstance(payload, dict):
         raise CorpusSchemaError("$: expected object")
     schema_version = _required(payload, "schema_version", "$")
-    if schema_version != 1:
-        raise CorpusSchemaError("$.schema_version: expected 1")
+    if schema_version not in {1, 2}:
+        raise CorpusSchemaError("$.schema_version: expected 1 or 2")
     corpus_version = _text(_required(payload, "corpus_version", "$"), "$.corpus_version")
     target = _required(payload, "target_case_count", "$")
     if not isinstance(target, int) or target <= 0:
@@ -250,6 +260,51 @@ def parse_manifest(payload: Any) -> CorpusManifest:
         reason_value = _required(value, "reason", path)
         if not isinstance(labels_value, dict) or not isinstance(reason_value, dict):
             raise CorpusSchemaError(f"{path}: labels and reason must be objects")
+        content_profile_value = labels_value.get("content_profile")
+        document_scope_value = labels_value.get("document_scope")
+        if schema_version == 2:
+            if not isinstance(content_profile_value, dict):
+                raise CorpusSchemaError(
+                    f"{path}.labels.content_profile: expected object"
+                )
+            if document_scope_value is None:
+                raise CorpusSchemaError(
+                    f"{path}.labels.document_scope: missing required field"
+                )
+        elif content_profile_value is not None or document_scope_value is not None:
+            raise CorpusSchemaError(
+                f"{path}.labels: content_profile and document_scope require "
+                "schema_version 2"
+            )
+
+        content_profile = None
+        if content_profile_value is not None:
+            profile_fields = (
+                "contains_summary_prospectus",
+                "contains_statutory_prospectus",
+                "contains_sai",
+                "is_supplement",
+            )
+            values = {}
+            for name in profile_fields:
+                profile_value = _required(
+                    content_profile_value,
+                    name,
+                    f"{path}.labels.content_profile",
+                )
+                if not isinstance(profile_value, bool):
+                    raise CorpusSchemaError(
+                        f"{path}.labels.content_profile.{name}: expected boolean"
+                    )
+                values[name] = profile_value
+            unexpected = set(content_profile_value).difference(profile_fields)
+            if unexpected:
+                raise CorpusSchemaError(
+                    f"{path}.labels.content_profile: unexpected fields "
+                    + ", ".join(sorted(unexpected))
+                )
+            content_profile = CorpusContentProfile(**values)
+
         labels = CorpusLabels(
             relevance=_enum(
                 RelevanceLabel,
@@ -266,6 +321,16 @@ def parse_manifest(payload: Any) -> CorpusManifest:
                 _required(labels_value, "automatic_use", f"{path}.labels"),
                 f"{path}.labels.automatic_use",
             ),
+            document_scope=(
+                _enum(
+                    DocumentScope,
+                    document_scope_value,
+                    f"{path}.labels.document_scope",
+                )
+                if document_scope_value is not None
+                else None
+            ),
+            content_profile=content_profile,
         )
         reason = LabelReason(
             summary=_text(
@@ -320,6 +385,58 @@ def parse_manifest(payload: Any) -> CorpusManifest:
             raise CorpusSchemaError(
                 f"{path}.labels: ambiguous relevance requires review"
             )
+        if labels.content_profile is not None:
+            profile = labels.content_profile
+            complete_profile = (
+                profile.contains_summary_prospectus
+                or profile.contains_statutory_prospectus
+            )
+            profile_kind_requirements = {
+                DocumentKind.SUMMARY_PROSPECTUS: profile.contains_summary_prospectus,
+                DocumentKind.STATUTORY_PROSPECTUS: (
+                    profile.contains_statutory_prospectus
+                ),
+                DocumentKind.SUPPLEMENT: profile.is_supplement,
+                DocumentKind.STATEMENT_OF_ADDITIONAL_INFORMATION: (
+                    profile.contains_sai and not complete_profile
+                ),
+                DocumentKind.UNKNOWN: not (
+                    complete_profile or profile.contains_sai or profile.is_supplement
+                ),
+            }
+            if (
+                labels.document_kind is DocumentKind.COMBINED_PROSPECTUS_PACKAGE
+                and (
+                    not complete_profile
+                    or sum(
+                        (
+                            profile.contains_summary_prospectus,
+                            profile.contains_statutory_prospectus,
+                            profile.contains_sai,
+                        )
+                    )
+                    < 2
+                    or profile.is_supplement
+                )
+            ):
+                raise CorpusSchemaError(
+                    f"{path}.labels: combined package requires at least two "
+                    "non-supplement content characteristics including a prospectus"
+                )
+            if (
+                labels.document_kind in profile_kind_requirements
+                and not profile_kind_requirements[labels.document_kind]
+            ):
+                raise CorpusSchemaError(
+                    f"{path}.labels: document_kind conflicts with content_profile"
+                )
+            if labels.automatic_use is AutomaticUseLabel.ALLOWED and (
+                not complete_profile or profile.is_supplement
+            ):
+                raise CorpusSchemaError(
+                    f"{path}.labels: allowed use requires complete non-supplement "
+                    "prospectus content"
+                )
 
         cases.append(
             CorpusCase(
