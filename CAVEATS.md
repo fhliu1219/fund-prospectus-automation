@@ -1163,6 +1163,134 @@ defined representative sample.
 
 ---
 
+## Milestone 6.3: Coverage Generalization
+
+**Status:** complete; V7 is available only through explicit staged activation
+
+**Goal:** Generalize the V6 coverage fixes, measure them once on fresh V7 data,
+and make an explicit activation decision before beginning persistent review
+operations.
+
+### Caveats register
+
+#### M6.3-C001: V6 disagreements are development data
+
+- **Status:** preserved
+- **Risk:** Rules designed from V6 misses can appear successful when rerun on
+  those same documents without generalizing to new layouts.
+- **Current mitigation:** V6 is diagnostic only for V7 development. Activation
+  evidence must come from new accession- and checksum-disjoint corpora whose
+  labels are frozen before the first V7 evaluation.
+- **Completion evidence:** V7 was evaluated once on 80 newly frozen cases with
+  no accession, URL, or document-checksum overlap against prior corpora. No V7
+  rule was changed after the first reports.
+
+#### M6.3-C002: Complete-document structure varies across filing generations
+
+- **Status:** mitigated, not universally eliminated
+- **Risk:** Modern HTML, untagged legacy text, prospectus/proxy statements, and
+  files with an appended SAI use different headings and document boundaries.
+  Literal title matching can miss complete documents.
+- **Current mitigation:** Require a prospectus cover marker plus a cluster of
+  substantive sections, and require declaration-style SAI evidence before
+  treating a later SAI reference as appended content.
+- **Completion evidence:** Complete-document recall reached 100% on the fresh
+  challenge and 97.5% on the fresh representative sample without a false
+  approval or automatic disallowance of a valid complete document.
+
+#### M6.3-C003: Class-cover omission is safe only for a closed roster
+
+- **Status:** enforced rule boundary
+- **Risk:** Absence of a ticker from arbitrary document text is not evidence of
+  exclusion. Treating it as one could reject a valid multi-class filing.
+- **Current mitigation:** Use omission only when a summary-prospectus cover for
+  the exact SEC series lists one or more known sibling class tickers and no
+  cover segment names the requested ticker.
+- **Completion evidence:** All five fresh same-registrant class-mismatch
+  controls were rejected, and both V7 corpora had zero false automatic
+  approvals.
+
+#### M6.3-C004: Accepted-form expansion remains unresolved
+
+- **Status:** deferred to Milestone 8
+- **Risk:** GLD, SLV, USO, UNG, UUP, and similar CIK-resolved instruments may
+  not file any of the five currently accepted prospectus forms.
+- **Current mitigation:** Continue failing closed. Milestone 6.3 must not call
+  another form a prospectus merely to increase coverage.
+- **Exit condition:** Milestone 8 defines the supported instrument/form matrix
+  with effective-dated identity evidence.
+
+#### M6.3-C005: V7 adds filing-identity metadata to the live dependency path
+
+- **Status:** open operational dependency; handed to Milestone 7
+- **Risk:** V7 needs the SEC filing submission header, or the filing-detail
+  fallback for older filings. A transient endpoint failure can prevent an
+  otherwise valid document from being automatically verified.
+- **Current mitigation:** Metadata is cached by accession for the CLI run.
+  Missing or unparseable identity evidence fails closed to
+  `manual_review_required`; it never falls back to a legacy automatic approval.
+- **Exit condition:** Milestone 7 persists immutable identity artifacts and
+  supports resumable retry before human review.
+
+### Assumptions register
+
+#### M6.3-A001: Structural evidence should be provider-independent
+
+Complete-document detection may use SEC form metadata, cover declarations,
+substantive section clusters, and document boundaries. It must not contain
+provider names, requested tickers, or accession-specific exceptions.
+
+#### M6.3-A002: Common legal-name abbreviations are equivalent
+
+For cover matching, legal-name tokens such as `Co`/`Company`,
+`Corp`/`Corporation`, and `Inc`/`Incorporated` are treated as equivalent.
+Identifier contradictions still take priority over name agreement.
+
+### Decisions register
+
+#### M6.3-D001: Preserve the V6 activation gates
+
+- **Status:** approved
+- **Decision:** V7 must produce zero false automatic approvals, zero valid
+  complete documents automatically disallowed, at least 95% valid-complete
+  recall, and at most 10% review on a representative sample.
+
+#### M6.3-D002: Require staged activation
+
+- **Status:** approved
+- **Decision:** Passing V7 may enable a feature-flagged control path with
+  rollback. It does not justify deleting the current validator or its reports.
+
+#### M6.3-D003: Activate V7 only by explicit policy selection
+
+- **Status:** implemented
+- **Decision:** `--validation-policy v7` (or
+  `PROSPECTUS_VALIDATION_POLICY=v7`) enables the evaluated policy.
+  `--validation-policy legacy` remains the default and rollback. Each output
+  manifest records the policy and exact policy version.
+
+#### M6.3-D004: Fail closed when V7 identity evidence is unavailable
+
+- **Status:** implemented
+- **Decision:** A technical failure while retrieving or parsing filing identity
+  metadata downgrades the document to manual review. It does not silently reuse
+  the legacy validator's automatic approval.
+
+### Verification at completion
+
+- Frozen V7 challenge: 30 cases, five negative controls, 14/14 complete
+  documents automatically allowed, zero false approvals, 10% review.
+- Frozen V7 representative: 50 cases, 39/40 complete documents automatically
+  allowed, zero false approvals, 4% review.
+- Cross-corpus integrity: 80 unique V7 accessions, URLs, and document checksums;
+  zero overlap with all five prior corpora.
+- Deterministic suite: 159 passed, with the one opt-in live test skipped.
+- Live staged-policy smoke test: VUSXX, QQQ, and SPY all produced verified V7
+  packages; QQQ included a review-required supplement and a verified
+  date-linked base.
+
+---
+
 ## Future milestone template
 
 For each new milestone, add:

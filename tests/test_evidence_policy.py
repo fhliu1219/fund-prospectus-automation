@@ -546,6 +546,197 @@ def test_non_exhaustive_fund_mentions_do_not_prove_exclusion():
     assert result.automatic_use is AutomaticUseLabel.REVIEW
 
 
+def test_supplement_detection_uses_bounded_cover_not_first_section_split():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>Portfolio Manager Changes</h1>"
+            "<p>Example Treasury Fund Supplement dated July 1, 2026 "
+            "to the Prospectus and Summary Prospectus.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.document_kind is DocumentKind.SUPPLEMENT
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+
+
+def test_497k_fund_summary_heading_can_establish_complete_summary():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<p>Example Treasury Fund (EXMXX) Fund Summary</p>"
+            "<p>Before you invest, review the Fund's prospectus.</p>"
+            "<h2>Investment Goal</h2><h2>Fee Table</h2>"
+            "<h2>Principal Investment Strategies</h2>"
+            "<h2>Risks of Investing</h2>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+        declared_form="497K",
+    )
+
+    assert result.document_kind is DocumentKind.SUMMARY_PROSPECTUS
+    assert result.automatic_use is AutomaticUseLabel.ALLOWED
+
+
+def test_untagged_appended_sai_is_detected_as_combined_content():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<p>Prospectus</p><p>Example Treasury Fund EXMXX</p>"
+            "<p>Investment Objective</p><p>Fees and Expenses</p>"
+            "<p>Principal Investment Strategies</p><p>Risk Factors</p>"
+            "<p>Statement of Additional Information</p>"
+            "<p>This Statement of Additional Information is not a prospectus "
+            "and should be read in conjunction with it.</p>"
+            "<p>Investment Restrictions</p><p>Portfolio Transactions</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+        declared_form="497",
+    )
+
+    assert result.document_kind is DocumentKind.COMBINED_PROSPECTUS_PACKAGE
+    assert result.content_profile.contains_statutory_prospectus
+    assert result.content_profile.contains_sai
+    assert result.automatic_use is AutomaticUseLabel.ALLOWED
+
+
+def test_top_level_sai_reference_does_not_become_statutory_prospectus():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<p>Statement of Additional Information</p>"
+            "<p>This Statement of Additional Information is not a prospectus "
+            "and should be read with the Fund's prospectus.</p>"
+            "<p>Example Treasury Fund EXMXX</p>"
+            "<p>Investment Objective</p><p>Fees and Expenses</p>"
+            "<p>Principal Investment Strategies</p><p>Risk Factors</p>"
+            "<p>Investment Restrictions</p><p>Portfolio Transactions</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+        declared_form="497",
+    )
+
+    assert (
+        result.document_kind
+        is DocumentKind.STATEMENT_OF_ADDITIONAL_INFORMATION
+    )
+    assert not result.content_profile.contains_statutory_prospectus
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+
+
+def test_requested_ticker_on_one_of_several_class_covers_is_strong():
+    content = html(
+        "<p>Example Treasury Fund Class /Ticker Institutional /OTHER</p>"
+        "<p>Summary Prospectus</p><p>Before you invest, review the prospectus.</p>"
+        "<p>Example Treasury Fund Class /Ticker Investor /EXMXX</p>"
+        "<p>Summary Prospectus</p><p>Before you invest, review the prospectus.</p>"
+        "<p>Investment Objective</p><p>Fees and Expenses</p>"
+    )
+
+    result = ShadowEvidencePolicy().evaluate(
+        content,
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert any(
+        signal.code == "ticker_in_prospectus_class_cover"
+        for signal in result.signals
+    )
+
+
+def test_exact_series_cover_roster_can_exclude_requested_class():
+    filing_metadata = parse_filing_identity_header(
+        """
+        <!--
+        <ACCESSION-NUMBER>0000000001-26-000001
+        <CONFORMED-NAME>EXAMPLE TRUST
+        <SERIES>
+        <OWNER-CIK>0000000001
+        <SERIES-ID>S000000001
+        <SERIES-NAME>Example Treasury Fund
+        <CLASS-CONTRACT>
+        <CLASS-CONTRACT-ID>C000000001
+        <CLASS-CONTRACT-NAME>Investor Shares
+        <CLASS-CONTRACT-TICKER-SYMBOL>EXMXX
+        </CLASS-CONTRACT>
+        <CLASS-CONTRACT>
+        <CLASS-CONTRACT-ID>C000000002
+        <CLASS-CONTRACT-NAME>Institutional Shares
+        <CLASS-CONTRACT-TICKER-SYMBOL>OTHER
+        </CLASS-CONTRACT>
+        </SERIES>
+        -->
+        """
+    )
+    content = html(
+        "<p>Example Treasury Fund Institutional Shares: OTHER</p>"
+        "<p>Summary Prospectus</p><p>Before you invest, review the prospectus.</p>"
+        "<p>Investment Objective</p><p>Fees and Expenses</p>"
+    )
+
+    result = ShadowEvidencePolicy().evaluate(
+        content,
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        filing_metadata,
+    )
+
+    assert result.relevance is RelevanceLabel.NEGATIVE
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+    assert any("lists sibling classes" in item for item in result.contradictions)
+
+
+def test_legal_name_abbreviation_supports_universal_supplement_scope():
+    filing_metadata = parse_filing_identity_header(
+        """
+        <!--
+        <ACCESSION-NUMBER>0000000001-26-000001
+        <CONFORMED-NAME>EXAMPLE CO I
+        <SERIES>
+        <OWNER-CIK>0000000001
+        <SERIES-ID>S000000001
+        <SERIES-NAME>Example Treasury Fund
+        <CLASS-CONTRACT>
+        <CLASS-CONTRACT-ID>C000000001
+        <CLASS-CONTRACT-NAME>Investor Shares
+        <CLASS-CONTRACT-TICKER-SYMBOL>EXMXX
+        </CLASS-CONTRACT>
+        </SERIES>
+        -->
+        """
+    )
+
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<p>Example Company I, and each series thereof</p>"
+            "<p>Supplement dated July 1, 2026 to each Fund's prospectus.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        filing_metadata,
+    )
+
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert result.document_scope is DocumentScope.REGISTRANT_WIDE
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+
+
 def _qualified_for_scope(scope):
     evaluation = ShadowEvidencePolicy().evaluate(
         complete("<h1>Example Treasury Fund EXMXX</h1>"),

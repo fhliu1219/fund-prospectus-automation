@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "corpus_version": "m6.3-v7-representative-2026-07-20",
+  "collection_date": "2026-07-20",
+  "policy_blind_collection": true,
+  "prior_corpora_excluded": [
+    "corpus/manifest.json",
+    "corpus/holdout_manifest.json",
+    "corpus/v5_followup_manifest.json",
+    "corpus/v6_challenge_manifest.json",
+    "corpus/v6_representative_manifest.json"
+  ],
+  "overlap_keys": [
+    "accession",
+    "document_url",
+    "document_sha256"
+  ],
+  "target": {
+    "total": 50,
+    "mutual_fund": 45,
+    "cik_only": 5
+  },
+  "mutual_fund_sampling": {
+    "source": "SEC company_tickers_mf.json",
+    "seed": 6303,
+    "method": "Sort unique symbols, shuffle with Python random.Random(seed), then accept the first 45 resolvable latest selections that do not overlap a prior corpus.",
+    "accepted_tickers": [
+      "TEUGX",
+      "TLMAX",
+      "MCNCX",
+      "SNDPX",
+      "GPHXX",
+      "FLMVX",
+      "HCVIX",
+      "PHJUX",
+      "FBFZX",
+      "DPIAX",
+      "HNCRX",
+      "BBNTX",
+      "MSFX",
+      "SIHAX",
+      "SRPU",
+      "REGEX",
+      "MIDSX",
+      "VRAI",
+      "VGIRX",
+      "ITHTX",
+      "MINDX",
+      "OAKLX",
+      "MDAVX",
+      "FDEWX",
+      "VNSNX",
+      "FLARX",
+      "BXFCX",
+      "BNTXX",
+      "TBLDX",
+      "TOTXX",
+      "TIHIX",
+      "UBOT",
+      "RGVBX",
+      "ABYEX",
+      "FIQFX",
+      "PNORX",
+      "PIFPX",
+      "ESFHX",
+      "PMLCX",
+      "FIJQX",
+      "JPME",
+      "GQQQ",
+      "DUSB",
+      "JDURX",
+      "PATN"
+    ]
+  },
+  "cik_only_sampling": {
+    "source": "SEC ticker.txt",
+    "method": "Use the ordered CIK-only control list and accept the first five resolvable selections that do not overlap a prior corpus.",
+    "ordered_attempts": [
+      {
+        "ticker": "ERH",
+        "outcome": "collected"
+      },
+      {
+        "ticker": "IFN",
+        "outcome": "collected"
+      },
+      {
+        "ticker": "FAX",
+        "outcome": "collected"
+      },
+      {
+        "ticker": "GAB",
+        "outcome": "collected"
+      },
+      {
+        "ticker": "USA",
+        "outcome": "collected"
+      }
+    ],
+    "accepted_tickers": [
+      "ERH",
+      "IFN",
+      "FAX",
+      "GAB",
+      "USA"
+    ]
+  },
+  "label_freeze": {
+    "manifest": "corpus/v7_representative_manifest.json",
+    "occurred_before_first_policy_evaluation": true,
+    "first_report": "corpus/reports/v7-representative-first-run.json"
+  }
+}

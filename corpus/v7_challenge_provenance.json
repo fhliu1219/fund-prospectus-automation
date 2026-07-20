@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "corpus_version": "m6.3-v7-challenge-2026-07-20",
+  "collection_date": "2026-07-20",
+  "policy_blind_collection": true,
+  "prior_corpora_excluded": [
+    "corpus/manifest.json",
+    "corpus/holdout_manifest.json",
+    "corpus/v5_followup_manifest.json",
+    "corpus/v6_challenge_manifest.json",
+    "corpus/v6_representative_manifest.json"
+  ],
+  "overlap_keys": [
+    "accession",
+    "document_url",
+    "document_sha256"
+  ],
+  "target": {
+    "total": 30,
+    "tickers": 10,
+    "documents_per_ticker": 3,
+    "negative_controls": 5
+  },
+  "sampling": {
+    "method": "For each preselected challenge ticker, collect three distinct related prospectus-form documents returned by the existing retrieval pipeline, excluding every accession, URL, or checksum in prior corpora.",
+    "tickers": [
+      "VTIAX",
+      "VWELX",
+      "FSKAX",
+      "FXNAX",
+      "SWISX",
+      "SWAGX",
+      "IJR",
+      "AGG",
+      "AGTHX",
+      "NEWFX"
+    ],
+    "negative_control_method": "Retarget five complete summary documents to a different same-registrant class that the filing header and document do not cover."
+  },
+  "label_freeze": {
+    "manifest": "corpus/v7_challenge_manifest.json",
+    "occurred_before_first_policy_evaluation": true,
+    "first_report": "corpus/reports/v7-challenge-first-run.json"
+  }
+}

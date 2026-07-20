@@ -18,7 +18,11 @@ from . import config
 from .downloader import Downloader
 from .edgar import EdgarClient
 from .models import DocumentVerification, FetchResult
-from .package import DocumentPackageBuilder
+from .package import (
+    LEGACY_VALIDATION_POLICY,
+    VALIDATION_POLICIES,
+    DocumentPackageBuilder,
+)
 from .resolver import Resolver
 from .sec_client import SECClient
 
@@ -35,10 +39,24 @@ EXIT_USAGE_ERROR = 2
 EXIT_REVIEW_REQUIRED = 3
 
 
+def _validation_policy(value: str) -> str:
+    normalized = value.strip().lower()
+    if normalized not in VALIDATION_POLICIES:
+        raise argparse.ArgumentTypeError(
+            f"expected one of {', '.join(VALIDATION_POLICIES)}"
+        )
+    return normalized
+
+
 class ProspectusFetcher:
     """High-level pipeline: resolve -> find filing -> download (-> optional PDF)."""
 
-    def __init__(self, output_dir: str = config.DEFAULT_OUTPUT_DIR, want_pdf: bool = False) -> None:
+    def __init__(
+        self,
+        output_dir: str = config.DEFAULT_OUTPUT_DIR,
+        want_pdf: bool = False,
+        validation_policy: str = LEGACY_VALIDATION_POLICY,
+    ) -> None:
         self.client = SECClient()
         self.resolver = Resolver(self.client)
         self.edgar = EdgarClient(self.client, self.resolver)
@@ -47,6 +65,7 @@ class ProspectusFetcher:
         self.package_builder = DocumentPackageBuilder(
             self.edgar,
             self.downloader,
+            validation_policy=validation_policy,
             want_pdf=want_pdf,
         )
 
@@ -148,6 +167,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output", default=config.DEFAULT_OUTPUT_DIR, help="Output directory (default: output/)")
     parser.add_argument("--pdf", action="store_true", help="Also write a PDF copy (best-effort)")
     parser.add_argument("--verbose", action="store_true", help="Verbose (DEBUG) console logging")
+    parser.add_argument(
+        "--validation-policy",
+        type=_validation_policy,
+        choices=VALIDATION_POLICIES,
+        default=os.environ.get(
+            "PROSPECTUS_VALIDATION_POLICY",
+            LEGACY_VALIDATION_POLICY,
+        ),
+        help=(
+            "Document validation policy (default: legacy; set v7 for the "
+            "feature-flagged evidence policy)"
+        ),
+    )
     return parser
 
 
@@ -161,7 +193,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         return EXIT_USAGE_ERROR
 
     logger.info("Fetching prospectuses for: %s", ", ".join(tickers))
-    fetcher = ProspectusFetcher(output_dir=args.output, want_pdf=args.pdf)
+    fetcher = ProspectusFetcher(
+        output_dir=args.output,
+        want_pdf=args.pdf,
+        validation_policy=args.validation_policy,
+    )
     results = fetcher.fetch_many(tickers, progress=True)
 
     table = format_summary(results)

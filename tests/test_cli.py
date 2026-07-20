@@ -3,6 +3,7 @@
 import logging
 from unittest.mock import Mock
 
+import pytest
 import responses
 
 from prospectus_fetcher import config
@@ -12,6 +13,7 @@ from prospectus_fetcher.cli import (
     EXIT_SUCCESS,
     EXIT_USAGE_ERROR,
     ProspectusFetcher,
+    build_parser,
     format_summary,
     main,
     parse_tickers,
@@ -34,6 +36,26 @@ def test_parse_tickers_from_batch_file(tmp_path):
     f = tmp_path / "tickers.txt"
     f.write_text("VTSAX\nVMFXX, SWPPX  # a comment\n\n")
     assert parse_tickers([], str(f)) == ["VTSAX", "VMFXX", "SWPPX"]
+
+
+def test_validation_policy_flag_is_explicit_and_defaults_to_legacy(monkeypatch):
+    monkeypatch.delenv("PROSPECTUS_VALIDATION_POLICY", raising=False)
+
+    assert build_parser().parse_args(["VUSXX"]).validation_policy == "legacy"
+    assert (
+        build_parser().parse_args(["VUSXX", "--validation-policy", "v7"])
+        .validation_policy
+        == "v7"
+    )
+
+
+def test_invalid_validation_policy_environment_is_a_usage_error(monkeypatch):
+    monkeypatch.setenv("PROSPECTUS_VALIDATION_POLICY", "invalid")
+
+    with pytest.raises(SystemExit) as exc:
+        build_parser().parse_args(["VUSXX"])
+
+    assert exc.value.code == EXIT_USAGE_ERROR
 
 
 def test_format_summary_shows_columns_and_statuses():

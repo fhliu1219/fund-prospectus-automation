@@ -29,6 +29,15 @@ method and unsupported attempts are recorded in
 `v6_representative_provenance.json`. Both v6 manifests are disjoint from all
 earlier corpora and from each other by accession and document checksum.
 
+`v7_challenge_manifest.json` contains 30 new cases spanning complete summaries,
+combined prospectus/SAI packages, supplements, and five deliberate
+same-registrant class mismatches. `v7_representative_manifest.json` contains 45
+new deterministic mutual-fund selections and five supported CIK-only
+selections. Their collection contracts are recorded in the corresponding
+`v7_*_provenance.json` files. Both were labeled before the first V7 evaluation
+and are disjoint from every prior corpus and each other by accession, document
+URL, and document checksum.
+
 ## Labels
 
 - `relevance`: `positive`, `negative`, or `ambiguous` ticker/class coverage.
@@ -75,6 +84,14 @@ python -m prospectus_fetcher.corpus_cli all \
 python -m prospectus_fetcher.corpus_cli all \
   --manifest corpus/v6_representative_manifest.json \
   --report corpus/reports/v6-representative-evaluation.json
+
+# Reproduce the frozen v7 activation evaluation
+python -m prospectus_fetcher.corpus_cli all \
+  --manifest corpus/v7_challenge_manifest.json \
+  --report corpus/reports/v7-challenge-evaluation.json
+python -m prospectus_fetcher.corpus_cli all \
+  --manifest corpus/v7_representative_manifest.json \
+  --report corpus/reports/v7-representative-evaluation.json
 ```
 
 The cache is written under `corpus/cache/`. The detailed report is written to
@@ -223,3 +240,35 @@ facets or scope, not automatic-use safety.
 These two sets are now consumed. Their disagreements may guide a successor,
 but any changed policy requires a new accession- and checksum-disjoint
 evaluation set before making an activation claim.
+
+## V7 Coverage-Generalization Result
+
+`m6.3-shadow-v7` was developed only from consumed V6 disagreements. It adds
+provider-independent support for `Fund Summary` covers, legacy and registration
+layouts, complete prospectus packages with appended substantive SAI material,
+bounded-cover supplement detection, multi-class prospectus covers, and common
+legal-name abbreviations.
+
+The 30-case V7 challenge contains 14 allowed complete documents and 16
+disallowed supplements or class mismatches. The 50-case representative set
+contains 40 allowed complete documents and 10 disallowed supplements or
+non-prospectus artifacts.
+
+First-run independent measurements:
+
+| Corpus | False approvals | Complete docs disallowed | Complete auto-allow recall | Review rate |
+|---|---:|---:|---:|---:|
+| V7 challenge (30) | 0 | 0 | 14/14 (100%) | 10.0% |
+| V7 representative (50) | 0 | 0 | 39/40 (97.5%) | 4.0% |
+
+All four approved gates passed. The one representative complete document routed
+to review is a historical CIK-only combined package whose content is complete
+but lacks a second independent identity signal. The other representative review
+is a ticker-relevant `497` press release, correctly not approved as a
+prospectus. Three challenge supplements/SAIs remain review because their
+applicability evidence is incomplete; none is automatically approved.
+
+The exact evaluated policy is available through
+`--validation-policy v7`. The legacy validator remains the default and rollback.
+This staged activation does not expand the five accepted filing forms or claim
+universal SEC-layout coverage.

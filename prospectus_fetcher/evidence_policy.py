@@ -1,4 +1,4 @@
-"""Location-aware shadow evidence policy for Milestone 6 evaluation."""
+"""Location-aware evidence policy for evaluation and staged V7 control."""
 
 from __future__ import annotations
 
@@ -13,7 +13,9 @@ from .filing_identity import FilingIdentityMetadata, IdentityMetadataSource
 from .models import DocumentKind, DocumentScope
 
 
-POLICY_VERSION = "m6.2-shadow-v6"
+POLICY_VERSION = "m6.3-shadow-v7"
+
+_COVER_LIMIT = 10_000
 
 _SUPPLEMENT_SIGNALS = (
     "prospectus supplement",
@@ -25,13 +27,26 @@ _SUPPLEMENT_SIGNALS = (
     "read this supplement in conjunction",
 )
 _SECTION_SIGNALS = {
-    "investment objective": ("investment objective",),
-    "fees and expenses": ("fees and expenses",),
+    "investment objective": (
+        "investment objective",
+        "investment goal",
+    ),
+    "fees and expenses": (
+        "fees and expenses",
+        "fee table",
+        "shareholder fees",
+    ),
     "investment strategies": (
         "principal investment strategies",
         "principal investment strategy",
+        "portfolio contents",
     ),
-    "principal risks": ("principal risks", "principal investment risks"),
+    "principal risks": (
+        "principal risks",
+        "principal investment risks",
+        "risk factors",
+        "risks of investing",
+    ),
     "performance": (
         "annual total returns",
         "average annual total returns",
@@ -59,6 +74,13 @@ _INCIDENTAL_RE = re.compile(
     r"\b(?:benchmark|comparison|portfolio holdings?|underlying (?:index|fund|security))\b",
     re.IGNORECASE,
 )
+_DIRECT_TICKER_CONTEXT_RE = re.compile(
+    r"\b(?:class\s*/?\s*ticker|ticker(?:\s+symbol)?\s*[:/]|"
+    r"under\s+(?:the\s+)?(?:following\s+)?(?:symbol|ticker)s?\b|"
+    r"(?:listed|traded|approved\s+for\s+listing).{0,160}"
+    r"\b(?:symbol|ticker)s?\b)",
+    re.IGNORECASE | re.DOTALL,
+)
 _APPLICABILITY_RE = re.compile(
     r"\b(?:all|each)\s+(?:share\s+)?classes\b|\bapplicable to all classes\b",
     re.IGNORECASE,
@@ -81,11 +103,30 @@ _SAI_SUBSTANTIVE_SIGNALS = (
     "investment advisory and other services",
     "control persons and principal holders",
     "portfolio transactions and brokerage",
+    "portfolio transactions",
+    "brokerage allocation",
     "description of the trust",
     "additional purchase and redemption information",
     "distribution and service plans",
+    "investment restrictions",
+    "principal holders of securities",
+    "management of the fund",
+    "management of the funds",
+)
+_SAI_DECLARATION_SIGNALS = (
+    "does not constitute a prospectus",
+    "is not a prospectus",
+    "should be read in conjunction with",
+    "relates to the proposed",
+    "pertains to the",
 )
 _REGISTRATION_FORMS = {"485BPOS", "485APOS", "N-1A"}
+_LEGAL_NAME_ALIASES = {
+    "co": "company",
+    "corp": "corporation",
+    "inc": "incorporated",
+    "ltd": "limited",
+}
 
 
 class EvidenceStrength(str, Enum):
@@ -376,7 +417,8 @@ def _contains_identifier(text: str, identifier: Optional[str]) -> bool:
 
 
 def _normalize_name(value: str) -> str:
-    return " ".join(re.findall(r"[a-z0-9]+", value.lower()))
+    tokens = re.findall(r"[a-z0-9]+", value.lower())
+    return " ".join(_LEGAL_NAME_ALIASES.get(token, token) for token in tokens)
 
 
 def _contains_name(text: str, expected: Optional[str]) -> bool:
@@ -412,6 +454,81 @@ def _contexts(text: str, identifier: str, radius: int = 160) -> List[str]:
     ]
 
 
+def _cover_region(parser: _StructureParser, text: str) -> str:
+    return _normalize_space(
+        " ".join(
+            (
+                parser.title,
+                text[:_COVER_LIMIT],
+                " ".join(parser.headings[:20]),
+            )
+        )
+    )
+
+
+def _summary_cover_segments(
+    text: str,
+    expected_series_name: Optional[str],
+) -> List[str]:
+    segments = []
+    for match in re.finditer(
+        r"\b(?:summary prospectus|fund summary)\b",
+        text,
+        re.IGNORECASE,
+    ):
+        segment = text[max(0, match.start() - 1_500) : match.end() + 2_500]
+        if "before you invest" not in segment.lower():
+            continue
+        if expected_series_name and not _contains_name(
+            segment, expected_series_name
+        ):
+            continue
+        segments.append(segment)
+    return segments
+
+
+def _class_cover_status(
+    text: str,
+    ticker: str,
+    expected_series_name: Optional[str],
+    known_class_tickers: Set[str],
+) -> tuple[bool, bool]:
+    """Return requested-cover match and closed sibling-only cover evidence."""
+    segments = _summary_cover_segments(text, expected_series_name)
+    requested_present = any(
+        _contains_identifier(segment, ticker) for segment in segments
+    )
+    if requested_present:
+        return True, False
+    sibling_present = any(
+        any(
+            sibling != ticker and _contains_identifier(segment, sibling)
+            for sibling in known_class_tickers
+        )
+        for segment in segments
+    )
+    return False, sibling_present
+
+
+def _substantive_sai_start(text: str, heading_text: str) -> Optional[int]:
+    lower = text.lower()
+    heading_has_sai = "statement of additional information" in heading_text.lower()
+    for match in re.finditer(r"\bstatement of additional information\b", lower):
+        declaration = lower[match.start() : match.start() + 2_500]
+        tail = lower[match.start() : match.start() + 200_000]
+        substantive_count = sum(
+            signal in tail for signal in _SAI_SUBSTANTIVE_SIGNALS
+        )
+        declared_section = any(
+            signal in declaration for signal in _SAI_DECLARATION_SIGNALS
+        )
+        if (declared_section and substantive_count >= 1) or (
+            heading_has_sai and substantive_count >= 1
+        ):
+            return match.start()
+    return None
+
+
 def _closed_fund_scope_region(text: str) -> Optional[str]:
     """Return a document-declared exhaustive fund list near the cover."""
     cover = text[:30_000]
@@ -444,23 +561,28 @@ def _appendix_contains_subject(
 def _document_content_profile(
     parser: _StructureParser,
     text: str,
-    kind_region: str,
+    cover_region: str,
     supplement_signal: Optional[str],
     declared_form: Optional[str],
 ) -> DocumentContentProfile:
     lower = text.lower()
     sections = _section_matches(lower)
-    title_and_headings = (parser.title + " " + " ".join(parser.headings)).lower()
-    sai_position = kind_region.find("statement of additional information")
+    heading_text = " ".join(parser.headings)
+    title_and_headings = (parser.title + " " + heading_text).lower()
+    cover_lower = cover_region.lower()
+    sai_position = cover_lower.find("statement of additional information")
     complete_marker_positions = [
-        kind_region.find(marker)
+        cover_lower.find(marker)
         for marker in (
             "summary prospectus",
             "statutory prospectus",
             "prospectus dated",
         )
-        if kind_region.find(marker) >= 0
+        if cover_lower.find(marker) >= 0
     ]
+    generic_prospectus = re.search(r"\bprospectus\b", cover_lower)
+    if generic_prospectus is not None:
+        complete_marker_positions.append(generic_prospectus.start())
     if "prospectus" in parser.title.lower():
         complete_marker_positions.append(0)
     top_level_sai = bool(
@@ -468,24 +590,6 @@ def _document_content_profile(
         and (
             not complete_marker_positions
             or sai_position < min(complete_marker_positions)
-        )
-    )
-    body_sai_position = lower.find("statement of additional information")
-    sai_tail = lower[sai_position : sai_position + 1_000_000] if sai_position >= 0 else ""
-    if body_sai_position >= 0:
-        sai_tail = lower[body_sai_position : body_sai_position + 1_000_000]
-    substantive_sai_count = sum(
-        signal in sai_tail for signal in _SAI_SUBSTANTIVE_SIGNALS
-    )
-    contains_sai = bool(
-        body_sai_position >= 0
-        and (
-            top_level_sai
-            or (
-                "statement of additional information" in title_and_headings
-                and substantive_sai_count >= 1
-            )
-            or substantive_sai_count >= 2
         )
     )
 
@@ -499,33 +603,60 @@ def _document_content_profile(
         base_form in _REGISTRATION_FORMS
         or bool(xbrl_types.intersection(_REGISTRATION_FORMS))
     )
-    explicit_statutory_marker = (
-        "statutory prospectus" in kind_region
-        or "prospectus dated" in kind_region
-        or any(signal in lower[:100_000] for signal in _REGISTRATION_SIGNALS)
-        or (
-            "prospectus" in parser.title.lower()
-            and "summary prospectus" not in kind_region
+    is_supplement = supplement_signal is not None
+    appended_sai_start = _substantive_sai_start(text, heading_text)
+    contains_sai = bool(
+        not is_supplement
+        and (
+            top_level_sai
+            or appended_sai_start is not None
+            or (
+                "statement of additional information" in title_and_headings
+                and lower.find("statement of additional information") >= 0
+            )
         )
     )
 
-    is_supplement = supplement_signal is not None
+    literal_summary_marker = "summary prospectus" in cover_lower
+    fund_summary_marker = (
+        base_form == "497K" and "fund summary" in cover_lower
+    )
     contains_summary = bool(
         not is_supplement
-        and "summary prospectus" in kind_region
-        and len(sections) >= 2
+        and (
+            (literal_summary_marker and len(sections) >= 2)
+            or (fund_summary_marker and len(sections) >= 4)
+        )
+    )
+
+    explicit_statutory_marker = (
+        "statutory prospectus" in cover_lower
+        or "prospectus dated" in cover_lower
+        or any(signal in lower[:100_000] for signal in _REGISTRATION_SIGNALS)
+        or (
+            "prospectus" in parser.title.lower()
+            and not literal_summary_marker
+        )
+    )
+    general_prospectus_cover = bool(
+        re.search(
+            r"\b(?:prospectus/proxy statement|prospectus)\b",
+            cover_lower,
+            re.IGNORECASE,
+        )
     )
     contains_statutory = bool(
         not is_supplement
+        and not top_level_sai
         and not (contains_summary and not registration_form)
-        and len(sections) >= 2
         and (
-            explicit_statutory_marker
+            (explicit_statutory_marker and len(sections) >= 2)
             or (
                 registration_form
                 and len(sections) >= 4
                 and "prospectus" in lower
             )
+            or (general_prospectus_cover and len(sections) >= 4)
         )
     )
     return DocumentContentProfile(
@@ -569,7 +700,7 @@ def _matched_series_ids(
 
 
 class ShadowEvidencePolicy:
-    """Produce a non-controlling structured evidence recommendation."""
+    """Produce the structured recommendation used by evaluation and opt-in V7."""
 
     def evaluate(
         self,
@@ -592,19 +723,20 @@ class ShadowEvidencePolicy:
         front = _front_matter(text)
         heading_text = " ".join(parser.headings)
         title_lower = parser.title.lower()
-        kind_region = (parser.title + " " + front + " " + heading_text).lower()
+        cover = _cover_region(parser, text)
+        cover_lower = cover.lower()
         supplement_signal = next(
             (
                 signal
                 for signal in _SUPPLEMENT_SIGNALS
-                if signal in kind_region
+                if signal in cover_lower
             ),
             None,
         )
         content_profile = _document_content_profile(
             parser,
             text,
-            kind_region,
+            cover,
             supplement_signal,
             declared_form,
         )
@@ -615,6 +747,7 @@ class ShadowEvidencePolicy:
         contradictions: List[str] = []
         expected_series_name: Optional[str] = None
         expected_class_name: Optional[str] = None
+        known_class_tickers: Set[str] = set()
         metadata_label = (
             "SEC filing header"
             if metadata.source is IdentityMetadataSource.SUBMISSION_HEADER
@@ -635,6 +768,11 @@ class ShadowEvidencePolicy:
                 series, class_identity = metadata_match
                 expected_series_name = series.name
                 expected_class_name = class_identity.name
+                known_class_tickers = {
+                    identity.ticker
+                    for identity in series.classes
+                    if identity.ticker
+                }
                 signals.append(
                     EvidenceSignal(
                         "metadata_class_match",
@@ -665,10 +803,31 @@ class ShadowEvidencePolicy:
                         )
                     )
 
-        ticker_rows = [row for row in parser.table_rows if _contains_identifier(row, ticker)]
+        ticker_rows = [
+            row for row in parser.table_rows if _contains_identifier(row, ticker)
+        ]
         class_rows = [
             row for row in parser.table_rows if _contains_identifier(row, class_id)
         ] if class_id else []
+        ticker_on_class_cover, class_cover_excludes = _class_cover_status(
+            text,
+            ticker,
+            expected_series_name,
+            known_class_tickers,
+        )
+        if class_cover_excludes:
+            contradictions.append(
+                "document's summary-prospectus cover lists sibling classes for "
+                f"{expected_series_name!r} but excludes requested ticker {ticker}"
+            )
+        direct_ticker_context = next(
+            (
+                context
+                for context in _contexts(text, ticker, radius=320)
+                if _DIRECT_TICKER_CONTEXT_RE.search(context)
+            ),
+            None,
+        )
         strong_document_identity = False
 
         if class_id and _contains_identifier(text, class_id):
@@ -685,13 +844,39 @@ class ShadowEvidencePolicy:
             )
             strong_document_identity = True
 
-        if ticker_rows:
+        if ticker_on_class_cover:
+            signals.append(
+                EvidenceSignal(
+                    "ticker_in_prospectus_class_cover",
+                    EvidenceStrength.STRONG,
+                    EvidenceLocation.FRONT_MATTER,
+                    (
+                        f"summary-prospectus cover for {expected_series_name!r} "
+                        f"lists ticker {ticker}"
+                    ),
+                )
+            )
+            strong_document_identity = True
+        elif ticker_rows:
             signals.append(
                 EvidenceSignal(
                     "ticker_in_table",
                     EvidenceStrength.STRONG,
                     EvidenceLocation.CLASS_TABLE,
                     f"ticker {ticker} appears in an HTML table row",
+                )
+            )
+            strong_document_identity = True
+        elif direct_ticker_context is not None:
+            signals.append(
+                EvidenceSignal(
+                    "ticker_in_direct_subject_context",
+                    EvidenceStrength.STRONG,
+                    EvidenceLocation.BODY,
+                    (
+                        f"ticker {ticker} appears in an explicit class, ticker, "
+                        "or exchange-listing statement"
+                    ),
                 )
             )
             strong_document_identity = True
@@ -748,7 +933,7 @@ class ShadowEvidencePolicy:
         )
         series_name_in_subject_front = bool(
             expected_series_name
-            and _contains_name(front[:5_000], expected_series_name)
+            and _contains_name(cover[:5_000], expected_series_name)
         )
         supplement_series_subject = bool(
             supplement_signal
@@ -879,7 +1064,9 @@ class ShadowEvidencePolicy:
                     f"ticker {ticker} and SEC series {expected_series_name!r}"
                 )
 
-        registrant_name_in_front = _contains_name(front, metadata.registrant_name)
+        registrant_name_in_front = _contains_name(
+            cover[:5_000], metadata.registrant_name
+        )
         registrant_name_in_heading = _contains_name(
             heading_text, metadata.registrant_name
         )
@@ -902,9 +1089,7 @@ class ShadowEvidencePolicy:
                 )
             )
 
-        universal_scope_region = (
-            parser.title + " " + front[:5_000] + " " + heading_text
-        )
+        universal_scope_region = cover[:5_000]
         if (
             supplement_signal
             and metadata_match is not None

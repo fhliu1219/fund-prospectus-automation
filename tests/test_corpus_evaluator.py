@@ -139,7 +139,7 @@ def test_report_compares_current_and_shadow_policies(tmp_path):
     save_report(report, path)
     with open(path, encoding="utf-8") as handle:
         saved = json.load(handle)
-    assert saved["shadow_policy_version"] == "m6.2-shadow-v6"
+    assert saved["shadow_policy_version"] == "m6.3-shadow-v7"
 
 
 def test_report_v2_measures_scope_and_content_characteristics(tmp_path):

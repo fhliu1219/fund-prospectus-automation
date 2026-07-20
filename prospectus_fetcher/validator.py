@@ -14,6 +14,7 @@ from .models import DocumentKind, DocumentVerification
 _COMPLETE_KINDS = {
     DocumentKind.SUMMARY_PROSPECTUS,
     DocumentKind.STATUTORY_PROSPECTUS,
+    DocumentKind.COMBINED_PROSPECTUS_PACKAGE,
 }
 
 _EARLY_CONTENT_WINDOW = 20_000
@@ -92,10 +93,18 @@ class ValidationResult:
     contradictions: List[str] = field(default_factory=list)
     ticker_found: bool = False
     class_id_found: bool = False
+    identity_verified: Optional[bool] = None
+    evaluation_error: Optional[str] = None
 
     @property
     def complete(self) -> bool:
         return self.kind in _COMPLETE_KINDS
+
+    @property
+    def has_verified_identity(self) -> bool:
+        if self.identity_verified is not None:
+            return self.identity_verified
+        return self.ticker_found or self.class_id_found
 
 
 def extract_text(content: bytes) -> str:
@@ -114,6 +123,12 @@ def extract_text(content: bytes) -> str:
     parser.feed(decoded)
     parser.close()
     return re.sub(r"\s+", " ", " ".join(parser.parts)).strip()
+
+
+def extract_date_evidence(content: bytes) -> tuple[List[str], List[str]]:
+    """Return all dated references and explicit base-prospectus dates."""
+    text = extract_text(content)
+    return _extract_dates(text), _extract_dates(text, _BASE_PROSPECTUS_DATED_RE)
 
 
 def _contains_identifier(text: str, identifier: Optional[str]) -> bool:

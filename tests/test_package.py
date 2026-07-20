@@ -4,8 +4,16 @@ import hashlib
 import json
 from unittest.mock import Mock
 
+import pytest
+
 from prospectus_fetcher.downloader import Downloader
 from prospectus_fetcher.edgar import ArchiveDocumentRef, ArchiveInventory, FilingRef
+from prospectus_fetcher.filing_identity import (
+    ClassIdentity,
+    FilingIdentityMetadata,
+    FilingIdentityParseError,
+    SeriesIdentity,
+)
 from prospectus_fetcher.models import (
     CandidateDisposition,
     CandidatePurpose,
@@ -58,6 +66,18 @@ SPY_PROSPECTUS = b"""
 """
 
 UNKNOWN_PRIMARY = b"<html><body><p>Administrative cover page</p></body></html>"
+
+V7_FUND_SUMMARY = b"""
+<html><body>
+<h1>Example Fund</h1>
+<table><tr><td>Admiral Shares</td><td>VUSXX</td></tr></table>
+<h2>Fund Summary</h2>
+<h2>Investment Goal</h2>
+<h2>Fees and Expenses</h2>
+<h2>Principal Risks</h2>
+<h2>Performance Information</h2>
+</body></html>
+"""
 
 
 def filing(
@@ -166,6 +186,8 @@ def test_supplement_package_includes_date_linked_verified_base(tmp_path):
     assert manifest["identity"]["class_id"] == "C1"
     assert manifest["identity"]["mapping_source"] == "mf"
     assert manifest["package"]["verification"] == "document_verified"
+    assert manifest["package"]["validation_policy"] == "legacy"
+    assert manifest["package"]["validation_policy_version"] == "legacy"
     assert manifest["documents"][0]["source_url"] == "supplement-url"
     assert manifest["documents"][0]["archive_index_url"] == "supplement-url/index.json"
     assert len(manifest["documents"][0]["sha256"]) == 64
@@ -416,3 +438,97 @@ def test_cik_only_document_can_be_verified_without_upgrading_identity(tmp_path):
     assert result.document_kind is DocumentKind.STATUTORY_PROSPECTUS
     assert result.document_verification is DocumentVerification.VERIFIED
     assert "exact ticker SPY" in result.document_evidence[0]
+
+
+def test_v7_feature_flag_controls_package_and_records_policy(tmp_path):
+    selected = filing("selected", "selected-url", "2026-01-01")
+    client = Mock()
+    client.get_bytes.return_value = V7_FUND_SUMMARY
+    downloader = Downloader(client, output_dir=str(tmp_path))
+    edgar = Mock()
+    edgar.resolver.series_for_cik.return_value = {"S1"}
+    edgar.filing_identity_metadata.return_value = FilingIdentityMetadata(
+        accession="selected",
+        registrant_name="Example Trust",
+        registrant_cik=1,
+        series=[
+            SeriesIdentity(
+                series_id="S1",
+                name="Example Fund",
+                owner_cik=1,
+                classes=[ClassIdentity("C1", "Admiral Shares", "VUSXX")],
+            )
+        ],
+    )
+    package_builder = DocumentPackageBuilder(
+        edgar,
+        downloader,
+        validation_policy="v7",
+    )
+
+    result = package_builder.build(
+        ResolvedFund("VUSXX", 1, "S1", "C1", "mf"),
+        selected,
+    )
+
+    assert result.document_kind is DocumentKind.SUMMARY_PROSPECTUS
+    assert result.document_verification is DocumentVerification.VERIFIED
+    edgar.accession_document_inventory.assert_not_called()
+    with open(result.manifest_path, encoding="utf-8") as handle:
+        manifest = json.load(handle)
+    assert manifest["package"]["validation_policy"] == "v7"
+    assert manifest["package"]["validation_policy_version"] == "m6.3-shadow-v7"
+
+
+def test_v7_metadata_failure_fails_closed_to_review(tmp_path):
+    selected = filing("selected", "selected-url", "2026-01-01")
+    client = Mock()
+    client.get_bytes.return_value = SUMMARY
+    downloader = Downloader(client, output_dir=str(tmp_path))
+    edgar = Mock()
+    edgar.resolver.series_for_cik.return_value = {"S1"}
+    edgar.filing_identity_metadata.side_effect = FilingIdentityParseError(
+        "metadata unavailable"
+    )
+    edgar.accession_document_inventory.return_value = archive_inventory()
+    package_builder = DocumentPackageBuilder(
+        edgar,
+        downloader,
+        validation_policy="v7",
+    )
+
+    result = package_builder.build(
+        ResolvedFund("VUSXX", 1, "S1", "C1", "mf"),
+        selected,
+    )
+
+    assert result.document_verification is DocumentVerification.MANUAL_REVIEW_REQUIRED
+    assert any("metadata unavailable" in warning for warning in result.warnings)
+    edgar.accession_document_inventory.assert_not_called()
+
+
+def test_v7_programming_error_is_not_hidden_as_manual_review(tmp_path):
+    selected = filing("selected", "selected-url", "2026-01-01")
+    client = Mock()
+    client.get_bytes.return_value = SUMMARY
+    downloader = Downloader(client, output_dir=str(tmp_path))
+    edgar = Mock()
+    edgar.resolver.series_for_cik.return_value = {"S1"}
+    edgar.filing_identity_metadata.return_value = FilingIdentityMetadata(
+        accession="selected",
+        registrant_name="Example Trust",
+    )
+    package_builder = DocumentPackageBuilder(
+        edgar,
+        downloader,
+        validation_policy="v7",
+    )
+    package_builder.evidence_policy = Mock(
+        evaluate=Mock(side_effect=RuntimeError("policy defect"))
+    )
+
+    with pytest.raises(RuntimeError, match="policy defect"):
+        package_builder.build(
+            ResolvedFund("VUSXX", 1, "S1", "C1", "mf"),
+            selected,
+        )

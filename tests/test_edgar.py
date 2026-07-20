@@ -1,6 +1,9 @@
 """Tests for filing selection, Atom parsing, and prospectus lookup."""
 
+from unittest.mock import Mock
+
 import pytest
+import requests
 import responses
 
 from prospectus_fetcher import config
@@ -13,6 +16,7 @@ from prospectus_fetcher.edgar import (
     select_filing,
 )
 from prospectus_fetcher.models import DocumentVerification, Filing, IdentityLevel, ResolvedFund
+from prospectus_fetcher.filing_identity import FilingIdentityMetadata
 from prospectus_fetcher.sec_client import SECClient
 from prospectus_fetcher.sec_schema import SECResponseSchemaError
 
@@ -529,6 +533,74 @@ def test_accession_inventory_uses_sec_document_types_to_exclude_exhibits(
     assert "exhibit" in reasons["ex99.htm"]
     assert "not a supported prospectus" in reasons["graphic.htm"]
     assert "XBRL" in reasons["r1.htm"]
+
+
+def test_filing_identity_metadata_uses_header_and_caches_by_accession(
+    edgar, monkeypatch
+):
+    filing = Filing(
+        registrant_cik=1,
+        accession="0000000001-26-000001",
+        form="497K",
+        date="2026-01-01",
+    )
+    metadata = FilingIdentityMetadata(
+        accession=filing.accession,
+        registrant_name="Example Trust",
+    )
+    get_text = Mock(return_value="header")
+    monkeypatch.setattr(edgar.client, "get_text", get_text)
+    monkeypatch.setattr(
+        "prospectus_fetcher.edgar.resolve_filing_identity",
+        Mock(return_value=metadata),
+    )
+
+    first = edgar.filing_identity_metadata(filing)
+    second = edgar.filing_identity_metadata(filing)
+
+    assert first is metadata
+    assert second is metadata
+    assert get_text.call_count == 1
+    assert get_text.call_args.args[0].endswith(
+        "/0000000001-26-000001-index-headers.html"
+    )
+
+
+def test_filing_identity_metadata_falls_back_from_missing_header(
+    edgar, monkeypatch
+):
+    filing = Filing(
+        registrant_cik=1,
+        accession="0000000001-04-000001",
+        form="497",
+        date="2004-01-01",
+    )
+    metadata = FilingIdentityMetadata(
+        accession=filing.accession,
+        registrant_name="Historical Trust",
+    )
+    response = requests.Response()
+    response.status_code = 404
+    missing = requests.HTTPError(response=response)
+
+    def get_text(url):
+        if url.endswith("-index-headers.html"):
+            raise missing
+        if url.endswith(".txt"):
+            return "complete submission"
+        return "filing detail"
+
+    resolver = Mock(return_value=metadata)
+    monkeypatch.setattr(edgar.client, "get_text", get_text)
+    monkeypatch.setattr(
+        "prospectus_fetcher.edgar.resolve_filing_identity",
+        resolver,
+    )
+
+    result = edgar.filing_identity_metadata(filing)
+
+    assert result is metadata
+    resolver.assert_called_once_with("complete submission", "filing detail")
 
 
 @responses.activate

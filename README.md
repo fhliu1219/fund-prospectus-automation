@@ -50,15 +50,22 @@ python main.py --batch tickers.txt
 python main.py VUSXX --output ./downloads   # change output directory
 python main.py VUSXX --pdf                   # also write a PDF (best-effort)
 python main.py VUSXX --verbose               # DEBUG logging to the console
+
+# Staged V7 evidence policy; omit the option or use "legacy" to roll back
+python main.py VUSXX --validation-policy v7
 ```
 
 You can also run it as a module: `python -m prospectus_fetcher VUSXX`.
+
+`legacy` remains the default validation policy. The same setting can be
+supplied through `PROSPECTUS_VALIDATION_POLICY=v7` for controlled deployments.
 
 Documents are saved to `output/{TICKER}/{date}_{form}_{accession}.html`. Every
 successful ticker also receives `output/{TICKER}/manifest.json`, which records
 structured SEC identity, source URLs, content classification, verification,
 warnings, document roles, byte sizes, SHA-256 checksums, and any recovery
-candidate decisions. A run summary is written to `logs/summary.log`.
+candidate decisions. The manifest also records the controlling validation
+policy and version. A run summary is written to `logs/summary.log`.
 
 ### Example run
 
@@ -103,9 +110,11 @@ ticker → resolve to (CIK [, seriesId, classId]) → find preferred filing
 3. **Resolve the document** (normally the filing-designated `primaryDocument`)
    and download its bytes for validation. If it fails verification, inventory
    the accession and inspect eligible SEC-labeled prospectus siblings.
-4. **Validate the content.** Detect a summary prospectus, statutory prospectus,
-   supplement, or unknown document; require direct requested-ticker/class
-   evidence before reporting `document_verified`.
+4. **Validate the content.** The default legacy policy uses direct
+   ticker/class and structural evidence. The feature-flagged V7 policy also
+   combines filing-specific SEC identity metadata, bounded cover evidence,
+   document structure, contradictions, and document scope. If its required
+   identity metadata is unavailable, it fails closed to manual review.
 5. **Build the package.** A complete prospectus produces one document plus a
    manifest. If the latest filing is a supplement, exhaust the older filing
    metadata exposed for the same identity scope, evaluate likely dates first,
@@ -310,13 +319,13 @@ manifest serialization, archive-URL construction, and the graceful-error path.
 The single opt-in live contract test exercises VUSXX, QQQ, and SPY across
 class-level and registrant-level paths, including a real SEC filing inventory.
 
-The separate [validation corpus](corpus/README.md) measures the current
-validator against a versioned location-aware shadow evidence policy without
-changing production CLI behavior. Raw SEC bytes and detailed reports remain
-local; the committed manifest preserves exact URLs, checksums, labels, and
-human reasons. Submission headers are the primary source of filing identity;
-the shadow evaluator can use a checksum-pinned SEC filing-detail page only when
-the header is unavailable or unparseable, and records which source was used.
+The separate [validation corpus](corpus/README.md) measures the legacy
+validator against versioned location-aware evidence policies before they
+control CLI behavior. Raw SEC bytes and detailed reports remain local; the
+committed manifests preserve exact URLs, checksums, labels, and human reasons.
+Submission headers are the primary source of filing identity; the evaluator
+can use a checksum-pinned SEC filing-detail page only when the header is
+unavailable or unparseable, and records which source was used.
 An accession- and checksum-disjoint 30-case holdout is committed separately so
 development tuning and independent evaluation are not conflated. A second
 disjoint 30-case follow-up evaluates the resulting `m6.1-shadow-v5` policy; its
@@ -324,7 +333,13 @@ measured activation blockers and the decision to keep `v5` shadow-only are
 documented in the corpus guide. Milestone 6.2 adds a disjoint 30-case challenge,
 a separately sampled 50-case representative set, mixed-content profiles, and
 document scope. `m6.2-shadow-v6` passed both safety gates but missed the approved
-recall and representative-review gates, so it also remains report-only.
+recall and representative-review gates, so it remains report-only. Milestone
+6.3 then froze 80 new disjoint V7 cases. V7 passed all four approved gates:
+zero false approvals, no valid complete document automatically disallowed,
+100%/97.5% complete-document recall on challenge/representative data, and 4%
+representative review. The exact evaluated policy is now available only through
+the explicit `--validation-policy v7` staged-control flag; `legacy` is the
+default rollback.
 
 ---
 
@@ -341,7 +356,7 @@ prospectus_fetcher/
   downloader.py             # save the document to disk
   validator.py              # classify content and collect verification evidence
   filing_identity.py        # parse header identity with filing-detail fallback
-  evidence_policy.py        # location-aware Milestone 6 shadow policy
+  evidence_policy.py        # location-aware Milestone 6/V7 evidence policy
   corpus.py                 # versioned corpus schema and checksum cache
   corpus_evaluator.py       # current-vs-shadow metrics and disagreements
   corpus_cli.py             # opt-in corpus fetch/evaluate commands
@@ -356,6 +371,8 @@ TEST_MATRIX.md               # curated live and deterministic contract cases
 corpus/manifest.json         # 30 labeled SEC cases; raw bytes stay ignored
 corpus/v6_challenge_manifest.json       # independent mixed-content challenge
 corpus/v6_representative_manifest.json  # separately sampled operating profile
+corpus/v7_challenge_manifest.json       # fresh V7 activation challenge
+corpus/v7_representative_manifest.json  # fresh V7 operating profile
 tests/                       # pytest suite (HTTP mocked) + optional live test
 Dockerfile
 ```

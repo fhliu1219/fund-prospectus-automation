@@ -21,7 +21,14 @@ from html.parser import HTMLParser
 from typing import Dict, List, Optional, Sequence, Tuple
 from urllib.parse import parse_qs, unquote, urlsplit
 
+import requests
+
 from . import config
+from .filing_identity import (
+    FilingIdentityMetadata,
+    FilingIdentityParseError,
+    resolve_filing_identity,
+)
 from .models import Filing, IdentityLevel, ResolvedFund
 from .resolver import Resolver
 from .sec_client import SECClient
@@ -329,6 +336,7 @@ class EdgarClient:
         self._atom_cache: Dict[str, List[FilingRef]] = {}
         self._atom_form_cache: Dict[str, List[FilingRef]] = {}
         self._atom_history_cache: Dict[Tuple[str, str, str], List[FilingRef]] = {}
+        self._filing_identity_cache: Dict[str, FilingIdentityMetadata] = {}
 
     # -- public API --------------------------------------------------------
     def find_prospectus(self, fund: ResolvedFund) -> Optional[Filing]:
@@ -523,6 +531,44 @@ class EdgarClient:
                 )
             )
         return ArchiveInventory(index_url=index_url, documents=documents, warnings=warnings)
+
+    def filing_identity_metadata(self, filing: Filing) -> FilingIdentityMetadata:
+        """Return checksum-independent SEC identity metadata for one accession."""
+        cached = self._filing_identity_cache.get(filing.accession)
+        if cached is not None:
+            return cached
+
+        nodash = filing.accession.replace("-", "")
+        base_url = config.ARCHIVES_BASE.format(
+            cik=filing.registrant_cik,
+            accession_nodash=nodash,
+        )
+        header_url = base_url + f"/{filing.accession}-index-headers.html"
+        detail_url = base_url + f"/{filing.accession}-index.html"
+        complete_submission_url = base_url + f"/{filing.accession}.txt"
+
+        try:
+            header_page = self.client.get_text(header_url)
+        except requests.HTTPError as exc:
+            if exc.response is None or exc.response.status_code != 404:
+                raise
+            header_page = self.client.get_text(complete_submission_url)
+            detail_page = self.client.get_text(detail_url)
+            metadata = resolve_filing_identity(header_page, detail_page)
+        else:
+            try:
+                metadata = resolve_filing_identity(header_page)
+            except FilingIdentityParseError:
+                detail_page = self.client.get_text(detail_url)
+                metadata = resolve_filing_identity(header_page, detail_page)
+
+        if metadata.accession != filing.accession:
+            raise FilingIdentityParseError(
+                f"identity metadata accession {metadata.accession} does not match "
+                f"selected filing {filing.accession}"
+            )
+        self._filing_identity_cache[filing.accession] = metadata
+        return metadata
 
     @staticmethod
     def _recovery_eligibility(

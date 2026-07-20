@@ -7,9 +7,14 @@ from dataclasses import asdict, dataclass, replace
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import unquote, urlsplit
 
+import requests
+
+from .corpus import AutomaticUseLabel, RelevanceLabel
 from .converter import to_pdf
 from .downloader import Downloader
 from .edgar import EdgarClient
+from .evidence_policy import POLICY_VERSION, ShadowEvidencePolicy
+from .filing_identity import FilingIdentityParseError
 from .models import (
     CandidateDisposition,
     CandidatePurpose,
@@ -24,7 +29,13 @@ from .models import (
     IdentityLevel,
     ResolvedFund,
 )
-from .validator import DocumentValidator, ValidationResult
+from .sec_schema import SECResponseSchemaError
+from .validator import DocumentValidator, ValidationResult, extract_date_evidence
+
+
+LEGACY_VALIDATION_POLICY = "legacy"
+V7_VALIDATION_POLICY = "v7"
+VALIDATION_POLICIES = (LEGACY_VALIDATION_POLICY, V7_VALIDATION_POLICY)
 
 
 @dataclass
@@ -53,24 +64,34 @@ class DocumentPackageBuilder:
         edgar: EdgarClient,
         downloader: Downloader,
         validator: Optional[DocumentValidator] = None,
+        validation_policy: str = LEGACY_VALIDATION_POLICY,
         want_pdf: bool = False,
     ) -> None:
+        if validation_policy not in VALIDATION_POLICIES:
+            raise ValueError(
+                f"validation_policy must be one of {', '.join(VALIDATION_POLICIES)}"
+            )
         self.edgar = edgar
         self.downloader = downloader
         self.validator = validator or DocumentValidator()
+        self.evidence_policy = ShadowEvidencePolicy()
+        self.validation_policy = validation_policy
         self.want_pdf = want_pdf
 
     def build(self, fund: ResolvedFund, selected: Filing) -> FetchResult:
         ticker = fund.ticker.upper()
         selection_warnings = list(selected.warnings)
         content = self.downloader.download(selected, ticker)
-        validation = self.validator.validate(content, ticker, fund.class_id)
+        validation = self._validate(content, fund, selected)
         self._apply_validation(selected, validation)
 
         candidate_evaluations: List[DocumentCandidateEvaluation] = []
         candidate_searches: List[CandidateSearchAudit] = []
         recovery_warnings: List[str] = []
-        if not self._is_usable_selected_document(validation):
+        if (
+            not self._is_usable_selected_document(validation)
+            and validation.evaluation_error is None
+        ):
             recovery = self._recover_sibling(
                 fund,
                 selected,
@@ -126,8 +147,9 @@ class DocumentPackageBuilder:
                     base_validation.referenced_dates
                 )
                 supplement_has_identity = (
-                    validation.ticker_found or validation.class_id_found
-                ) and not validation.contradictions
+                    validation.has_verified_identity
+                    and not validation.contradictions
+                )
                 if (
                     shared_dates
                     and supplement_has_identity
@@ -252,7 +274,7 @@ class DocumentPackageBuilder:
             )
             try:
                 content = self.downloader.download(candidate, fund.ticker)
-                validation = self.validator.validate(content, fund.ticker, fund.class_id)
+                validation = self._validate(content, fund, candidate)
             except Exception as exc:
                 evaluation_errors += 1
                 message = f"could not evaluate sibling {document.name}: {exc}"
@@ -376,9 +398,7 @@ class DocumentPackageBuilder:
             try:
                 candidate = self.edgar.resolve_related_prospectus(fund, selected, ref)
                 content = self.downloader.download(candidate, fund.ticker)
-                validation = self.validator.validate(
-                    content, fund.ticker, fund.class_id
-                )
+                validation = self._validate(content, fund, candidate)
             except Exception as exc:
                 message = f"could not evaluate base candidate {ref.accession}: {exc}"
                 warnings.append(message)
@@ -472,7 +492,7 @@ class DocumentPackageBuilder:
             return True
         return (
             validation.kind is DocumentKind.SUPPLEMENT
-            and (validation.ticker_found or validation.class_id_found)
+            and validation.has_verified_identity
         )
 
     @staticmethod
@@ -484,10 +504,95 @@ class DocumentPackageBuilder:
         if not validation.complete and validation.kind is not DocumentKind.SUPPLEMENT:
             return f"document classified as {validation.kind.value}, not a complete prospectus"
         if validation.kind is DocumentKind.SUPPLEMENT:
-            if validation.ticker_found or validation.class_id_found:
+            if validation.has_verified_identity:
                 return "supplement is not a complete base prospectus"
             return "supplement lacks direct ticker or class evidence"
         return "complete prospectus lacks sufficient direct ticker or class evidence"
+
+    def _validate(
+        self,
+        content: bytes,
+        fund: ResolvedFund,
+        filing: Filing,
+    ) -> ValidationResult:
+        baseline = self.validator.validate(content, fund.ticker, fund.class_id)
+        if self.validation_policy == LEGACY_VALIDATION_POLICY:
+            return baseline
+
+        try:
+            metadata = self.edgar.filing_identity_metadata(filing)
+            resolver = getattr(self.edgar, "resolver", None)
+            known_series_count = (
+                len(resolver.series_for_cik(fund.cik))
+                if resolver is not None
+                else None
+            )
+            evaluation = self.evidence_policy.evaluate(
+                content,
+                fund.ticker,
+                fund.class_id,
+                fund.series_id,
+                metadata,
+                requested_cik=fund.cik,
+                registrant_cik=filing.registrant_cik,
+                known_series_count=known_series_count,
+                declared_form=filing.form,
+            )
+        except (
+            FilingIdentityParseError,
+            SECResponseSchemaError,
+            requests.RequestException,
+        ) as exc:
+            message = f"V7 identity evidence could not be evaluated: {exc}"
+            baseline.verification = DocumentVerification.MANUAL_REVIEW_REQUIRED
+            baseline.identity_verified = False
+            baseline.evaluation_error = message
+            baseline.warnings.append(message)
+            return baseline
+
+        if evaluation.automatic_use is AutomaticUseLabel.ALLOWED:
+            verification = DocumentVerification.VERIFIED
+        elif (
+            evaluation.relevance is RelevanceLabel.NEGATIVE
+            or (
+                evaluation.automatic_use is AutomaticUseLabel.DISALLOWED
+                and evaluation.document_kind is not DocumentKind.SUPPLEMENT
+            )
+        ):
+            verification = DocumentVerification.REJECTED
+        else:
+            verification = DocumentVerification.MANUAL_REVIEW_REQUIRED
+
+        referenced_dates, base_dates = extract_date_evidence(content)
+        evidence = [
+            f"{signal.code}: {signal.detail}" for signal in evaluation.signals
+        ]
+        warnings = list(evaluation.missing_evidence)
+        if evaluation.document_kind is DocumentKind.SUPPLEMENT:
+            warnings.append("V7 policy requires a verified complete base prospectus")
+        elif evaluation.automatic_use is AutomaticUseLabel.REVIEW:
+            warnings.append("V7 policy requires manual review")
+        elif evaluation.automatic_use is AutomaticUseLabel.DISALLOWED:
+            warnings.append(
+                f"V7 policy disallows automatic use of {evaluation.document_kind.value}"
+            )
+
+        return ValidationResult(
+            kind=evaluation.document_kind,
+            verification=verification,
+            evidence=evidence,
+            warnings=list(dict.fromkeys(warnings)),
+            referenced_dates=referenced_dates,
+            base_prospectus_dates=(
+                base_dates
+                if evaluation.document_kind is DocumentKind.SUPPLEMENT
+                else []
+            ),
+            contradictions=list(evaluation.contradictions),
+            ticker_found=baseline.ticker_found,
+            class_id_found=baseline.class_id_found,
+            identity_verified=evaluation.relevance is RelevanceLabel.POSITIVE,
+        )
 
     @staticmethod
     def _candidate_evaluation(
@@ -595,8 +700,11 @@ class DocumentPackageBuilder:
             contradictions=list(validation.contradictions),
         )
 
-    @staticmethod
-    def _manifest(result: FetchResult, fund: ResolvedFund) -> Dict[str, object]:
+    def _manifest(
+        self,
+        result: FetchResult,
+        fund: ResolvedFund,
+    ) -> Dict[str, object]:
         documents = []
         for artifact in result.documents:
             value = asdict(artifact)
@@ -637,6 +745,12 @@ class DocumentPackageBuilder:
             "package": {
                 "kind": result.document_kind.value,
                 "verification": result.document_verification.value,
+                "validation_policy": self.validation_policy,
+                "validation_policy_version": (
+                    POLICY_VERSION
+                    if self.validation_policy == V7_VALIDATION_POLICY
+                    else LEGACY_VALIDATION_POLICY
+                ),
                 "evidence": result.document_evidence,
                 "warnings": result.warnings,
             },
