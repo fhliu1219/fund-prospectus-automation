@@ -31,7 +31,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-(Tests and the optional PDF feature: `pip install -r requirements-dev.txt`.)
+Service persistence dependencies are isolated in `requirements-service.txt`.
+Tests install both CLI and service dependencies through
+`pip install -r requirements-dev.txt`. The optional PDF feature still requires
+WeasyPrint and its system libraries.
 
 ## Usage
 
@@ -303,6 +306,11 @@ pip install -r requirements-dev.txt
 pytest                         # offline, deterministic (HTTP mocked)
 RUN_LIVE_TESTS=1 pytest tests/test_integration_live.py   # optional live EDGAR check
 
+# Optional PostgreSQL 16 migration and concurrency contract
+docker compose -f docker-compose.postgres.yml up -d --wait
+RUN_POSTGRES_TESTS=1 pytest tests/postgres_contract.py -q
+docker compose -f docker-compose.postgres.yml down
+
 # Optional: download and evaluate the checksum-verified 30-case corpus
 python -m prospectus_fetcher.corpus_cli all
 ```
@@ -320,6 +328,12 @@ The operations tests additionally cover schema compatibility, idempotency-key
 conflicts, transactional work claims, lease recovery and ownership, aggregate
 job states, manifest-policy integrity, artifact checksums, terminal resume
 behavior, and persistent review-task creation.
+S3 tests use botocore request stubs to verify content-addressed keys, SHA-256,
+conditional no-overwrite writes, collision handling, and explicit SSE-S3/KMS
+parameters without requiring AWS credentials. The PostgreSQL contract file is
+not discovered by the default suite; it runs explicitly against the disposable
+Docker database and covers Alembic upgrade/downgrade/drift, schema revision
+refusal, server-time leases, and eight-worker claim contention.
 The single opt-in live contract test exercises VUSXX, QQQ, and SPY across
 class-level and registrant-level paths, including a real SEC filing inventory.
 
@@ -347,17 +361,21 @@ default rollback.
 
 ### Durable operations foundation
 
-Milestone 7.1 adds a storage-neutral job runner and a SQLite reference
-repository for local development and deterministic tests. It persists
-normalized batch items, explicit idempotency keys, expiring work leases,
-terminal result states, complete package manifests, identity fields, policy
-versions, artifact checksums, and pending review tasks. Artifact bytes are
-rehashed before their records are committed.
+Milestones 7.1 and 7.2 add a storage-neutral job runner plus SQLite and
+PostgreSQL repositories. They persist scoped idempotency keys, leased batch
+items, terminal states, package manifests, identity and policy fields,
+content-addressed artifacts, and pending review tasks. PostgreSQL claims work
+with `FOR UPDATE SKIP LOCKED` and uses database time for lease recovery.
 
-This foundation is not wired into the submitted CLI yet, and SQLite is not the
-production database recommendation. PostgreSQL, immutable object storage,
-stage-aware Temporal retries, reviewer decisions, an internal API, and
-monitoring remain explicit later Milestone 7 work.
+Artifact identity is `(storage_provider, storage_namespace, object_key,
+sha256)`, never a worker-local path. The local adapter publishes an immutable
+content-addressed object; the S3 adapter sends and verifies SHA-256, uses
+conditional no-overwrite writes, and requires explicit SSE-S3 or SSE-KMS
+configuration.
+
+This operations path is not wired into the submitted CLI yet. Temporal
+stage-aware retries, reviewer decisions, an internal API, deployment-account
+AWS validation, and monitoring remain later Milestone 7 work.
 
 ---
 
@@ -381,6 +399,10 @@ prospectus_fetcher/
   package.py                # assemble documents and write the evidence manifest
   operations.py             # durable job contracts and persistent runner
   sqlite_operations.py      # local/test persistence reference adapter
+  operations_schema.py      # SQLAlchemy Core PostgreSQL tables
+  postgres_operations.py    # PostgreSQL repository and queue claims
+  artifact_store.py         # artifact protocol and local content-addressed store
+  s3_artifact_store.py      # checksummed, encrypted, conditional S3 writes
   converter.py              # optional, best-effort HTML -> PDF
   models.py                 # ResolvedFund, Filing, FetchResult
   cli.py                    # orchestration, summary table, logging
@@ -394,5 +416,9 @@ corpus/v6_representative_manifest.json  # separately sampled operating profile
 corpus/v7_challenge_manifest.json       # fresh V7 activation challenge
 corpus/v7_representative_manifest.json  # fresh V7 operating profile
 tests/                       # pytest suite (HTTP mocked) + optional live test
+migrations/                  # explicit Alembic PostgreSQL migrations
+alembic.ini
+docker-compose.postgres.yml  # disposable PostgreSQL 16 contract service
+requirements-service.txt
 Dockerfile
 ```

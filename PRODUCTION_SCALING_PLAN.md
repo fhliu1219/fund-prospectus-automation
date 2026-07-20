@@ -1,11 +1,11 @@
 # Production Scaling Plan
 
-**Status:** active implementation blueprint; Milestone 7.1 complete
+**Status:** active implementation blueprint; Milestone 7.2 complete
 
-**Current point:** the durable local operations contract is implemented and
-tested. PostgreSQL plus immutable artifact references are the next production
-slice; Temporal, the API/review application, and deployment remain later
-phases.
+**Current point:** SQLite and PostgreSQL implement the durable operations
+contract, and local CAS/S3 adapters implement immutable artifact references.
+Temporal orchestration is the next production slice; the API/review
+application and deployment remain later phases.
 
 This document describes how the current Python CLI could become a durable
 internal cloud service and review application. `ROADMAP.md` decides when the
@@ -47,22 +47,26 @@ directly or hold a browser request open while the complete pipeline runs.
 - Persistent job, item, lease, artifact, and review-task contracts
 - Explicit idempotency-key/request-fingerprint semantics
 - SQLite reference adapter for deterministic durability and recovery tests
+- PostgreSQL repository with Alembic migrations, server-time leases, and
+  `SKIP LOCKED` work claims
+- Local content-addressed and S3 artifact-store adapters
 - Deterministic and opt-in live tests
 
 These modules should become domain and application services used by both the
 CLI and a worker. The CLI should remain available for local diagnostics and
 administrative use.
 
-### Required redesign
+### Remaining redesign
 
-- Local filesystem output becomes an object-storage interface.
-- In-memory job state becomes persistent PostgreSQL state.
 - The process-local SEC limiter becomes a service-wide limiter.
 - Synchronous CLI control flow becomes durable workflow orchestration.
 - Broad operational failures become typed retryable or non-retryable outcomes.
 - Console logs become structured logs, traces, and metrics.
-- Local review-required output becomes a persistent review queue.
-- Local paths in manifests become durable artifact identifiers and object URLs.
+- Pending review tasks gain authorized reviewer decisions and audit events.
+- API responses expose durable artifact references and suppress diagnostic
+  worker-local paths.
+- AWS account, IAM, KMS, bucket-policy, failover, and retention contracts are
+  validated in the target environment.
 
 ### Entry criteria
 
@@ -407,7 +411,7 @@ selection logic.
 
 ### Phase P2: Add durable persistence
 
-**Status:** not started; SQLite proves the contract but is not this phase
+**Status:** implementation complete; deployment validation pending
 
 - Add PostgreSQL job and evidence records.
 - Add S3 artifact storage.
@@ -485,9 +489,10 @@ an accountable owner.
 
 ## 16. Decisions required during implementation
 
-Do not silently assume answers to these questions. The immediate Milestone 7.2
-choice is the PostgreSQL migration/repository toolkit and artifact-store
-boundary; the remaining choices become blocking only in their owning phase.
+Do not silently assume answers to these questions. The immediate Milestone 7.3
+choices are workflow boundaries and retry ownership between `SECClient` and
+Temporal Activities; the remaining choices become blocking only in their
+owning phase.
 
 1. What ticker universe and nightly completion objective are required?
 2. Are registrant-only verified documents acceptable, or must they always enter
@@ -521,6 +526,11 @@ boundary; the remaining choices become blocking only in their owning phase.
 
 ## 18. Reference material
 
+- SQLAlchemy `FOR UPDATE` options: <https://docs.sqlalchemy.org/en/20/core/selectable.html#sqlalchemy.sql.expression.Select.with_for_update>
+- PostgreSQL explicit locking: <https://www.postgresql.org/docs/current/explicit-locking.html>
+- Alembic migration commands: <https://alembic.sqlalchemy.org/en/latest/api/commands.html>
+- S3 checksum validation: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity-upload.html>
+- S3 conditional writes: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html>
 - Temporal concepts and durable execution: <https://docs.temporal.io/>
 - Temporal Python SDK: <https://python.temporal.io/>
 - AWS EKS workload concepts: <https://docs.aws.amazon.com/eks/latest/userguide/eks-workloads.html>

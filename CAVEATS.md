@@ -45,11 +45,12 @@ Caveat statuses:
 | M6.3-C003 | enforced | Class-cover omission is contradictory only for a demonstrably closed SEC-series roster. | Keep the boundary narrow; do not generalize absence from arbitrary text. |
 | M6.3-C004 | open | The five-form policy excludes some valid CIK-only instrument form families. | Milestone 8 supported instrument/form matrix. |
 | M6.3-C005 | mitigated | V7 identity metadata is persisted after a completed package, but transient stage failures are not durably retried. | Milestone 7.3 stage-aware Temporal retries. |
-| M7.1-C001 | open | The SQLite repository proves local durability but not PostgreSQL concurrency behavior. | Milestone 7.2 PostgreSQL adapter and contention tests. |
-| M7.1-C002 | open | Filesystem artifact paths are not durable service-level object references. | Milestone 7.2 artifact-store interface. |
 | M7.1-C003 | open | Review tasks can be queued before reviewer authorization and decision semantics are defined. | Product decision before Milestone 7.4. |
-| M7.1-C004 | open | SQLite lease recovery relies on comparable UTC clocks. | Replace local lease authority with production workflow/database time in Milestone 7.3. |
 | M7.1-C005 | open | A completed ticker failure is terminal in the local runner; retry ownership is not stage-aware. | Define typed activity retries in Milestone 7.3. |
+| M7.2-C001 | mitigated | PostgreSQL contention is proven locally, not across an EKS deployment or database failover. | Roadmap Milestone 7.4 deployment validation. |
+| M7.2-C002 | open | S3 behavior is SDK-stubbed but not exercised against the target AWS account, IAM, KMS, or bucket policy. | Roadmap Milestone 7.4 infrastructure contract test. |
+| M7.2-C003 | open | An immutable object can become unreferenced if storage succeeds but database finalization fails. | Roadmap Milestone 7.4 retention and reconciliation policy. |
+| M7.2-C004 | mitigated | Exact manifests retain worker-local source paths as provenance, although durable artifact records never use them as identity. | Keep paths out of API contracts and downstream decisions. |
 
 ---
 
@@ -1327,7 +1328,7 @@ review-task creation before adding PostgreSQL, Temporal, or an API.
 
 #### M7.1-C001: SQLite does not prove production database concurrency
 
-- **Status:** open; handed to Milestone 7.2
+- **Status:** retired in Milestone 7.2
 - **Risk:** SQLite transaction and locking behavior differs from PostgreSQL.
   Passing local lease/idempotency tests does not prove correct work claiming
   across multiple pods.
@@ -1336,10 +1337,13 @@ review-task creation before adding PostgreSQL, Temporal, or an API.
   local/test reference adapter.
 - **Exit condition:** Implement the same contract with PostgreSQL migrations,
   row-level contention tests, and database-enforced work claiming.
+- **Resolution:** The PostgreSQL adapter implements `FOR UPDATE SKIP LOCKED`.
+  Eight concurrent workers claimed 40 items exactly once in a disposable
+  PostgreSQL 16 integration test. Deployment topology remains M7.2-C001.
 
 #### M7.1-C002: Local artifact paths are not durable object references
 
-- **Status:** open; handed to Milestone 7.2
+- **Status:** retired in Milestone 7.2
 - **Risk:** A database record can outlive or move away from its local HTML,
   manifest, or PDF file.
 - **Current mitigation:** Persist source URLs, roles, sizes, and SHA-256
@@ -1347,6 +1351,9 @@ review-task creation before adding PostgreSQL, Temporal, or an API.
   service-stable artifact ID.
 - **Exit condition:** Add an artifact-store interface and immutable object keys,
   then verify object checksums before a result is published.
+- **Resolution:** Artifact records now use provider, namespace, content-addressed
+  object key, size, SHA-256, and content type. Local CAS and S3 adapters verify
+  bytes before publication; S3 uses conditional writes.
 
 #### M7.1-C003: Review resolution semantics require a product decision
 
@@ -1362,7 +1369,7 @@ review-task creation before adding PostgreSQL, Temporal, or an API.
 
 #### M7.1-C004: Lease recovery assumes synchronized UTC clocks
 
-- **Status:** open operational assumption
+- **Status:** retired as a production blocker in Milestone 7.2
 - **Risk:** A worker with a materially incorrect clock could reclaim active
   work early or delay recovery of abandoned work.
 - **Current mitigation:** Store all timestamps in normalized UTC, require a
@@ -1371,6 +1378,9 @@ review-task creation before adding PostgreSQL, Temporal, or an API.
 - **Exit condition:** Temporal or the production database becomes the
   authoritative lease/workflow clock, with clock-skew monitoring where
   applicable.
+- **Resolution:** PostgreSQL claims and lease expiration use
+  `clock_timestamp()` from the database. The SQLite adapter retains its
+  injected local clock only for deterministic local operation and tests.
 
 #### M7.1-C005: Local failures do not have stage-aware durable retries
 
@@ -1445,6 +1455,142 @@ artifact checksum that caused review.
 - Focused operations suite: 13 passed. Full deterministic suite: 172 passed
   with the one opt-in live SEC test skipped. All 37 Python source and test files
   parse under Python 3.9 grammar.
+
+---
+
+## Milestone 7.2: PostgreSQL and Immutable Artifact Storage
+
+**Status:** complete
+
+**Goal:** Implement the M7.1 operations contract on PostgreSQL, prove
+concurrency against a real database, and replace local paths as artifact
+identity with immutable content-addressed references.
+
+### Caveats register
+
+#### M7.2-C001: Local PostgreSQL does not prove deployment behavior
+
+- **Status:** mitigated
+- **Risk:** A single disposable PostgreSQL container cannot reproduce EKS
+  scheduling, connection-pool exhaustion, network interruption, managed
+  database failover, or multi-zone latency.
+- **Current mitigation:** Claims use database row locks and server time rather
+  than process-local locks or clocks. The integration suite uses separate
+  transactions and eight concurrent workers.
+- **Exit condition:** Run failure-injection, pool-capacity, and failover tests
+  in the approved deployment topology before production traffic.
+
+#### M7.2-C002: S3 integration is not live-environment validated
+
+- **Status:** open
+- **Risk:** SDK request correctness does not prove the target AWS account's IAM
+  permissions, KMS grants, bucket versioning, lifecycle, retention, or
+  conditional-write policy.
+- **Current mitigation:** Botocore request stubs assert exact checksum,
+  encryption, KMS, conditional-write, and verification calls. Encryption must
+  be explicitly configured, and missing or contradictory object evidence fails
+  closed.
+- **Exit condition:** Run an opt-in contract test against a dedicated
+  versioned test bucket with the production-equivalent IAM and KMS policy.
+
+#### M7.2-C003: Content-addressed uploads can become orphaned
+
+- **Status:** open
+- **Risk:** Artifact upload occurs before the final database transaction so a
+  stale lease, database failure, or process interruption can leave an immutable
+  object with no artifact row.
+- **Current mitigation:** The object key is its SHA-256, writes never overwrite
+  an existing key, and an orphan cannot be served as a completed result because
+  no committed database record references it.
+- **Exit condition:** Define retention, reconciliation, and garbage-collection
+  rules after workflow retry and package-retention semantics are approved.
+
+#### M7.2-C004: Exact manifests preserve local source paths
+
+- **Status:** mitigated
+- **Risk:** Package manifests and diagnostic result JSON preserve the worker's
+  source path. That path is not portable and should not appear as a service
+  artifact URL.
+- **Current mitigation:** Durable document identity is stored separately as
+  provider, namespace, object key, size, and SHA-256. Repository/API consumers
+  must use those fields and treat source paths as provenance only.
+- **Exit condition:** The internal API returns durable artifact references and
+  excludes worker-local paths from its public response schema.
+
+### Assumptions register
+
+#### M7.2-A001: PostgreSQL 16 is a valid production compatibility target
+
+The repository uses standard PostgreSQL row locks, JSONB, UUID, constraints,
+and timezone-aware timestamps. The Docker contract runs on PostgreSQL 16; the
+eventual managed PostgreSQL version must be tested explicitly.
+
+#### M7.2-A002: Idempotency belongs to a caller scope
+
+`(idempotency_scope, idempotency_key)` is unique. The default scope is
+`internal`; future API clients, schedules, or backfills can use separate scopes
+without accidental key collision.
+
+#### M7.2-A003: Artifact bytes are immutable by content hash
+
+SHA-256 is the object identity. Metadata and database rows may be added, but an
+existing content-addressed object is never overwritten with different bytes.
+
+### Decisions register
+
+#### M7.2-D001: Keep domain records independent of SQLAlchemy
+
+- **Status:** implemented
+- **Decision:** SQLAlchemy Core defines the PostgreSQL schema and repository;
+  domain-facing operations continue to use frozen dataclasses and the shared
+  `OperationsStore` protocol.
+
+#### M7.2-D002: Use explicit Alembic migrations
+
+- **Status:** implemented
+- **Decision:** The repository refuses an absent or unexpected Alembic
+  revision. Migration scripts contain explicit operations rather than importing
+  mutable current metadata, and `alembic check` detects schema drift.
+
+#### M7.2-D003: Use database-enforced queue claims and lease time
+
+- **Status:** implemented
+- **Decision:** PostgreSQL claims one eligible row with
+  `FOR UPDATE SKIP LOCKED`; lease timestamps come from the database server.
+
+#### M7.2-D004: Use content-addressed conditional artifact writes
+
+- **Status:** implemented
+- **Decision:** Local CAS publishes through an atomic no-overwrite link. S3
+  sends SHA-256, `If-None-Match: *`, and an explicit SSE-S3 or SSE-KMS policy,
+  then verifies stored length, checksum, metadata, and encryption.
+
+#### M7.2-D005: Keep service dependencies separate from the CLI image
+
+- **Status:** implemented
+- **Decision:** PostgreSQL, Alembic, Psycopg, and Boto3 live in
+  `requirements-service.txt`. The submitted CLI still installs only
+  `requirements.txt`.
+
+### Verification at completion
+
+- SQLite V1-to-V2 migration preserves existing jobs, items, and artifact
+  metadata while introducing scoped idempotency and durable artifact fields.
+- Shared conformance assertions run against SQLite and PostgreSQL for scoped
+  idempotency and active-claim isolation.
+- PostgreSQL migration upgrade, downgrade, revision refusal, and Alembic schema
+  drift checks pass.
+- Eight PostgreSQL workers claim 40 queued items exactly once.
+- PostgreSQL server-time lease recovery rejects stale-owner finalization.
+- Mixed verified, review-required, and failed packages persist with immutable
+  artifact references and idempotent resume behavior.
+- Local CAS and S3 tests cover deduplication, corruption, traversal, checksums,
+  conditional-write races, SSE-S3, and SSE-KMS request construction.
+- Full deterministic suite: 184 passed with the one opt-in live SEC test
+  skipped. PostgreSQL contract suite: 6 passed. All 47 Python source,
+  migration, and test files parse under Python 3.9 grammar.
+- The existing lightweight CLI image still builds without service dependencies,
+  and its containerized `--help` smoke test passes.
 
 ---
 

@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import sqlite3
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -22,8 +23,13 @@ from prospectus_fetcher.operations import (
     PersistentJobRunner,
 )
 from prospectus_fetcher.sqlite_operations import (
+    _MIGRATION_1,
     SCHEMA_VERSION,
     SQLiteOperationsStore,
+)
+from tests.operations_contract import (
+    assert_active_claim_isolation_contract,
+    assert_scoped_idempotency_contract,
 )
 
 
@@ -123,8 +129,83 @@ def test_schema_migration_is_idempotent_across_reopen(tmp_path):
         ).fetchall()
         jobs = second.connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
 
-    assert [row["version"] for row in versions] == [SCHEMA_VERSION]
+    assert [row["version"] for row in versions] == list(
+        range(1, SCHEMA_VERSION + 1)
+    )
     assert jobs == 1
+
+
+def test_schema_migration_preserves_v1_jobs_items_and_artifacts(tmp_path):
+    path = tmp_path / "operations.db"
+    timestamp = "2026-07-20T12:00:00.000000+00:00"
+    connection = sqlite3.connect(path)
+    connection.executescript(_MIGRATION_1)
+    connection.execute(
+        "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+        (1, timestamp),
+    )
+    connection.execute(
+        """
+        INSERT INTO jobs(
+            job_id, idempotency_key, request_fingerprint, validation_policy,
+            status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        ("00000000-0000-4000-8000-000000000001", "legacy", "fingerprint",
+         "v7", "completed", timestamp, timestamp),
+    )
+    connection.execute(
+        """
+        INSERT INTO job_items(
+            item_id, job_id, ticker, ordinal, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            "00000000-0000-4000-8000-000000000002",
+            "00000000-0000-4000-8000-000000000001",
+            "VUSXX",
+            0,
+            "verified",
+            timestamp,
+            timestamp,
+        ),
+    )
+    connection.execute(
+        """
+        INSERT INTO artifacts(
+            artifact_id, item_id, role, accession, source_url, local_path,
+            size_bytes, sha256, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            "00000000-0000-4000-8000-000000000003",
+            "00000000-0000-4000-8000-000000000002",
+            "primary_prospectus",
+            "0000000001-26-000001",
+            "https://www.sec.gov/example.htm",
+            "/legacy/VUSXX.html",
+            10,
+            "0" * 64,
+            timestamp,
+        ),
+    )
+    connection.commit()
+    connection.close()
+
+    with SQLiteOperationsStore(str(path)) as store:
+        job = store.get_job("00000000-0000-4000-8000-000000000001")
+        artifacts = store.artifact_records(
+            "00000000-0000-4000-8000-000000000002"
+        )
+        versions = store.connection.execute(
+            "SELECT version FROM schema_migrations ORDER BY version"
+        ).fetchall()
+
+    assert job.idempotency_scope == "internal"
+    assert [row["version"] for row in versions] == [1, 2]
+    assert artifacts[0]["storage_provider"] == "legacy-local"
+    assert artifacts[0]["storage_namespace"] == "legacy"
+    assert artifacts[0]["object_key"] == "/legacy/VUSXX.html"
 
 
 def test_store_refuses_a_database_from_a_newer_schema_version(tmp_path):
@@ -145,28 +226,7 @@ def test_store_refuses_a_database_from_a_newer_schema_version(tmp_path):
 
 def test_idempotency_key_reuses_only_identical_normalized_request(tmp_path):
     with SQLiteOperationsStore(str(tmp_path / "operations.db")) as store:
-        first = store.create_job(
-            "nightly-2026-07-20",
-            ["vusxx", "VUSXX", "spy"],
-            "v7",
-        )
-        repeated = store.create_job(
-            "nightly-2026-07-20",
-            ["VUSXX", "SPY"],
-            "v7",
-        )
-
-        assert repeated.job_id == first.job_id
-        assert [item.ticker for item in store.list_items(first.job_id)] == [
-            "VUSXX",
-            "SPY",
-        ]
-        with pytest.raises(IdempotencyConflict):
-            store.create_job(
-                "nightly-2026-07-20",
-                ["VUSXX", "QQQ"],
-                "v7",
-            )
+        assert_scoped_idempotency_contract(store)
 
 
 def test_expired_lease_is_reclaimed_and_old_owner_cannot_finalize(tmp_path):
@@ -202,16 +262,7 @@ def test_separate_sqlite_connections_do_not_claim_the_same_active_item(
 ):
     path = str(tmp_path / "operations.db")
     with SQLiteOperationsStore(path) as first, SQLiteOperationsStore(path) as second:
-        job = first.create_job("two-workers", ["VUSXX", "SPY"], "v7")
-
-        first_claim = first.claim_next_item(job.job_id, "worker-1", 60)
-        second_claim = second.claim_next_item(job.job_id, "worker-2", 60)
-        no_third_claim = first.claim_next_item(job.job_id, "worker-3", 60)
-
-        assert first_claim is not None and first_claim.ticker == "VUSXX"
-        assert second_claim is not None and second_claim.ticker == "SPY"
-        assert first_claim.item_id != second_claim.item_id
-        assert no_third_claim is None
+        assert_active_claim_isolation_contract(first, second)
 
 
 def test_persistent_runner_records_mixed_results_and_resumes_idempotently(tmp_path):
@@ -260,6 +311,10 @@ def test_persistent_runner_records_mixed_results_and_resumes_idempotently(tmp_pa
         assert store.persisted_manifest(items[2].item_id) is None
         assert len(store.artifact_records(items[0].item_id)) == 1
         assert len(store.artifact_records(items[1].item_id)) == 1
+        artifact = store.artifact_records(items[0].item_id)[0]
+        assert artifact["storage_provider"] == "local-cas"
+        assert artifact["object_key"].startswith("sha256/")
+        assert "local_path" not in artifact
         stored_identity = store.connection.execute(
             """
             SELECT registrant_cik, series_id, class_id, identity_level,
@@ -421,5 +476,5 @@ def test_artifact_checksum_drift_fails_the_item_without_persisting_artifact(
 
         assert completed.status is JobStatus.COMPLETED_WITH_ERRORS
         assert item.status is ItemStatus.FAILED
-        assert "checksum mismatch" in (item.error or "")
+        assert "integrity mismatch" in (item.error or "")
         assert store.artifact_records(item.item_id) == []

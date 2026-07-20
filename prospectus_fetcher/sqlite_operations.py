@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import sqlite3
 import uuid
@@ -10,8 +9,15 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence
 
-from .models import DocumentVerification, FetchResult
+from .artifact_store import (
+    ArtifactStore,
+    LocalContentAddressedArtifactStore,
+    PreparedArtifact,
+    prepare_manifest_artifacts,
+)
+from .models import FetchResult
 from .operations import (
+    completion_record,
     IdempotencyConflict,
     ItemStatus,
     JobItem,
@@ -21,11 +27,14 @@ from .operations import (
     OperationsJob,
     ReviewStatus,
     ReviewTask,
+    normalize_idempotency_scope,
+    normalize_tickers,
+    request_fingerprint,
 )
 from .package import VALIDATION_POLICIES
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 _MIGRATION_1 = """
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -105,6 +114,59 @@ CREATE INDEX IF NOT EXISTS idx_review_tasks_status
     ON review_tasks(status, created_at);
 """
 
+_MIGRATION_2 = """
+CREATE TABLE jobs_v2 (
+    job_id TEXT PRIMARY KEY,
+    idempotency_scope TEXT NOT NULL,
+    idempotency_key TEXT NOT NULL,
+    request_fingerprint TEXT NOT NULL,
+    validation_policy TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE(idempotency_scope, idempotency_key)
+);
+
+INSERT INTO jobs_v2(
+    job_id, idempotency_scope, idempotency_key, request_fingerprint,
+    validation_policy, status, created_at, updated_at
+)
+SELECT
+    job_id, 'internal', idempotency_key, request_fingerprint,
+    validation_policy, status, created_at, updated_at
+FROM jobs;
+
+CREATE TABLE artifacts_v2 (
+    artifact_id TEXT PRIMARY KEY,
+    item_id TEXT NOT NULL REFERENCES job_items(item_id) ON DELETE CASCADE,
+    role TEXT NOT NULL,
+    accession TEXT NOT NULL,
+    source_url TEXT,
+    storage_provider TEXT NOT NULL,
+    storage_namespace TEXT,
+    object_key TEXT NOT NULL,
+    size_bytes INTEGER NOT NULL,
+    sha256 TEXT NOT NULL,
+    content_type TEXT,
+    created_at TEXT NOT NULL,
+    UNIQUE(item_id, role, accession, sha256)
+);
+
+INSERT INTO artifacts_v2(
+    artifact_id, item_id, role, accession, source_url, storage_provider,
+    storage_namespace, object_key, size_bytes, sha256, content_type, created_at
+)
+SELECT
+    artifact_id, item_id, role, accession, source_url, 'legacy-local',
+    'legacy', local_path, size_bytes, sha256, NULL, created_at
+FROM artifacts;
+
+DROP TABLE artifacts;
+DROP TABLE jobs;
+ALTER TABLE jobs_v2 RENAME TO jobs;
+ALTER TABLE artifacts_v2 RENAME TO artifacts;
+"""
+
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -116,31 +178,6 @@ def _timestamp(value: datetime) -> str:
     return value.astimezone(timezone.utc).isoformat(timespec="microseconds")
 
 
-def _normalize_tickers(tickers: Sequence[str]) -> List[str]:
-    values: List[str] = []
-    seen = set()
-    for raw in tickers:
-        ticker = raw.strip().upper()
-        if ticker and ticker not in seen:
-            seen.add(ticker)
-            values.append(ticker)
-    if not values:
-        raise OperationsContractError("at least one ticker is required")
-    return values
-
-
-def _request_fingerprint(tickers: Sequence[str], validation_policy: str) -> str:
-    payload = json.dumps(
-        {
-            "tickers": list(tickers),
-            "validation_policy": validation_policy,
-        },
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
-
-
 class SQLiteOperationsStore:
     """Durable local implementation of the Milestone 7 operations contract."""
 
@@ -148,11 +185,21 @@ class SQLiteOperationsStore:
         self,
         path: str,
         clock: Callable[[], datetime] = _utc_now,
+        artifact_store: Optional[ArtifactStore] = None,
     ) -> None:
         self.path = path
         self.clock = clock
         if path != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
+        if artifact_store is None:
+            if path == ":memory:":
+                raise OperationsContractError(
+                    "an artifact_store is required for an in-memory database"
+                )
+            artifact_store = LocalContentAddressedArtifactStore(
+                Path(f"{path}.artifacts")
+            )
+        self.artifact_store = artifact_store
         self.connection = sqlite3.connect(path)
         self.connection.row_factory = sqlite3.Row
         try:
@@ -190,38 +237,80 @@ class SQLiteOperationsStore:
                     f"version {SCHEMA_VERSION}"
                 )
 
-        with self.connection:
-            self.connection.executescript(_MIGRATION_1)
+        newest = (
+            self.connection.execute(
+                "SELECT MAX(version) FROM schema_migrations"
+            ).fetchone()[0]
+            if migrations_exist is not None
+            else None
+        )
+        if newest is None:
+            with self.connection:
+                self.connection.executescript(_MIGRATION_1)
+                self.connection.execute(
+                    """
+                    INSERT OR IGNORE INTO schema_migrations(version, applied_at)
+                    VALUES (?, ?)
+                    """,
+                    (1, _timestamp(self.clock())),
+                )
+            newest = 1
+        if newest < 2:
+            self._apply_migration_2()
+
+    def _apply_migration_2(self) -> None:
+        self.connection.executescript(
+            "PRAGMA foreign_keys = OFF;\nBEGIN IMMEDIATE;\n" + _MIGRATION_2
+        )
+        try:
+            violations = self.connection.execute(
+                "PRAGMA foreign_key_check"
+            ).fetchall()
+            if violations:
+                raise OperationsContractError(
+                    "SQLite migration 2 produced foreign-key violations"
+                )
             self.connection.execute(
                 """
-                INSERT OR IGNORE INTO schema_migrations(version, applied_at)
+                INSERT INTO schema_migrations(version, applied_at)
                 VALUES (?, ?)
                 """,
-                (SCHEMA_VERSION, _timestamp(self.clock())),
+                (2, _timestamp(self.clock())),
             )
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+        finally:
+            self.connection.execute("PRAGMA foreign_keys = ON")
 
     def create_job(
         self,
         idempotency_key: str,
         tickers: Sequence[str],
         validation_policy: str,
+        idempotency_scope: str = "internal",
     ) -> OperationsJob:
         key = idempotency_key.strip()
         if not key:
             raise OperationsContractError("idempotency_key must not be empty")
+        scope = normalize_idempotency_scope(idempotency_scope)
         if validation_policy not in VALIDATION_POLICIES:
             raise OperationsContractError(
                 f"validation_policy must be one of {', '.join(VALIDATION_POLICIES)}"
             )
-        normalized = _normalize_tickers(tickers)
-        fingerprint = _request_fingerprint(normalized, validation_policy)
+        normalized = normalize_tickers(tickers)
+        fingerprint = request_fingerprint(normalized, validation_policy)
         now = _timestamp(self.clock())
 
         self.connection.execute("BEGIN IMMEDIATE")
         try:
             existing = self.connection.execute(
-                "SELECT * FROM jobs WHERE idempotency_key = ?",
-                (key,),
+                """
+                SELECT * FROM jobs
+                WHERE idempotency_scope = ? AND idempotency_key = ?
+                """,
+                (scope, key),
             ).fetchone()
             if existing is not None:
                 if existing["request_fingerprint"] != fingerprint:
@@ -236,12 +325,14 @@ class SQLiteOperationsStore:
             self.connection.execute(
                 """
                 INSERT INTO jobs(
-                    job_id, idempotency_key, request_fingerprint,
+                    job_id, idempotency_scope, idempotency_key,
+                    request_fingerprint,
                     validation_policy, status, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     job_id,
+                    scope,
                     key,
                     fingerprint,
                     validation_policy,
@@ -379,78 +470,34 @@ class SQLiteOperationsStore:
         result: FetchResult,
         manifest: Optional[dict],
     ) -> JobItem:
+        preview = self._owned_running_item(item_id, worker_id)
+        job_policy = self.connection.execute(
+            "SELECT validation_policy FROM jobs WHERE job_id = ?",
+            (preview["job_id"],),
+        ).fetchone()["validation_policy"]
+        record = completion_record(
+            preview["ticker"],
+            job_policy,
+            result,
+            manifest,
+        )
+        prepared_artifacts = (
+            prepare_manifest_artifacts(manifest, self.artifact_store)
+            if manifest is not None
+            else []
+        )
         now = _timestamp(self.clock())
         self.connection.execute("BEGIN IMMEDIATE")
         try:
             row = self._owned_running_item(item_id, worker_id)
-            if result.ticker != row["ticker"]:
+            current_job_policy = self.connection.execute(
+                "SELECT validation_policy FROM jobs WHERE job_id = ?",
+                (row["job_id"],),
+            ).fetchone()["validation_policy"]
+            if current_job_policy != job_policy:
                 raise OperationsContractError(
-                    f"result ticker {result.ticker!r} does not match claimed "
-                    f"ticker {row['ticker']!r}"
+                    "job validation policy changed during artifact preparation"
                 )
-
-            if result.ok:
-                if manifest is None:
-                    raise OperationsContractError(
-                        f"{result.ticker}: successful result requires a manifest"
-                    )
-                status = (
-                    ItemStatus.VERIFIED
-                    if result.document_verification
-                    is DocumentVerification.VERIFIED
-                    else ItemStatus.REVIEW_REQUIRED
-                )
-                error = None
-            else:
-                if manifest is not None:
-                    raise OperationsContractError(
-                        f"{result.ticker}: failed result must not include a manifest"
-                    )
-                status = ItemStatus.FAILED
-                error = result.error or "retrieval failed without an error message"
-
-            if manifest is not None:
-                if manifest.get("ticker") != result.ticker:
-                    raise OperationsContractError(
-                        "manifest ticker does not match the completed result"
-                    )
-                package = manifest.get("package")
-                if not isinstance(package, dict):
-                    raise OperationsContractError(
-                        "manifest.package must be an object"
-                    )
-                job_policy = self.connection.execute(
-                    "SELECT validation_policy FROM jobs WHERE job_id = ?",
-                    (row["job_id"],),
-                ).fetchone()["validation_policy"]
-                if package.get("validation_policy") != job_policy:
-                    raise OperationsContractError(
-                        "manifest validation policy does not match the job"
-                    )
-                if (
-                    package.get("verification")
-                    != result.document_verification.value
-                ):
-                    raise OperationsContractError(
-                        "manifest verification does not match the completed result"
-                    )
-
-            result_json = json.dumps(
-                {
-                    "ticker": result.ticker,
-                    "status": result.status,
-                    "form": result.form,
-                    "filing_date": result.date,
-                    "path": result.path,
-                    "error": result.error,
-                    "document_kind": result.document_kind.value,
-                    "document_verification": result.document_verification.value,
-                    "warnings": result.warnings,
-                },
-                sort_keys=True,
-            )
-            identity = manifest.get("identity", {}) if manifest else {}
-            package = manifest.get("package", {}) if manifest else {}
             self.connection.execute(
                 """
                 UPDATE job_items
@@ -463,29 +510,28 @@ class SQLiteOperationsStore:
                 WHERE item_id = ?
                 """,
                 (
-                    status.value,
-                    error,
-                    result_json,
+                    record.status.value,
+                    record.error,
+                    json.dumps(record.result_payload, sort_keys=True),
                     (
-                        json.dumps(manifest, sort_keys=True)
-                        if manifest is not None
+                        json.dumps(record.manifest_payload, sort_keys=True)
+                        if record.manifest_payload is not None
                         else None
                     ),
                     result.manifest_path,
-                    identity.get("registrant_cik"),
-                    identity.get("series_id"),
-                    identity.get("class_id"),
-                    identity.get("level"),
-                    package.get("verification"),
-                    package.get("validation_policy_version"),
+                    record.identity.get("registrant_cik"),
+                    record.identity.get("series_id"),
+                    record.identity.get("class_id"),
+                    record.identity.get("level"),
+                    record.package.get("verification"),
+                    record.package.get("validation_policy_version"),
                     now,
                     item_id,
                 ),
             )
 
-            if manifest is not None:
-                self._persist_artifacts(item_id, manifest, now)
-            if status is ItemStatus.REVIEW_REQUIRED:
+            self._persist_artifacts(item_id, prepared_artifacts, now)
+            if record.status is ItemStatus.REVIEW_REQUIRED:
                 self._create_review_task(item_id, result, now)
 
             self._refresh_job_status(row["job_id"], now)
@@ -593,65 +639,42 @@ class SQLiteOperationsStore:
             raise KeyError(f"unknown item {item_id}")
         return self._item(row)
 
-    def _persist_artifacts(self, item_id: str, manifest: dict, now: str) -> None:
-        documents = manifest.get("documents")
-        if not isinstance(documents, list):
-            raise OperationsContractError("manifest.documents must be an array")
+    def _persist_artifacts(
+        self,
+        item_id: str,
+        artifacts: Sequence[PreparedArtifact],
+        now: str,
+    ) -> None:
         namespace = uuid.UUID(item_id)
-        for index, document in enumerate(documents):
-            if not isinstance(document, dict):
-                raise OperationsContractError(
-                    f"manifest.documents[{index}] must be an object"
-                )
-            required = ("role", "accession", "path", "size_bytes", "sha256")
-            missing = [name for name in required if document.get(name) in {None, ""}]
-            if missing:
-                raise OperationsContractError(
-                    f"manifest.documents[{index}] missing {', '.join(missing)}"
-                )
+        for artifact in artifacts:
             identity = "|".join(
                 (
-                    str(document["role"]),
-                    str(document["accession"]),
-                    str(document["sha256"]),
+                    artifact.role,
+                    artifact.accession,
+                    artifact.stored.sha256,
                 )
             )
             artifact_id = str(uuid.uuid5(namespace, identity))
-            path = Path(str(document["path"]))
-            try:
-                content = path.read_bytes()
-            except OSError as exc:
-                raise OperationsContractError(
-                    f"manifest.documents[{index}] artifact cannot be read: {exc}"
-                ) from exc
-            actual_size = len(content)
-            actual_sha = hashlib.sha256(content).hexdigest()
-            if int(document["size_bytes"]) != actual_size:
-                raise OperationsContractError(
-                    f"manifest.documents[{index}] size mismatch: expected "
-                    f"{document['size_bytes']}, received {actual_size}"
-                )
-            if document["sha256"] != actual_sha:
-                raise OperationsContractError(
-                    f"manifest.documents[{index}] checksum mismatch: expected "
-                    f"{document['sha256']}, received {actual_sha}"
-                )
             self.connection.execute(
                 """
                 INSERT OR IGNORE INTO artifacts(
                     artifact_id, item_id, role, accession, source_url,
-                    local_path, size_bytes, sha256, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    storage_provider, storage_namespace, object_key,
+                    size_bytes, sha256, content_type, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     artifact_id,
                     item_id,
-                    document["role"],
-                    document["accession"],
-                    document.get("source_url"),
-                    document["path"],
-                    int(document["size_bytes"]),
-                    document["sha256"],
+                    artifact.role,
+                    artifact.accession,
+                    artifact.source_url,
+                    artifact.stored.storage_provider,
+                    artifact.stored.storage_namespace,
+                    artifact.stored.object_key,
+                    artifact.stored.size_bytes,
+                    artifact.stored.sha256,
+                    artifact.stored.content_type,
                     now,
                 ),
             )
@@ -711,6 +734,7 @@ class SQLiteOperationsStore:
     def _job(row: sqlite3.Row) -> OperationsJob:
         return OperationsJob(
             job_id=row["job_id"],
+            idempotency_scope=row["idempotency_scope"],
             idempotency_key=row["idempotency_key"],
             request_fingerprint=row["request_fingerprint"],
             validation_policy=row["validation_policy"],

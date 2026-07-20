@@ -7,6 +7,12 @@ TEST_MATRIX.md
 corpus/cache/
 corpus/reports/
 
+# Local operations state
+*.db
+*.db-shm
+*.db-wal
+*.db.artifacts/
+
 # Python
 __pycache__/
 *.py[cod]

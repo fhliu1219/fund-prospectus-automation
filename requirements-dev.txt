@@ -1,4 +1,4 @@
--r requirements.txt
+-r requirements-service.txt
 
 # Test/dev dependencies
 pytest>=8.0

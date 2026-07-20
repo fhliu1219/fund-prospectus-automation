@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import uuid
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Protocol, Sequence
+from typing import Any, Dict, List, Optional, Protocol, Sequence
 
-from .models import FetchResult
+from .models import DocumentVerification, FetchResult
 
 
 class JobStatus(str, Enum):
@@ -48,6 +49,7 @@ class OperationsContractError(ValueError):
 @dataclass(frozen=True)
 class OperationsJob:
     job_id: str
+    idempotency_scope: str
     idempotency_key: str
     request_fingerprint: str
     validation_policy: str
@@ -82,12 +84,23 @@ class ReviewTask:
     resolved_at: Optional[str]
 
 
+@dataclass(frozen=True)
+class CompletionRecord:
+    status: ItemStatus
+    error: Optional[str]
+    result_payload: Dict[str, Any]
+    manifest_payload: Optional[dict]
+    identity: dict
+    package: dict
+
+
 class OperationsStore(Protocol):
     def create_job(
         self,
         idempotency_key: str,
         tickers: Sequence[str],
         validation_policy: str,
+        idempotency_scope: str = "internal",
     ) -> OperationsJob:
         ...
 
@@ -128,6 +141,12 @@ class OperationsStore(Protocol):
     ) -> List[ReviewTask]:
         ...
 
+    def artifact_records(self, item_id: str) -> List[dict]:
+        ...
+
+    def persisted_manifest(self, item_id: str) -> Optional[dict]:
+        ...
+
 
 class PersistentJobRunner:
     """Run existing ticker retrieval through durable, leased work items."""
@@ -151,6 +170,7 @@ class PersistentJobRunner:
         idempotency_key: str,
         tickers: Sequence[str],
         validation_policy: str,
+        idempotency_scope: str = "internal",
     ) -> OperationsJob:
         configured_policy = getattr(
             getattr(self.fetcher, "package_builder", None),
@@ -166,6 +186,7 @@ class PersistentJobRunner:
             idempotency_key,
             tickers,
             validation_policy,
+            idempotency_scope,
         )
 
     def run(self, job_id: str) -> OperationsJob:
@@ -214,3 +235,113 @@ class PersistentJobRunner:
                 f"{result.ticker}: package manifest ticker does not match result"
             )
         return value
+
+
+def normalize_tickers(tickers: Sequence[str]) -> List[str]:
+    values: List[str] = []
+    seen = set()
+    for raw in tickers:
+        ticker = raw.strip().upper()
+        if ticker and ticker not in seen:
+            seen.add(ticker)
+            values.append(ticker)
+    if not values:
+        raise OperationsContractError("at least one ticker is required")
+    return values
+
+
+def normalize_idempotency_scope(value: str) -> str:
+    scope = value.strip()
+    if not scope:
+        raise OperationsContractError("idempotency_scope must not be empty")
+    if len(scope) > 128:
+        raise OperationsContractError(
+            "idempotency_scope must not exceed 128 characters"
+        )
+    return scope
+
+
+def request_fingerprint(
+    tickers: Sequence[str],
+    validation_policy: str,
+) -> str:
+    payload = json.dumps(
+        {
+            "tickers": list(tickers),
+            "validation_policy": validation_policy,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def completion_record(
+    claimed_ticker: str,
+    job_policy: str,
+    result: FetchResult,
+    manifest: Optional[dict],
+) -> CompletionRecord:
+    if result.ticker != claimed_ticker:
+        raise OperationsContractError(
+            f"result ticker {result.ticker!r} does not match claimed ticker "
+            f"{claimed_ticker!r}"
+        )
+
+    if result.ok:
+        if not isinstance(manifest, dict):
+            raise OperationsContractError(
+                f"{result.ticker}: successful result requires a manifest"
+            )
+        status = (
+            ItemStatus.VERIFIED
+            if result.document_verification is DocumentVerification.VERIFIED
+            else ItemStatus.REVIEW_REQUIRED
+        )
+        error = None
+    else:
+        if manifest is not None:
+            raise OperationsContractError(
+                f"{result.ticker}: failed result must not include a manifest"
+            )
+        status = ItemStatus.FAILED
+        error = result.error or "retrieval failed without an error message"
+
+    identity = manifest.get("identity", {}) if manifest else {}
+    package = manifest.get("package", {}) if manifest else {}
+    if manifest is not None:
+        if manifest.get("ticker") != result.ticker:
+            raise OperationsContractError(
+                "manifest ticker does not match the completed result"
+            )
+        if not isinstance(identity, dict):
+            raise OperationsContractError("manifest.identity must be an object")
+        if not isinstance(package, dict):
+            raise OperationsContractError("manifest.package must be an object")
+        if package.get("validation_policy") != job_policy:
+            raise OperationsContractError(
+                "manifest validation policy does not match the job"
+            )
+        if package.get("verification") != result.document_verification.value:
+            raise OperationsContractError(
+                "manifest verification does not match the completed result"
+            )
+
+    return CompletionRecord(
+        status=status,
+        error=error,
+        result_payload={
+            "ticker": result.ticker,
+            "status": result.status,
+            "form": result.form,
+            "filing_date": result.date,
+            "path": result.path,
+            "error": result.error,
+            "document_kind": result.document_kind.value,
+            "document_verification": result.document_verification.value,
+            "warnings": result.warnings,
+        },
+        manifest_payload=manifest,
+        identity=identity,
+        package=package,
+    )
