@@ -16,12 +16,23 @@ from .corpus import (
     RelevanceLabel,
 )
 from .evidence_policy import POLICY_VERSION, ShadowEvidencePolicy
-from .filing_identity import parse_filing_identity_header
+from .filing_identity import FilingIdentityMetadata, resolve_filing_identity
 from .models import DocumentKind, DocumentVerification
 from .validator import DocumentValidator
 
 
-REPORT_SCHEMA_VERSION = 1
+REPORT_SCHEMA_VERSION = 2
+SCENARIO_DIMENSIONS = (
+    "provider",
+    "form",
+    "requested_identity_scope",
+    "filing_metadata_breadth",
+    "document_encoding",
+    "reason_category",
+    "expected_relevance",
+    "expected_document_kind",
+    "expected_automatic_use",
+)
 
 
 def _confusion(expected: Iterable[str], actual: Iterable[str]) -> Dict[str, Dict[str, int]]:
@@ -92,6 +103,38 @@ def _metrics(rows: List[dict], policy_key: str) -> dict:
     }
 
 
+def _requested_identity_scope(class_id: Optional[str], series_id: Optional[str]) -> str:
+    if class_id:
+        return "class"
+    if series_id:
+        return "series"
+    return "registrant"
+
+
+def _filing_metadata_breadth(metadata: FilingIdentityMetadata) -> str:
+    if not metadata.series:
+        return "registrant_only"
+    if len(metadata.series) > 1:
+        return "multiple_series"
+    if len(metadata.series[0].classes) > 1:
+        return "single_series_multiple_classes"
+    return "single_series_single_class"
+
+
+def _scenario_slices(rows: List[dict], policy_key: str) -> dict:
+    slices: Dict[str, dict] = {}
+    for dimension in SCENARIO_DIMENSIONS:
+        values = sorted({row["scenario"][dimension] for row in rows})
+        slices[dimension] = {
+            value: _metrics(
+                [row for row in rows if row["scenario"][dimension] == value],
+                policy_key,
+            )
+            for value in values
+        }
+    return slices
+
+
 class CorpusEvaluator:
     def __init__(
         self,
@@ -106,8 +149,8 @@ class CorpusEvaluator:
     def evaluate(self, manifest: CorpusManifest) -> dict:
         rows: List[dict] = []
         for case in manifest.cases:
-            content, header_page = self.cache.read_case(case)
-            metadata = parse_filing_identity_header(header_page)
+            content, header_page, detail_page = self.cache.read_case(case)
+            metadata = resolve_filing_identity(header_page, detail_page)
             if metadata.accession != case.accession:
                 raise ValueError(
                     f"{case.case_id}: header accession {metadata.accession} does not "
@@ -136,6 +179,10 @@ class CorpusEvaluator:
                 case.class_id,
                 case.series_id,
                 metadata,
+                requested_cik=case.requested_cik,
+                registrant_cik=case.registrant_cik,
+                known_series_count=case.known_series_count,
+                declared_form=case.form,
             )
             expected = {
                 "relevance": case.labels.relevance.value,
@@ -150,12 +197,30 @@ class CorpusEvaluator:
                 "warnings": current.warnings,
             }
             shadow_value = shadow.as_dict()
+            scenario = {
+                "provider": case.provider,
+                "form": case.form,
+                "requested_identity_scope": _requested_identity_scope(
+                    case.class_id,
+                    case.series_id,
+                ),
+                "filing_metadata_breadth": _filing_metadata_breadth(metadata),
+                "document_encoding": (
+                    "inline_xbrl" if b"<ix:" in content.lower() else "html"
+                ),
+                "reason_category": case.reason.category,
+                "expected_relevance": case.labels.relevance.value,
+                "expected_document_kind": case.labels.document_kind.value,
+                "expected_automatic_use": case.labels.automatic_use.value,
+            }
             rows.append(
                 {
                     "case_id": case.case_id,
                     "ticker": case.ticker,
                     "accession": case.accession,
                     "document_url": case.document_url,
+                    "identity_metadata_source": metadata.source.value,
+                    "scenario": scenario,
                     "expected": expected,
                     "label_reason": {
                         "summary": case.reason.summary,
@@ -185,6 +250,9 @@ class CorpusEvaluator:
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "current_metrics": _metrics(rows, "current"),
             "shadow_metrics": _metrics(rows, "shadow"),
+            "scenario_dimensions": list(SCENARIO_DIMENSIONS),
+            "current_slices": _scenario_slices(rows, "current"),
+            "shadow_slices": _scenario_slices(rows, "shadow"),
             "cases": rows,
         }
 

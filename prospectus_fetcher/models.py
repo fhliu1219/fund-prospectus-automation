@@ -37,6 +37,7 @@ class DocumentKind(str, Enum):
     SUMMARY_PROSPECTUS = "summary_prospectus"
     STATUTORY_PROSPECTUS = "statutory_prospectus"
     SUPPLEMENT = "supplement"
+    STATEMENT_OF_ADDITIONAL_INFORMATION = "statement_of_additional_information"
 
 
 class DocumentRole(str, Enum):

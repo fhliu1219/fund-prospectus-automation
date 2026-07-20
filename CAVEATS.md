@@ -35,11 +35,15 @@ Caveat statuses:
 | M1-C003 | open | CIK-only resolution cannot establish a class or series relationship. | Identity enrichment in Roadmap Milestone 8. |
 | M2-C001 | mitigated | Live provider coverage exists, but class-to-series fallback remains mocked only. | Curated contract matrix maintenance. |
 | M3-C001 | mitigated | Deterministic content rules still misclassify unfamiliar SEC documents. | Expand the corpus from measured misses. |
-| M3-C003 | mitigated | The location-aware replacement is measured but remains shadow-only. | Explicit policy-activation decision. |
+| M3-C003 | mitigated | The location-aware replacement is measured but remains shadow-only. | Resolve M6.1-C003 before activation. |
 | M5-C001 | mitigated | Real SEC archive parsing is live-tested, but no stable live fixture currently triggers sibling replacement. | Curated contract matrix maintenance. |
 | M6-C001 | mitigated | Thirty curated cases do not establish production-wide accuracy. | Expand by provider and observed failures. |
-| M6-C002 | mitigated | The shadow policy still misses three expected automatic approvals on the corpus. | Review misses before threshold changes. |
-| M6-C003 | mitigated | Submission headers parsed for all cases; filing-detail identity fallback remains unexercised. | Add a real fallback case when available. |
+| M6-C002 | mitigated | `v5` preserves zero false automatic approvals, but the follow-up has one missed allowed document and 20% review. | M6.1-C003 and M6.1-C004. |
+| M6-C003 | retired | Filing-detail fallback is cross-checked on real pages and exercised synthetically. | Monitor real fallback frequency. |
+| M6.1-C001 | retired | Both `v4` and `v5` were evaluated on separately frozen, disjoint 30-case sets. | Use new data for any later policy version. |
+| M6.1-C002 | mitigated | `v5` resolves the original holdout supplement misses, but one later Appendix A fund-list case still routes to review. | Expand location-aware fund-list evidence from new reviewed cases. |
+| M6.1-C003 | open | A combined `485BPOS` package can be classified as SAI when its SAI section precedes its prospectus section. | Resolve mixed-document precedence before activation. |
+| M6.1-C004 | mitigated | Class- or fund-limited supplements without the requested identity route to review rather than explicit rejection. | Add structured scope contradictions from labeled review outcomes. |
 
 ---
 
@@ -646,16 +650,17 @@ This milestone owns M3-C001 and M3-C003.
 
 #### M6-C003: Filing-detail identity fallback not exercised
 
-- **Status:** mitigated
+- **Status:** resolved in Milestone 6.1
 - **Risk:** A filing with a missing or incompatible submission header would stop
   corpus evaluation because the filing-detail series/class table is not yet an
   exercised fallback path.
 - **Evidence:** All 30 SEC submission headers fetched, checksum-verified, and
   parsed successfully, including providers with and without fund class blocks.
-- **Current mitigation:** Header incompatibility fails explicitly; it cannot be
-  mistaken for absent identity evidence.
-- **Next review:** Add and test a real filing-detail fallback case when one is
-  available or before activating the shadow policy in production.
+- **Resolution:** Two real filing-detail pages are checksum-pinned and
+  cross-checked against valid headers. A malformed-header integration test
+  exercises fallback selection. Source disagreements fail closed.
+- **Residual boundary:** None of the 30 real corpus headers currently requires
+  fallback, so the observed live fallback rate remains 0/30.
 
 ### Assumptions register
 
@@ -772,6 +777,220 @@ Ambiguity without a reason is not accepted ground truth.
 - Investigate the specific M6-C002 misses before changing thresholds.
 - Expand the corpus from new provider layouts and real review outcomes.
 - Exercise filing-detail identity fallback before production activation.
+
+---
+
+## Milestone 6.1: Evidence Policy Hardening
+
+**Status:** complete; `m6.1-shadow-v5` retained in shadow mode
+
+### Decisions register
+
+#### M6.1-D001: Represent SAI as an explicit document kind
+
+- **Status:** accepted and implemented
+- **Decision:** Add `statement_of_additional_information` instead of treating a
+  recognized SAI as `unknown`.
+- **Reason:** Relevance and suitability are separate. The TRBCX SAI has direct
+  class and ticker evidence, but it is not the prospectus requested by the
+  product.
+- **Policy:** An SAI may be relevance-positive but is always disallowed as a
+  standalone prospectus.
+- **Measured result:** The TRBCX shadow disagreement is resolved. Shadow review
+  rate decreased from 30.0% to 26.7%, while false automatic approvals remained
+  zero and positive precision/recall remained 100%/90%.
+
+#### M6.1-D002: Test a guarded registrant-instrument signal
+
+- **Status:** accepted and implemented in shadow mode
+- **Decision:** For CIK-only requests, treat the combined relationship as strong
+  only when requested and filing CIKs agree, no mutual-fund series are known,
+  the exact SEC registrant name is prominent, the ticker occurs in the document,
+  the document is a complete prospectus, and no contradiction exists.
+- **Boundary:** This remains registrant-level confidence and does not establish a
+  class, series, or permanent instrument identity. The effective-dated
+  instrument registry remains the long-term solution.
+- **Measured result:** Both SPY shadow misses are resolved. Shadow relevance
+  precision and recall are now 100%, false automatic approvals remain zero, one
+  expected automatic approval remains missed, and review rate is 20.0%.
+
+#### M6.1-D003: Separate visible HTML from inline-XBRL metadata
+
+- **Status:** accepted and implemented in shadow mode
+- **Decision:** Use browser-visible body text for semantic location; parse the
+  HTML title, hidden inline-XBRL facts, and declared filing form as separately
+  sourced supporting evidence.
+- **Safety rules:** Hidden tickers cannot establish visible identity, and form
+  type alone cannot establish document kind.
+- **Measured result:** FDRXX and both combined Vanguard document-kind
+  disagreements are resolved. The shadow policy now matches every label on the
+  30-case development corpus, with zero false or missed automatic approvals and
+  a 16.7% review rate.
+
+#### M6.1-D004: Use filing detail only as a technical identity fallback
+
+- **Status:** accepted and implemented in shadow evaluation
+- **Decision:** Parse the accession's SEC filing-detail page only when the
+  submission header is absent or technically unparseable. A valid header remains
+  primary; a valid header that omits the requested identity is evidence, not a
+  reason to fall back.
+- **Safety rules:** Checksum-pin optional detail pages, record
+  `identity_metadata_source`, cross-check both sources when present, and fail
+  closed on accession, registrant-name, or series/class disagreement.
+- **Measured result:** Real VUSXX and SPY detail pages agree with their valid
+  headers. A forced malformed-header evaluation resolves through
+  `filing_detail_fallback` without changing the 30-case shadow metrics.
+
+#### M6.1-D005: Report metrics by explicit scenario dimensions
+
+- **Status:** accepted and implemented
+- **Decision:** Derive scenario metadata from immutable labels, request
+  identity, parsed SEC metadata, and document bytes. Report current and shadow
+  metrics by provider, form, requested identity scope, filing metadata breadth,
+  HTML/inline-XBRL encoding, reason category, and each expected label.
+- **Reason:** Aggregate precision can conceal a failure concentrated in one
+  provider, registrant-only path, combined filing, or document encoding.
+- **Measured result:** The development corpus includes 27 class and 3
+  registrant-only requests, 7 inline-XBRL documents, and 12 filings whose
+  metadata covers multiple series. All five shadow review outcomes are the
+  intentionally ambiguous supplement cases.
+
+#### M6.1-D006: Freeze an accession-disjoint holdout before evaluation
+
+- **Status:** accepted and implemented
+- **Decision:** Label 30 new cases before running the shadow policy and reject
+  every accession or document checksum that overlaps the development corpus.
+- **Composition:** 25 relevance-positive and 5 same-registrant class-mismatch
+  negatives; 11 summaries, 10 statutory prospectuses, 7 supplements, and 2
+  SAIs; 16 allowed and 14 disallowed.
+- **Measured result:** `m6.1-shadow-v4` has zero false automatic approvals and
+  zero missed allowed documents. It matches all complete prospectuses and all
+  class-mismatch controls, but routes six positive supplements to review.
+- **Boundary:** The holdout is now consumed for model selection. Any `v5`
+  changes derived from its disagreements require a new, separately frozen
+  follow-up set.
+
+#### M6.1-D007: Add guarded supplement-scope evidence in `v5`
+
+- **Status:** accepted and implemented in shadow mode
+- **Decision:** Treat an exact SEC series name in a supplement title,
+  front-matter region, heading, or structured table row as strong relevance
+  evidence. Also recognize universal all-funds/all-series language only when
+  filing metadata contains the requested class and the exact SEC registrant
+  name is prominent.
+- **Safety rules:** Supplement and SAI document kinds remain ineligible for
+  standalone automatic use. Contradictions still override positive signals.
+  Generic provider language and body-only identity mentions do not become
+  strong merely because the filing is a supplement.
+- **Measured result:** `v5` resolves all six conservative supplement misses on
+  the consumed `v4` holdout without introducing a false automatic approval.
+  The development corpus now has three relevance-label disagreements because
+  `v5` treats explicit exact-series fund lists as positive while the historical
+  labels called them ambiguous; all three documents remain disallowed
+  supplements.
+
+#### M6.1-D008: Validate `v5` on a second disjoint follow-up set
+
+- **Status:** accepted and implemented
+- **Decision:** Freeze 30 additional cases with no accession or document
+  checksum overlap with either prior corpus, label them before evaluation, and
+  leave `v5` unchanged during adjudication.
+- **Composition:** 23 relevance-positive, 4 negative, and 3 ambiguous cases
+  after one human-label correction; 12 summaries, 10 statutory prospectuses, 7
+  supplements, and 1 SAI; 20 allowed, 7 disallowed, and 3 review.
+- **Label adjudication:** The initial FOCPX SAI label was corrected from
+  negative to positive after the document's later authoritative table was
+  found to pair Fidelity OTC Portfolio with FOCPX. The pre-adjudication report
+  is preserved locally; no policy rule changed.
+- **Measured result:** `v5` produced 100% positive precision, 95.7% positive
+  recall, zero false automatic approvals, one missed allowed document, and a
+  20% review rate. Nineteen of 20 expected allowed documents were allowed.
+- **Activation decision:** Do not activate `v5` yet. Retain it as the next
+  shadow baseline because the combined PIMCO `485BPOS` case is incorrectly
+  classified as SAI and disallowed.
+
+### Caveats register
+
+#### M6.1-C001: Development-set overfitting
+
+- **Status:** retired by the frozen holdout evaluation
+- **Risk:** The same 30 cases were used to discover defects and measure the
+  corrected policy, so perfect metrics can reflect post-hoc tuning.
+- **Current mitigation:** The scoring behavior introduced in
+  `m6.1-shadow-v3` is frozen before selecting new cases. `m6.1-shadow-v4` adds
+  only identity-source fallback and provenance; it does not relax relevance or
+  automatic-use rules. Normal CLI behavior remains unchanged.
+- **Resolution:** Thirty accession- and checksum-disjoint cases were labeled
+  before `v4` evaluation. After those cases informed `v5`, a second 30-case set
+  was frozen without overlap against either prior corpus and evaluated without
+  changing `v5`.
+
+#### M6.1-C002: Broad supplement relevance is under-classified
+
+- **Status:** mitigated; residual case remains
+- **Risk:** `v4` under-classified explicit fund-list and universal-scope
+  supplements. `v5` adds guarded evidence, but a requested fund listed only in
+  a later Appendix A still routes to review.
+- **Evidence:** `v5` resolves all six original holdout misses. On the new
+  follow-up set, the TLT supplement is relevance-positive by its Appendix A but
+  remains ambiguous because TLT appears only in body text.
+- **Current mitigation:** Review is conservative, and supplements remain
+  disallowed even when relevance-positive.
+- **Next review:** Add a structured fund-list parser or bounded Appendix
+  recognition using additional independently labeled cases.
+
+#### M6.1-C003: Mixed prospectus and SAI package precedence
+
+- **Status:** open; activation blocker
+- **Risk:** A combined filing document can contain both prospectus and SAI
+  sections. The current kind classifier uses the earliest recognized complete
+  document marker, so an early SAI section can cause a complete `485BPOS`
+  package to be disallowed.
+- **Evidence:** The follow-up PIMIX `485BPOS` is relevance-positive and contains
+  complete prospectus material, but `v5` classifies it as SAI and misses one of
+  20 expected automatic approvals.
+- **Current mitigation:** The policy remains shadow-only, so the controlling
+  validator does not lose this document.
+- **Exit condition:** Represent mixed packages explicitly or require stronger
+  top-level package/form evidence before an SAI marker can override complete
+  prospectus structure.
+
+#### M6.1-C004: Negative supplement scope is not fully structured
+
+- **Status:** mitigated
+- **Risk:** A supplement may expressly apply only to other classes or funds
+  without naming the requested identity. Absence alone is not a contradiction,
+  so `v5` can route a known mismatch to review rather than reject it.
+- **Evidence:** The PIMIX Class A/Class C supplement and the AGTHX bond-fund
+  supplement are labeled negative but remain ambiguous under `v5`.
+- **Current mitigation:** Both route to review and neither can be automatically
+  returned as a complete prospectus.
+- **Exit condition:** Parse explicit class/fund scope lists and emit a
+  contradiction only when the list is demonstrably exhaustive.
+
+### Remaining disagreement audit
+
+The original development corpus is diagnostic rather than independent. Under
+`v5`, three historical ambiguous labels become positive because exact series
+names appear in explicit fund lists; all remain disallowed supplements. The
+first holdout is now consumed for `v5` design and has no remaining `v5`
+disagreement.
+
+The independent `v5` follow-up has four adjudicated policy disagreements: one
+positive Appendix A supplement routes to review, one complete combined
+`485BPOS` is misclassified as SAI and disallowed, and two negative limited-scope
+supplements route to review. There are no false automatic approvals. `v5`
+therefore remains shadow-only.
+
+### Verification at completion
+
+- All three committed manifests pass the runtime schema.
+- The `v5` follow-up has 30 unique accessions and document checksums with no
+  overlap against either prior corpus.
+- Focused corpus/evidence tests: 35 passed.
+- Full offline suite: 127 passed, with the one opt-in live test skipped.
+- Opt-in VUSXX/QQQ/SPY live SEC contract: 1 passed.
+- All project and test Python files parse under Python 3.9 grammar.
 
 ---
 

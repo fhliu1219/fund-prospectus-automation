@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "corpus_version": "2026-07-16",
+  "corpus_version": "2026-07-19.2",
   "target_case_count": 30,
   "cases": [
     {
@@ -18,6 +18,8 @@
       "document_sha256": "14e16449a459f2fbaba07b468d7f3a04585f2796a2a2b3ebe87db7682ca5cdce",
       "filing_header_url": "https://www.sec.gov/Archives/edgar/data/891190/000089119026000223/0000891190-26-000223-index-headers.html",
       "filing_header_sha256": "5ec985e96195fbdf5a6694d784b0f88dd81df0ef7800711a633545698cab3c6e",
+      "filing_detail_url": "https://www.sec.gov/Archives/edgar/data/891190/000089119026000223/0000891190-26-000223-index.html",
+      "filing_detail_sha256": "954bd4fbb1619623317db5fc820b24a207ac71628b7f478a5e5578298c58b480",
       "labels": {
         "relevance": "positive",
         "document_kind": "summary_prospectus",
@@ -496,7 +498,7 @@
       "filing_header_sha256": "8305f8ef727f45127086275e6cc46a2b66eedf95a4324bb337a303e4701eeea3",
       "labels": {
         "relevance": "positive",
-        "document_kind": "unknown",
+        "document_kind": "statement_of_additional_information",
         "automatic_use": "disallowed"
       },
       "reason": {
@@ -520,6 +522,7 @@
       "requested_cik": 884394,
       "series_id": null,
       "class_id": null,
+      "known_series_count": 0,
       "accession": "0001193125-26-022316",
       "form": "485BPOS",
       "filing_date": "2026-01-26",
@@ -527,6 +530,8 @@
       "document_sha256": "05cf519441a6f019d4e310472a35112bce29b3cc1dbb5b2d018ca845252b528e",
       "filing_header_url": "https://www.sec.gov/Archives/edgar/data/884394/000119312526022316/0001193125-26-022316-index-headers.html",
       "filing_header_sha256": "f40333aefd7e868a21a34dd8667b51626cf399d0232cde6e873ef60c37997dff",
+      "filing_detail_url": "https://www.sec.gov/Archives/edgar/data/884394/000119312526022316/0001193125-26-022316-index.html",
+      "filing_detail_sha256": "a5678f061b5f0e8377789ef8ac4cf3fad1bb8b1e62dfe13dcee43a625d4ae96a",
       "labels": {
         "relevance": "positive",
         "document_kind": "statutory_prospectus",
@@ -537,6 +542,7 @@
         "category": "registrant_and_document_identity",
         "observed_evidence": [
           "The filing header names SPDR S&P 500 ETF Trust as the registrant.",
+          "The SEC mutual-fund mapping has no known series under CIK 884394.",
           "The document directly names SPY or the SPDR S&P 500 ETF Trust in prospectus content.",
           "The document contains statutory prospectus or registration-statement sections."
         ],
@@ -555,6 +561,7 @@
       "requested_cik": 884394,
       "series_id": null,
       "class_id": null,
+      "known_series_count": 0,
       "accession": "0001193125-26-022775",
       "form": "497",
       "filing_date": "2026-01-26",
@@ -572,6 +579,7 @@
         "category": "registrant_and_document_identity",
         "observed_evidence": [
           "The filing header names SPDR S&P 500 ETF Trust as the registrant.",
+          "The SEC mutual-fund mapping has no known series under CIK 884394.",
           "The document directly names SPY or the SPDR S&P 500 ETF Trust in prospectus content.",
           "The document contains statutory prospectus or registration-statement sections."
         ],
@@ -590,6 +598,7 @@
       "requested_cik": 884394,
       "series_id": null,
       "class_id": null,
+      "known_series_count": 0,
       "accession": "0001193125-25-014030",
       "form": "497",
       "filing_date": "2025-01-28",
@@ -607,6 +616,7 @@
         "category": "registrant_and_document_identity",
         "observed_evidence": [
           "The filing header names SPDR S&P 500 ETF Trust as the registrant.",
+          "The SEC mutual-fund mapping has no known series under CIK 884394.",
           "The document directly names SPY or the SPDR S&P 500 ETF Trust in prospectus content.",
           "The document contains statutory prospectus or registration-statement sections."
         ],

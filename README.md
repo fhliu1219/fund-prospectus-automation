@@ -311,10 +311,17 @@ The single opt-in live contract test exercises VUSXX, QQQ, and SPY across
 class-level and registrant-level paths, including a real SEC filing inventory.
 
 The separate [validation corpus](corpus/README.md) measures the current
-validator against the location-aware `m6-shadow-v1` evidence policy without
+validator against a versioned location-aware shadow evidence policy without
 changing production CLI behavior. Raw SEC bytes and detailed reports remain
 local; the committed manifest preserves exact URLs, checksums, labels, and
-human reasons.
+human reasons. Submission headers are the primary source of filing identity;
+the shadow evaluator can use a checksum-pinned SEC filing-detail page only when
+the header is unavailable or unparseable, and records which source was used.
+An accession- and checksum-disjoint 30-case holdout is committed separately so
+development tuning and independent evaluation are not conflated. A second
+disjoint 30-case follow-up evaluates the resulting `m6.1-shadow-v5` policy; its
+measured activation blockers and the decision to keep `v5` shadow-only are
+documented in the corpus guide.
 
 ---
 
@@ -330,7 +337,7 @@ prospectus_fetcher/
   edgar.py                  # PROSPECTUS_FORM_PRIORITY; filing selection; doc resolution
   downloader.py             # save the document to disk
   validator.py              # classify content and collect verification evidence
-  filing_identity.py        # parse filing-specific SEC series/class metadata
+  filing_identity.py        # parse header identity with filing-detail fallback
   evidence_policy.py        # location-aware Milestone 6 shadow policy
   corpus.py                 # versioned corpus schema and checksum cache
   corpus_evaluator.py       # current-vs-shadow metrics and disagreements

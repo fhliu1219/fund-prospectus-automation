@@ -1,0 +1,1045 @@
+{
+  "schema_version": 1,
+  "corpus_version": "2026-07-19.v5-followup.2",
+  "target_case_count": 30,
+  "cases": [
+    {
+      "case_id": "fxnax-1-0000035315-25-001095",
+      "provider": "FIDELITY SALEM STREET TRUST",
+      "ticker": "FXNAX",
+      "registrant_cik": 35315,
+      "requested_cik": 35315,
+      "series_id": "S000017676",
+      "class_id": "C000100043",
+      "known_series_count": 95,
+      "accession": "0000035315-25-001095",
+      "form": "497K",
+      "filing_date": "2025-10-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/35315/000003531525001095/filing9919.htm",
+      "document_sha256": "86fec08805c76a993f416a842a6aff0d3961e85c6333dd086fc1634c6274a049",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/35315/000003531525001095/0000035315-25-001095-index-headers.html",
+      "filing_header_sha256": "e46e51de5098f93a97579fbd15175893fc874b1bce0f9a5cda886bb3ad85b054",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "fxnax-2-0000035315-25-001071",
+      "provider": "FIDELITY SALEM STREET TRUST",
+      "ticker": "FXNAX",
+      "registrant_cik": 35315,
+      "requested_cik": 35315,
+      "series_id": "S000017676",
+      "class_id": "C000100043",
+      "known_series_count": 95,
+      "accession": "0000035315-25-001071",
+      "form": "485BPOS",
+      "filing_date": "2025-10-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/35315/000003531525001071/filing10360.htm",
+      "document_sha256": "20d73b80463613abff45456819d660bf819b49afd5a5a8076c578db9f5160772",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/35315/000003531525001071/0000035315-25-001071-index-headers.html",
+      "filing_header_sha256": "d2280ab1fafa5da8be5c9cf8410f58b28715d43839a6d69cd2d118c50a9bf754",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "fxnax-3-0000035315-25-000152",
+      "provider": "FIDELITY SALEM STREET TRUST",
+      "ticker": "FXNAX",
+      "registrant_cik": 35315,
+      "requested_cik": 35315,
+      "series_id": "S000017676",
+      "class_id": "C000100043",
+      "known_series_count": 95,
+      "accession": "0000035315-25-000152",
+      "form": "497K",
+      "filing_date": "2025-01-31",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/35315/000003531525000152/filing8558.htm",
+      "document_sha256": "a546b5cc613a9d5bc8473116c2ae877719a2bb268508031368570a3441d40118",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/35315/000003531525000152/0000035315-25-000152-index-headers.html",
+      "filing_header_sha256": "1bb2858004dc392fa2eef901024c2a0a34a2019963fadcaab6979a16834b4ee6",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The supplement directly covers the requested fund but is not a complete standalone prospectus.",
+        "category": "direct_supplement_evidence",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker, exact fund, or a fund list containing that fund.",
+          "The document identifies itself as a supplement."
+        ],
+        "missing_evidence": [
+          "The applicable complete base prospectus is not part of this case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "focpx-1-0000754510-25-000161",
+      "provider": "FIDELITY SECURITIES FUND",
+      "ticker": "FOCPX",
+      "registrant_cik": 754510,
+      "requested_cik": 754510,
+      "series_id": "S000007191",
+      "class_id": "C000019679",
+      "known_series_count": 16,
+      "accession": "0000754510-25-000161",
+      "form": "497K",
+      "filing_date": "2025-09-25",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/754510/000075451025000161/filing9865.htm",
+      "document_sha256": "2e11dbd259e17f2ac387413f6e6a4a01e3dfd098ba431eb79d3a0423c90af77f",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/754510/000075451025000161/0000754510-25-000161-index-headers.html",
+      "filing_header_sha256": "3366974cabfe1be1acf0bd6977d93f85068c463bb9e2d5f75a8dfe315483fc22",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "focpx-2-0000754510-25-000153",
+      "provider": "FIDELITY SECURITIES FUND",
+      "ticker": "FOCPX",
+      "registrant_cik": 754510,
+      "requested_cik": 754510,
+      "series_id": "S000007191",
+      "class_id": "C000019679",
+      "known_series_count": 16,
+      "accession": "0000754510-25-000153",
+      "form": "485BPOS",
+      "filing_date": "2025-09-24",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/754510/000075451025000153/filing9876.htm",
+      "document_sha256": "d7831e910c7af696f6c02fe456a9becd5192f394fae08ad3da874a65acfb67e4",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/754510/000075451025000153/0000754510-25-000153-index-headers.html",
+      "filing_header_sha256": "0c37a22c690ec9185acbe7933d89f51ae56a5df340a05570ad0febd9ab95c38d",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "focpx-3-0000754510-25-000077",
+      "provider": "FIDELITY SECURITIES FUND",
+      "ticker": "FOCPX",
+      "registrant_cik": 754510,
+      "requested_cik": 754510,
+      "series_id": "S000007191",
+      "class_id": "C000019679",
+      "known_series_count": 16,
+      "accession": "0000754510-25-000077",
+      "form": "497",
+      "filing_date": "2025-03-31",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/754510/000075451025000077/filing8803.htm",
+      "document_sha256": "8a1e271fdcac4b5f7215991d0db2dd7edd0a2a8bec60919f89174d138a44fa23",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/754510/000075451025000077/0000754510-25-000077-index-headers.html",
+      "filing_header_sha256": "0def9ea15d1940c5d7240aaa2a3d709ed27e99e96a672169ed3668812ab70642",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statement_of_additional_information",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The SAI covers the requested FOCPX class but is not a standalone prospectus.",
+        "category": "direct_sai_evidence",
+        "observed_evidence": [
+          "The filing metadata includes requested class C000019679.",
+          "The combined SAI contains an authoritative fund and ticker table that pairs Fidelity OTC Portfolio with FOCPX.",
+          "The document also contains separate Class K sections, so the first share-class table is not the document's complete scope."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vti-1-0000036405-26-000197",
+      "provider": "VANGUARD INDEX FUNDS",
+      "ticker": "VTI",
+      "registrant_cik": 36405,
+      "requested_cik": 36405,
+      "series_id": "S000002848",
+      "class_id": "C000007808",
+      "known_series_count": 12,
+      "accession": "0000036405-26-000197",
+      "form": "497K",
+      "filing_date": "2026-04-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/36405/000003640526000197/f44849d1.htm",
+      "document_sha256": "f5105864b1e9c6241f11431d5e35b8eb66f98e698edbd0cfd69952c35c3f65f2",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/36405/000003640526000197/0000036405-26-000197-index-headers.html",
+      "filing_header_sha256": "f116f0a050f4c12e6dd7a24bba0c4d562886fc44a46501af018b269390b3d1ad",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vti-2-0001193125-25-224194",
+      "provider": "VANGUARD WORLD FUND",
+      "ticker": "VTI",
+      "registrant_cik": 36405,
+      "requested_cik": 36405,
+      "series_id": "S000002848",
+      "class_id": "C000007808",
+      "known_series_count": 12,
+      "accession": "0001193125-25-224194",
+      "form": "497",
+      "filing_date": "2025-09-30",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/36405/000119312525224194/f43052d1.htm",
+      "document_sha256": "a605e3f15b41b0bb6bb63a539e56f5f094e8d72b2bbc4670a8b55e6b5dc9b230",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/36405/000119312525224194/0001193125-25-224194-index-headers.html",
+      "filing_header_sha256": "6d0091fefa4d926429d020353e2df95ac1b23a31f721f852dce857400e76a1e3",
+      "labels": {
+        "relevance": "ambiguous",
+        "document_kind": "supplement",
+        "automatic_use": "review"
+      },
+      "reason": {
+        "summary": "The broad registrant supplement may apply to the requested fund, but the document does not provide enough direct identity evidence.",
+        "category": "broad_supplement_scope_unresolved",
+        "observed_evidence": [
+          "The filing metadata includes the requested class and series.",
+          "The document identifies itself as a supplement with broad Vanguard fund or series language."
+        ],
+        "missing_evidence": [
+          "The document does not name the requested ticker or exact fund.",
+          "The document does not establish universal scope under the exact requested registrant name."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": "Confirm the supplement's fund list or referenced base prospectus covers the requested class."
+      }
+    },
+    {
+      "case_id": "vti-3-0001683863-25-007112",
+      "provider": "VANGUARD WORLD FUND",
+      "ticker": "VTI",
+      "registrant_cik": 36405,
+      "requested_cik": 36405,
+      "series_id": "S000002848",
+      "class_id": "C000007808",
+      "known_series_count": 12,
+      "accession": "0001683863-25-007112",
+      "form": "497",
+      "filing_date": "2025-08-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/36405/000168386325007112/f42753d1.htm",
+      "document_sha256": "453e7e59841c15f1f16c27bf482b9095fd451a8ca0021b8942899db04fb2aca6",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/36405/000168386325007112/0001683863-25-007112-index-headers.html",
+      "filing_header_sha256": "125ec1ddf96544b21f740719d793bfae29bdc479dd614c91efc0c6b2b8177739",
+      "labels": {
+        "relevance": "ambiguous",
+        "document_kind": "supplement",
+        "automatic_use": "review"
+      },
+      "reason": {
+        "summary": "The broad registrant supplement may apply to the requested fund, but the document does not provide enough direct identity evidence.",
+        "category": "broad_supplement_scope_unresolved",
+        "observed_evidence": [
+          "The filing metadata includes the requested class and series.",
+          "The document identifies itself as a supplement with broad Vanguard fund or series language."
+        ],
+        "missing_evidence": [
+          "The document does not name the requested ticker or exact fund.",
+          "The document does not establish universal scope under the exact requested registrant name."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": "Confirm the supplement's fund list or referenced base prospectus covers the requested class."
+      }
+    },
+    {
+      "case_id": "vxus-1-0001193125-26-077510",
+      "provider": "VANGUARD STAR FUNDS",
+      "ticker": "VXUS",
+      "registrant_cik": 736054,
+      "requested_cik": 736054,
+      "series_id": "S000002932",
+      "class_id": "C000094038",
+      "known_series_count": 7,
+      "accession": "0001193125-26-077510",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/736054/000119312526077510/f44038d1.htm",
+      "document_sha256": "03b4c12c884bf4ca8fe67dab95ccb67027e61d4946f9d4338df110183ef66f4f",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/736054/000119312526077510/0001193125-26-077510-index-headers.html",
+      "filing_header_sha256": "8c7f80439ac8da28b384140d95bda8355ca13c2be11502698897a7bc2a49fa4b",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vxus-2-0001193125-26-077488",
+      "provider": "VANGUARD STAR FUNDS",
+      "ticker": "VXUS",
+      "registrant_cik": 736054,
+      "requested_cik": 736054,
+      "series_id": "S000002932",
+      "class_id": "C000094038",
+      "known_series_count": 7,
+      "accession": "0001193125-26-077488",
+      "form": "485BPOS",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/736054/000119312526077488/f44218d1.htm",
+      "document_sha256": "32badbe2c470aa67baec70e1fe29df2a9ea5e903bd5e0eaf89136f604c788ae4",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/736054/000119312526077488/0001193125-26-077488-index-headers.html",
+      "filing_header_sha256": "58ba4e346a1169ab681011cda08253c1fd9592d4f486da13a0c7beaac7bb6dc3",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "vxus-3-0001683863-25-005558",
+      "provider": "VANGUARD WORLD FUND",
+      "ticker": "VXUS",
+      "registrant_cik": 736054,
+      "requested_cik": 736054,
+      "series_id": "S000002932",
+      "class_id": "C000094038",
+      "known_series_count": 7,
+      "accession": "0001683863-25-005558",
+      "form": "497",
+      "filing_date": "2025-07-02",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/736054/000168386325005558/f42371d1.htm",
+      "document_sha256": "f8e66e4a550a0ededcfc5f755ce4f1cd41017e5904aab5ea99992a6f08fd9a92",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/736054/000168386325005558/0001683863-25-005558-index-headers.html",
+      "filing_header_sha256": "b2335a00808a851bb1d78de25d80a47ae90ec6bd92dbcab183caf4df9b45ea1a",
+      "labels": {
+        "relevance": "ambiguous",
+        "document_kind": "supplement",
+        "automatic_use": "review"
+      },
+      "reason": {
+        "summary": "The broad registrant supplement may apply to the requested fund, but the document does not provide enough direct identity evidence.",
+        "category": "broad_supplement_scope_unresolved",
+        "observed_evidence": [
+          "The filing metadata includes the requested class and series.",
+          "The document identifies itself as a supplement with broad Vanguard fund or series language."
+        ],
+        "missing_evidence": [
+          "The document does not name the requested ticker or exact fund.",
+          "The document does not establish universal scope under the exact requested registrant name."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": "Confirm the supplement's fund list or referenced base prospectus covers the requested class."
+      }
+    },
+    {
+      "case_id": "schd-1-0001104659-26-020681",
+      "provider": "SCHWAB STRATEGIC TRUST",
+      "ticker": "SCHD",
+      "registrant_cik": 1454889,
+      "requested_cik": 1454889,
+      "series_id": "S000034163",
+      "class_id": "C000105320",
+      "known_series_count": 34,
+      "accession": "0001104659-26-020681",
+      "form": "497K",
+      "filing_date": "2026-02-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1454889/000110465926020681/tm266454-15_497k.htm",
+      "document_sha256": "88cd967f308e18df660dc596c88af41ca35296c7327f979057fe9780233fcef8",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1454889/000110465926020681/0001104659-26-020681-index-headers.html",
+      "filing_header_sha256": "fe3857db005dc9d39ccf469fb097b65dc9c79c3df3b05a9166ddfdc9862c3ee8",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "schd-2-0001104659-25-123312",
+      "provider": "SCHWAB STRATEGIC TRUST",
+      "ticker": "SCHD",
+      "registrant_cik": 1454889,
+      "requested_cik": 1454889,
+      "series_id": "S000034163",
+      "class_id": "C000105320",
+      "known_series_count": 34,
+      "accession": "0001104659-25-123312",
+      "form": "497K",
+      "filing_date": "2025-12-22",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1454889/000110465925123312/tm2526338-14_497k.htm",
+      "document_sha256": "401361eb9976f516b2077c894753bc485a17019eea6c1124ede6ccaa84339754",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1454889/000110465925123312/0001104659-25-123312-index-headers.html",
+      "filing_header_sha256": "3378c9a12fb9cf3e8d0192a6ff4d2c46b164b70de0b5176d9969d3da1bde6ef9",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "schd-3-0001104659-25-123308",
+      "provider": "SCHWAB STRATEGIC TRUST",
+      "ticker": "SCHD",
+      "registrant_cik": 1454889,
+      "requested_cik": 1454889,
+      "series_id": "S000034163",
+      "class_id": "C000105320",
+      "known_series_count": 34,
+      "accession": "0001104659-25-123308",
+      "form": "485BPOS",
+      "filing_date": "2025-12-22",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1454889/000110465925123308/tm2526338d1_485bpos.htm",
+      "document_sha256": "f4457d37acc5a3da64280b53a4abf32fc1c8d30275de2a80c4ef3bc8ddac370e",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1454889/000110465925123308/0001104659-25-123308-index-headers.html",
+      "filing_header_sha256": "afa4dc926d10d6c6a8a67e49ef053ce0c16a159b1500a14d0c2dbc45d06e0385",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "tlt-1-0001193125-26-287948",
+      "provider": "iSHARES TRUST",
+      "ticker": "MUB",
+      "registrant_cik": 1100663,
+      "requested_cik": 1100663,
+      "series_id": "S000018861",
+      "class_id": "C000052220",
+      "known_series_count": 390,
+      "accession": "0001193125-26-287948",
+      "form": "497K",
+      "filing_date": "2026-06-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312526287948/d128154d497k.htm",
+      "document_sha256": "f69d2d6431b1fb243450f43eb5880ddaf9c9bca59db2962249c24dbc7b1f020b",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312526287948/0001193125-26-287948-index-headers.html",
+      "filing_header_sha256": "293727f4dab5bd0cb4b5f7f702fffff706536b7970a4c2be05775f2bb3c3e1d6",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The document covers TLT, not requested ticker MUB.",
+        "category": "authoritative_class_mismatch",
+        "observed_evidence": [
+          "The filing metadata and document identify TLT.",
+          "The requested identity is MUB / C000052220."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "The SEC filing metadata does not include C000052220.",
+          "The document names TLT rather than requested ticker MUB."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "tlt-2-0001193125-25-171727",
+      "provider": "iSHARES TRUST",
+      "ticker": "TLT",
+      "registrant_cik": 1100663,
+      "requested_cik": 1100663,
+      "series_id": "S000004360",
+      "class_id": "C000012090",
+      "known_series_count": 390,
+      "accession": "0001193125-25-171727",
+      "form": "497",
+      "filing_date": "2025-08-01",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312525171727/d35987d497.htm",
+      "document_sha256": "e7c6f890d7aca7f88cab9010f033d5c12ec7771f0450d0cab09bd8b290d1b555",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312525171727/0001193125-25-171727-index-headers.html",
+      "filing_header_sha256": "606607ad911dfd316c5f4fd64f27ac30c3eb90bf97cc7973cdf412d55f7a8b7a",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The supplement directly covers the requested fund but is not a complete standalone prospectus.",
+        "category": "direct_supplement_evidence",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker, exact fund, or a fund list containing that fund.",
+          "The document identifies itself as a supplement."
+        ],
+        "missing_evidence": [
+          "The applicable complete base prospectus is not part of this case."
+        ],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "tlt-3-0001193125-25-151221",
+      "provider": "iSHARES TRUST",
+      "ticker": "TLT",
+      "registrant_cik": 1100663,
+      "requested_cik": 1100663,
+      "series_id": "S000004360",
+      "class_id": "C000012090",
+      "known_series_count": 390,
+      "accession": "0001193125-25-151221",
+      "form": "497K",
+      "filing_date": "2025-06-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312525151221/d943072d497k.htm",
+      "document_sha256": "e24c5b7be59ebd45c716d509ab191a1d45a25348cdeaceefa684753e16f25d62",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312525151221/0001193125-25-151221-index-headers.html",
+      "filing_header_sha256": "27a0b42b783250280b335ff58030506d06a808acdcc47a1989dd12b242dbfd93",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mub-1-0001193125-26-287963",
+      "provider": "iSHARES TRUST",
+      "ticker": "TLT",
+      "registrant_cik": 1100663,
+      "requested_cik": 1100663,
+      "series_id": "S000004360",
+      "class_id": "C000012090",
+      "known_series_count": 390,
+      "accession": "0001193125-26-287963",
+      "form": "497K",
+      "filing_date": "2026-06-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312526287963/d128923d497k.htm",
+      "document_sha256": "1fa6492b9102e46b4abf77db9cf595ac1b80306511b4695eb2bcb519c493d6a8",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312526287963/0001193125-26-287963-index-headers.html",
+      "filing_header_sha256": "1936696fc5fafb9d12ee2cde9173797a91d04e9f127e1b1fdeb8dd453ef1f07b",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The document covers MUB, not requested ticker TLT.",
+        "category": "authoritative_class_mismatch",
+        "observed_evidence": [
+          "The filing metadata and document identify MUB.",
+          "The requested identity is TLT / C000012090."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "The SEC filing metadata does not include C000012090.",
+          "The document names MUB rather than requested ticker TLT."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mub-2-0001193125-25-151202",
+      "provider": "iSHARES TRUST",
+      "ticker": "MUB",
+      "registrant_cik": 1100663,
+      "requested_cik": 1100663,
+      "series_id": "S000018861",
+      "class_id": "C000052220",
+      "known_series_count": 390,
+      "accession": "0001193125-25-151202",
+      "form": "497K",
+      "filing_date": "2025-06-27",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312525151202/d932143d497k.htm",
+      "document_sha256": "709eb5a6abc87dee187311b1b264a1c3e4a12a8ef2d124b2d79f469b0f1c6ede",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312525151202/0001193125-25-151202-index-headers.html",
+      "filing_header_sha256": "4df52d8c22f7784688514dcd4d9647f09b8d7b3638fcf5c5a38b21db33ea50b2",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mub-3-0001193125-25-143695",
+      "provider": "iSHARES TRUST",
+      "ticker": "MUB",
+      "registrant_cik": 1100663,
+      "requested_cik": 1100663,
+      "series_id": "S000018861",
+      "class_id": "C000052220",
+      "known_series_count": 390,
+      "accession": "0001193125-25-143695",
+      "form": "485BPOS",
+      "filing_date": "2025-06-20",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312525143695/d938480d485bpos.htm",
+      "document_sha256": "eac289ebb9e3603ed1815df277c5924d5185d6564388747f45c260ba7b72cc89",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312525143695/0001193125-25-143695-index-headers.html",
+      "filing_header_sha256": "ccb05f6ef848dceaf042e312436352d92acd31ccaa4f6c97b5de07a31dce2b6d",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "pimix-1-0001193125-25-166820",
+      "provider": "PIMCO FUNDS",
+      "ticker": "PIMIX",
+      "registrant_cik": 810893,
+      "requested_cik": 810893,
+      "series_id": "S000016548",
+      "class_id": "C000046102",
+      "known_series_count": 74,
+      "accession": "0001193125-25-166820",
+      "form": "497K",
+      "filing_date": "2025-07-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/810893/000119312525166820/d43182d497k.htm",
+      "document_sha256": "53623002fd7943e73bb5d9b0f5820ef0b041d4dafe09ade6a31b0d38b57c362e",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/810893/000119312525166820/0001193125-25-166820-index-headers.html",
+      "filing_header_sha256": "bb3879bbb4be0adddf1aafcaea4881585200a7e2f21e68f8e113e54d5f5fd02e",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "pimix-2-0001193125-25-166715",
+      "provider": "PIMCO FUNDS",
+      "ticker": "PIMIX",
+      "registrant_cik": 810893,
+      "requested_cik": 810893,
+      "series_id": "S000016548",
+      "class_id": "C000046102",
+      "known_series_count": 74,
+      "accession": "0001193125-25-166715",
+      "form": "485BPOS",
+      "filing_date": "2025-07-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/810893/000119312525166715/d943766d485bpos.htm",
+      "document_sha256": "04cd83bcc8dc296f258c658e20fd75aa6a552de7cb2fc70b438e9b132df66b1d",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/810893/000119312525166715/0001193125-25-166715-index-headers.html",
+      "filing_header_sha256": "c9ddfc72792a03e4462adf7fe0c92afa9e5e08d9d3207df68e471d8296359d50",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "pimix-3-0001193125-24-272552",
+      "provider": "PIMCO FUNDS",
+      "ticker": "PIMIX",
+      "registrant_cik": 810893,
+      "requested_cik": 810893,
+      "series_id": "S000016548",
+      "class_id": "C000046102",
+      "known_series_count": 74,
+      "accession": "0001193125-24-272552",
+      "form": "497",
+      "filing_date": "2024-12-06",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/810893/000119312524272552/d687461d497.htm",
+      "document_sha256": "20c15fa0f42eab43f78f0d393c6d516d442c39d24c4fbe6d747d7806a2b183b0",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/810893/000119312524272552/0001193125-24-272552-index-headers.html",
+      "filing_header_sha256": "a1a5b71f86eb57857a2f8862525cdb1e784209d60f4e7a37f9c573b3b081bc5e",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The supplement changes terms for Class A and Class C, not the requested PIMIX Institutional Class.",
+        "category": "document_class_mismatch",
+        "observed_evidence": [
+          "The filing metadata includes the requested PIMIX class.",
+          "The document limits the amended disclosure to Class A and Class C."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "PIMIX is the Institutional Class and is outside the stated scope.",
+          "The requested ticker and class name are absent from the document."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "agthx-1-0000051931-25-001203",
+      "provider": "GROWTH FUND OF AMERICA",
+      "ticker": "AGTHX",
+      "registrant_cik": 44201,
+      "requested_cik": 44201,
+      "series_id": "S000009228",
+      "class_id": "C000025064",
+      "known_series_count": 1,
+      "accession": "0000051931-25-001203",
+      "form": "497K",
+      "filing_date": "2025-10-31",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/44201/000005193125001203/gfa497k.htm",
+      "document_sha256": "c863de654d2ec57c6e8d2786fc895e603c4a60ce7b10b007786501aa58cbf247",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/44201/000005193125001203/0000051931-25-001203-index-headers.html",
+      "filing_header_sha256": "bd0836cbdb285dcb6f3fe1da4cbdf9cade106c5547604931b0c2889dcd9d4273",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "summary_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "agthx-2-0000051931-25-001201",
+      "provider": "GROWTH FUND OF AMERICA",
+      "ticker": "AGTHX",
+      "registrant_cik": 44201,
+      "requested_cik": 44201,
+      "series_id": "S000009228",
+      "class_id": "C000025064",
+      "known_series_count": 1,
+      "accession": "0000051931-25-001201",
+      "form": "485BPOS",
+      "filing_date": "2025-10-31",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/44201/000005193125001201/ck0000044201-20251031.htm",
+      "document_sha256": "a7e719e50ca6797fedc3cd13f9642fdc9079473f9ad90c05bfd3ac636c110714",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/44201/000005193125001201/0000051931-25-001201-index-headers.html",
+      "filing_header_sha256": "4386dced7f9847d599fd1beee881ded01decdb3c0b3cf47c90a3425492aea251",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The SEC filing metadata includes the requested class and series.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "agthx-3-0000051931-25-000947",
+      "provider": "BOND FUND OF AMERICA",
+      "ticker": "AGTHX",
+      "registrant_cik": 44201,
+      "requested_cik": 44201,
+      "series_id": "S000009228",
+      "class_id": "C000025064",
+      "known_series_count": 1,
+      "accession": "0000051931-25-000947",
+      "form": "497",
+      "filing_date": "2025-08-21",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/44201/000005193125000947/ck0000013075-20250822.htm",
+      "document_sha256": "8357d5ca842a213f8d97b01076db713b8bb5d5a5b15bb52980eae34a64822388",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/44201/000005193125000947/0000051931-25-000947-index-headers.html",
+      "filing_header_sha256": "49ecfdeffa559cbeb3b7daf4de73ad2a9405fd79f40382ee289232332379aa09",
+      "labels": {
+        "relevance": "negative",
+        "document_kind": "supplement",
+        "automatic_use": "disallowed"
+      },
+      "reason": {
+        "summary": "The supplement names a set of bond funds and does not cover the requested Growth Fund of America class.",
+        "category": "document_fund_mismatch",
+        "observed_evidence": [
+          "The filing metadata includes the requested AGTHX class.",
+          "The document's express fund list contains only named bond funds."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [
+          "The Growth Fund of America and AGTHX are absent from the fund list.",
+          "The selected primary document identifies a different fund scope."
+        ],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mdy-1-0001193125-26-026958",
+      "provider": "SPDR S&P MIDCAP 400 ETF TRUST",
+      "ticker": "MDY",
+      "registrant_cik": 936958,
+      "requested_cik": 936958,
+      "series_id": null,
+      "class_id": null,
+      "known_series_count": 0,
+      "accession": "0001193125-26-026958",
+      "form": "485BPOS",
+      "filing_date": "2026-01-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/936958/000119312526026958/d77156d485bpos.htm",
+      "document_sha256": "52d7cde68246580c5649523846da49bfbfd060255e8b05e632d329bd787471f6",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/936958/000119312526026958/0001193125-26-026958-index-headers.html",
+      "filing_header_sha256": "cc5e3c496f005461dd7bd217fd42cdfb6046649709124357e5e0f821efc0b3cc",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing belongs to the requested registrant CIK; no SEC class or series identifier is available for this ticker.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mdy-2-0001193125-25-014587",
+      "provider": "SPDR S&P MIDCAP 400 ETF TRUST",
+      "ticker": "MDY",
+      "registrant_cik": 936958,
+      "requested_cik": 936958,
+      "series_id": null,
+      "class_id": null,
+      "known_series_count": 0,
+      "accession": "0001193125-25-014587",
+      "form": "497",
+      "filing_date": "2025-01-29",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/936958/000119312525014587/d912481d497.htm",
+      "document_sha256": "1ee19a855249b60473580fa205c6a29b32d395ca0ebd6cf140042dd855f049e0",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/936958/000119312525014587/0001193125-25-014587-index-headers.html",
+      "filing_header_sha256": "bf10753b41aa703ea938c929a4cb8c3ae84c9c74e5a4fb1891875365cfea1924",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing belongs to the requested registrant CIK; no SEC class or series identifier is available for this ticker.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    },
+    {
+      "case_id": "mdy-3-0001193125-25-014326",
+      "provider": "SPDR S&P MIDCAP 400 ETF TRUST",
+      "ticker": "MDY",
+      "registrant_cik": 936958,
+      "requested_cik": 936958,
+      "series_id": null,
+      "class_id": null,
+      "known_series_count": 0,
+      "accession": "0001193125-25-014326",
+      "form": "485BPOS",
+      "filing_date": "2025-01-28",
+      "document_url": "https://www.sec.gov/Archives/edgar/data/936958/000119312525014326/d912481d485bpos.htm",
+      "document_sha256": "5ccf14fa1fad4f4bdd023fca9d8ea4b8cd3321df03c742d65a546d02813edf55",
+      "filing_header_url": "https://www.sec.gov/Archives/edgar/data/936958/000119312525014326/0001193125-25-014326-index-headers.html",
+      "filing_header_sha256": "84e11b89d7a5a6468e6fb3d7b047e121d9e34daab678583d952227541a505bba",
+      "labels": {
+        "relevance": "positive",
+        "document_kind": "statutory_prospectus",
+        "automatic_use": "allowed"
+      },
+      "reason": {
+        "summary": "The document directly covers the requested ticker and is a complete prospectus document.",
+        "category": "direct_document_identity",
+        "observed_evidence": [
+          "The filing belongs to the requested registrant CIK; no SEC class or series identifier is available for this ticker.",
+          "The document names the requested ticker or its exact fund.",
+          "The document presents itself as a complete summary or statutory prospectus rather than a supplement."
+        ],
+        "missing_evidence": [],
+        "contradictory_evidence": [],
+        "resolution_needed": null
+      }
+    }
+  ]
+}

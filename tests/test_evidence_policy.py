@@ -137,6 +137,100 @@ def test_ambiguous_supplement_routes_to_review():
     assert result.automatic_use is AutomaticUseLabel.REVIEW
 
 
+def test_supplement_to_exact_series_name_is_positive_without_ticker():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>Supplement to the Example&reg; Treasury Fund Summary Prospectus</h1>"
+            "<p>Portfolio management information is replaced.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert result.document_kind is DocumentKind.SUPPLEMENT
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+    assert any(
+        signal.code == "supplement_series_subject" for signal in result.signals
+    )
+
+
+def test_supplement_fund_list_can_establish_exact_series_subject():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>Supplement dated July 1, 2026</h1>"
+            "<table><tr><td>Other Fund</td><td>Example Treasury Fund</td></tr></table>"
+            "<p>Management information is replaced.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+    assert any(
+        signal.code == "supplement_series_subject"
+        and signal.location.value == "class_table"
+        for signal in result.signals
+    )
+
+
+def test_universal_supplement_scope_requires_matching_registrant():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>EXAMPLE TRUST</h1>"
+            "<p>Supplement dated July 1, 2026 to the SAI for all series.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+    assert any(
+        signal.code == "supplement_universal_registrant_scope"
+        for signal in result.signals
+    )
+
+
+def test_universal_scope_without_matching_registrant_remains_ambiguous():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>UNRELATED TRUST</h1>"
+            "<p>Supplement dated July 1, 2026 to the SAI for all series.</p>"
+        ),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.relevance is RelevanceLabel.AMBIGUOUS
+    assert result.automatic_use is AutomaticUseLabel.REVIEW
+
+
+def test_universal_scope_cannot_override_metadata_class_contradiction():
+    result = ShadowEvidencePolicy().evaluate(
+        html(
+            "<h1>EXAMPLE TRUST</h1>"
+            "<p>Supplement dated July 1, 2026 to the SAI for all series.</p>"
+        ),
+        "EXMXX",
+        "C000000999",
+        "S000000001",
+        metadata(),
+    )
+
+    assert result.relevance is RelevanceLabel.NEGATIVE
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+
+
 def test_generic_prospectus_disclaimer_is_not_an_exclusion():
     content = html(
         "<h1>Statutory Prospectus</h1><p>SPDR S&P 500 ETF Trust (SPY)</p>"
@@ -152,3 +246,172 @@ def test_generic_prospectus_disclaimer_is_not_an_exclusion():
     )
 
     assert not result.contradictions
+
+
+def test_sai_is_relevant_but_disallowed_as_a_prospectus():
+    content = html(
+        "<h1>Statement of Additional Information</h1>"
+        "<table><tr><td>Investor Shares</td><td>EXMXX</td></tr></table>"
+        "<p>Example Treasury Fund</p>"
+    )
+
+    result = ShadowEvidencePolicy().evaluate(
+        content, "EXMXX", "C000000001", "S000000001", metadata()
+    )
+
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert (
+        result.document_kind
+        is DocumentKind.STATEMENT_OF_ADDITIONAL_INFORMATION
+    )
+    assert result.automatic_use is AutomaticUseLabel.DISALLOWED
+
+
+def test_summary_remains_summary_when_it_references_its_sai():
+    content = complete(
+        "<p>Example Treasury Fund (EXMXX)</p>"
+        "<p>The Statement of Additional Information is incorporated by reference.</p>"
+    )
+
+    result = ShadowEvidencePolicy().evaluate(
+        content, "EXMXX", "C000000001", "S000000001", metadata()
+    )
+
+    assert result.document_kind is DocumentKind.SUMMARY_PROSPECTUS
+
+
+def test_cik_only_registrant_instrument_match_accepts_late_ticker():
+    content = html(
+        "<h1>SPDR S&P 500 ETF Trust</h1>"
+        "<p>Statutory Prospectus</p>"
+        "<h2>Fees and Expenses</h2><p>" + ("registration material " * 1000) + "</p>"
+        "<p>The units trade under ticker SPY.</p>"
+        "<h2>Investment Objective</h2>"
+    )
+    filing_metadata = parse_filing_identity_header(
+        "<!--<ACCESSION-NUMBER>0000000001-26-000001"
+        "\n<CONFORMED-NAME>SPDR S&P 500 ETF TRUST-->"
+    )
+
+    result = ShadowEvidencePolicy().evaluate(
+        content,
+        "SPY",
+        None,
+        None,
+        filing_metadata,
+        requested_cik=884394,
+        registrant_cik=884394,
+        known_series_count=0,
+    )
+
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert result.automatic_use is AutomaticUseLabel.ALLOWED
+    assert any(
+        signal.code == "registrant_instrument_match" for signal in result.signals
+    )
+
+
+def test_cik_only_match_stays_ambiguous_for_known_multi_series_registrant():
+    content = html(
+        "<h1>Example Trust</h1><p>Statutory Prospectus</p>"
+        "<h2>Fees and Expenses</h2><p>EXMXX</p>"
+        "<h2>Investment Objective</h2>"
+    )
+    filing_metadata = parse_filing_identity_header(
+        "<!--<ACCESSION-NUMBER>0000000001-26-000001"
+        "\n<CONFORMED-NAME>EXAMPLE TRUST-->"
+    )
+
+    result = ShadowEvidencePolicy().evaluate(
+        content,
+        "EXMXX",
+        None,
+        None,
+        filing_metadata,
+        requested_cik=1,
+        registrant_cik=1,
+        known_series_count=2,
+    )
+
+    assert result.relevance is RelevanceLabel.AMBIGUOUS
+    assert result.automatic_use is AutomaticUseLabel.REVIEW
+
+
+def test_inline_xbrl_uses_visible_content_and_structured_metadata():
+    content = b"""
+    <html xmlns:ix="http://www.xbrl.org/2013/inlineXBRL">
+      <head><title>Prospectus - Investment Objective</title></head>
+      <body>
+        <div style="display: none">
+          <ix:header><ix:hidden>
+            <ix:nonNumeric name="dei:DocumentType">485BPOS</ix:nonNumeric>
+          </ix:hidden></ix:header>
+        </div>
+        <table><tr><td>Fund /Ticker</td><td>Example Treasury Fund /EXMXX</td></tr></table>
+        <div>Investment Objective</div>
+        <div>Fees and Expenses</div>
+        <div>Principal Investment Strategies</div>
+        <div>Principal Risks</div>
+      </body>
+    </html>
+    """
+
+    result = ShadowEvidencePolicy().evaluate(
+        content,
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+        declared_form="485BPOS",
+    )
+
+    assert result.relevance is RelevanceLabel.POSITIVE
+    assert result.document_kind is DocumentKind.STATUTORY_PROSPECTUS
+    assert result.automatic_use is AutomaticUseLabel.ALLOWED
+    assert {signal.code for signal in result.signals} >= {
+        "xbrl_document_type",
+        "prospectus_html_title",
+        "declared_filing_form",
+    }
+
+
+def test_hidden_inline_xbrl_ticker_is_not_visible_identity_evidence():
+    content = b"""
+    <html xmlns:ix="http://www.xbrl.org/2013/inlineXBRL">
+      <head><title>Prospectus</title></head>
+      <body>
+        <ix:header><ix:hidden>
+          <ix:nonNumeric name="example:Ticker">EXMXX</ix:nonNumeric>
+        </ix:hidden></ix:header>
+        <p>Another fund is the subject of this document.</p>
+        <div>Investment Objective</div><div>Fees and Expenses</div>
+      </body>
+    </html>
+    """
+
+    result = ShadowEvidencePolicy().evaluate(
+        content, "EXMXX", "C000000001", "S000000001", metadata()
+    )
+
+    assert result.relevance is RelevanceLabel.AMBIGUOUS
+    assert any(
+        value == "document does not contain exact ticker EXMXX"
+        for value in result.missing_evidence
+    )
+
+
+def test_declared_form_alone_does_not_establish_document_kind():
+    result = ShadowEvidencePolicy().evaluate(
+        html("<p>EXMXX administrative filing material.</p>"),
+        "EXMXX",
+        "C000000001",
+        "S000000001",
+        metadata(),
+        declared_form="485BPOS",
+    )
+
+    assert result.document_kind is DocumentKind.UNKNOWN
+    assert any(
+        signal.code == "declared_filing_form" for signal in result.signals
+    )
+    assert result.automatic_use is AutomaticUseLabel.REVIEW

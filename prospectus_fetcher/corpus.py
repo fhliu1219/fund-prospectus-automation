@@ -74,6 +74,9 @@ class CorpusCase:
     reason: LabelReason
     series_id: Optional[str] = None
     class_id: Optional[str] = None
+    known_series_count: Optional[int] = None
+    filing_detail_url: Optional[str] = None
+    filing_detail_sha256: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -175,6 +178,7 @@ def parse_manifest(payload: Any) -> CorpusManifest:
 
         series_id = value.get("series_id") or None
         class_id = value.get("class_id") or None
+        known_series_count = value.get("known_series_count")
         for name, identifier, prefix in (
             ("series_id", series_id, "S"),
             ("class_id", class_id, "C"),
@@ -188,6 +192,12 @@ def parse_manifest(payload: Any) -> CorpusManifest:
         if class_id and not series_id:
             raise CorpusSchemaError(
                 f"{path}.series_id: required when class_id is present"
+            )
+        if known_series_count is not None and (
+            not isinstance(known_series_count, int) or known_series_count < 0
+        ):
+            raise CorpusSchemaError(
+                f"{path}.known_series_count: expected non-negative integer or null"
             )
 
         filing_date = _text(
@@ -212,6 +222,29 @@ def parse_manifest(payload: Any) -> CorpusManifest:
             raise CorpusSchemaError(f"{path}.document_sha256: invalid SHA-256")
         if not _SHA256_RE.fullmatch(header_sha):
             raise CorpusSchemaError(f"{path}.filing_header_sha256: invalid SHA-256")
+        detail_url_value = value.get("filing_detail_url")
+        detail_sha_value = value.get("filing_detail_sha256")
+        if (detail_url_value is None) != (detail_sha_value is None):
+            raise CorpusSchemaError(
+                f"{path}: filing_detail_url and filing_detail_sha256 must appear together"
+            )
+        detail_url: Optional[str] = None
+        detail_sha: Optional[str] = None
+        if detail_url_value is not None:
+            detail_url = _sec_archive_url(
+                detail_url_value,
+                f"{path}.filing_detail_url",
+                registrant_cik,
+                accession,
+            )
+            detail_sha = _text(
+                detail_sha_value,
+                f"{path}.filing_detail_sha256",
+            )
+            if not _SHA256_RE.fullmatch(detail_sha):
+                raise CorpusSchemaError(
+                    f"{path}.filing_detail_sha256: invalid SHA-256"
+                )
 
         labels_value = _required(value, "labels", path)
         reason_value = _required(value, "reason", path)
@@ -272,12 +305,13 @@ def parse_manifest(payload: Any) -> CorpusManifest:
                 f"{path}.reason: ambiguous case requires missing_evidence and "
                 "resolution_needed"
             )
-        if (
-            labels.document_kind is DocumentKind.SUPPLEMENT
-            and labels.automatic_use is AutomaticUseLabel.ALLOWED
-        ):
+        if labels.document_kind in {
+            DocumentKind.SUPPLEMENT,
+            DocumentKind.STATEMENT_OF_ADDITIONAL_INFORMATION,
+        } and labels.automatic_use is AutomaticUseLabel.ALLOWED:
             raise CorpusSchemaError(
-                f"{path}.labels: supplement cannot be allowed as a standalone document"
+                f"{path}.labels: {labels.document_kind.value} cannot be allowed "
+                "as a standalone prospectus"
             )
         if (
             labels.relevance is RelevanceLabel.AMBIGUOUS
@@ -299,6 +333,7 @@ def parse_manifest(payload: Any) -> CorpusManifest:
                 filing_date=filing_date,
                 series_id=series_id,
                 class_id=class_id,
+                known_series_count=known_series_count,
                 document_url=_sec_archive_url(
                     _required(value, "document_url", path),
                     f"{path}.document_url",
@@ -313,6 +348,8 @@ def parse_manifest(payload: Any) -> CorpusManifest:
                     accession,
                 ),
                 filing_header_sha256=header_sha,
+                filing_detail_url=detail_url,
+                filing_detail_sha256=detail_sha,
                 labels=labels,
                 reason=reason,
             )
@@ -339,24 +376,47 @@ class CorpusCache:
     def header_path(self, case: CorpusCase) -> Path:
         return self.cache_dir / "headers" / f"{case.filing_header_sha256}.html"
 
-    def ensure_case(self, case: CorpusCase) -> tuple[Path, Path]:
-        return (
-            self._ensure(case.document_url, case.document_sha256, self.document_path(case)),
-            self._ensure(
-                case.filing_header_url,
-                case.filing_header_sha256,
-                self.header_path(case),
-            ),
+    def detail_path(self, case: CorpusCase) -> Path:
+        if case.filing_detail_sha256 is None:
+            raise ValueError(f"{case.case_id}: filing detail resource is not configured")
+        return self.cache_dir / "filing-details" / (
+            f"{case.filing_detail_sha256}.html"
         )
+
+    def ensure_case(self, case: CorpusCase) -> tuple[Path, Path, Optional[Path]]:
+        document_path = self._ensure(
+            case.document_url,
+            case.document_sha256,
+            self.document_path(case),
+        )
+        header_path = self._ensure(
+            case.filing_header_url,
+            case.filing_header_sha256,
+            self.header_path(case),
+        )
+        detail_path = None
+        if case.filing_detail_url and case.filing_detail_sha256:
+            detail_path = self._ensure(
+                case.filing_detail_url,
+                case.filing_detail_sha256,
+                self.detail_path(case),
+            )
+        return document_path, header_path, detail_path
 
     def ensure_manifest(self, manifest: CorpusManifest) -> None:
         for case in manifest.cases:
             self.ensure_case(case)
 
-    def read_case(self, case: CorpusCase) -> tuple[bytes, str]:
-        document_path, header_path = self.ensure_case(case)
-        return document_path.read_bytes(), header_path.read_text(
-            encoding="utf-8", errors="replace"
+    def read_case(self, case: CorpusCase) -> tuple[bytes, str, Optional[str]]:
+        document_path, header_path, detail_path = self.ensure_case(case)
+        return (
+            document_path.read_bytes(),
+            header_path.read_text(encoding="utf-8", errors="replace"),
+            (
+                detail_path.read_text(encoding="utf-8", errors="replace")
+                if detail_path
+                else None
+            ),
         )
 
     def _ensure(self, url: str, expected_sha: str, path: Path) -> Path:

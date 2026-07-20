@@ -2,6 +2,7 @@
 
 import hashlib
 from copy import deepcopy
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -10,12 +11,14 @@ from prospectus_fetcher.corpus import (
     CorpusCache,
     CorpusSchemaError,
     RelevanceLabel,
+    load_manifest,
     parse_manifest,
 )
 
 
 DOCUMENT = b"<html><body>Summary Prospectus EXMXX</body></html>"
 HEADER = b"<!--<ACCESSION-NUMBER>0000000001-26-000001\n<CONFORMED-NAME>EXAMPLE-->"
+DETAIL = b"<html><title>EDGAR Filing Documents for 0000000001-26-000001</title></html>"
 
 
 def payload():
@@ -83,6 +86,16 @@ def test_manifest_requires_observed_evidence_for_every_label():
         parse_manifest(value)
 
 
+def test_manifest_rejects_sai_as_automatically_allowed():
+    value = payload()
+    value["cases"][0]["labels"]["document_kind"] = (
+        "statement_of_additional_information"
+    )
+
+    with pytest.raises(CorpusSchemaError, match="cannot be allowed"):
+        parse_manifest(value)
+
+
 def test_manifest_rejects_document_outside_declared_accession():
     value = payload()
     value["cases"][0]["document_url"] = (
@@ -98,6 +111,25 @@ def test_manifest_rejects_invalid_filing_date():
     value["cases"][0]["filing_date"] = "2026-02-30"
 
     with pytest.raises(CorpusSchemaError, match="invalid calendar date"):
+        parse_manifest(value)
+
+
+def test_manifest_rejects_negative_known_series_count():
+    value = payload()
+    value["cases"][0]["known_series_count"] = -1
+
+    with pytest.raises(CorpusSchemaError, match="known_series_count"):
+        parse_manifest(value)
+
+
+def test_manifest_requires_complete_optional_filing_detail_resource():
+    value = payload()
+    value["cases"][0]["filing_detail_url"] = (
+        "https://www.sec.gov/Archives/edgar/data/1/"
+        "000000000126000001/0000000001-26-000001-index.html"
+    )
+
+    with pytest.raises(CorpusSchemaError, match="must appear together"):
         parse_manifest(value)
 
 
@@ -119,9 +151,29 @@ def test_cache_fetches_once_and_reverifies_local_bytes(tmp_path):
     first = cache.read_case(case)
     second = cache.read_case(case)
 
-    assert first == (DOCUMENT, HEADER.decode())
+    assert first == (DOCUMENT, HEADER.decode(), None)
     assert second == first
     assert client.get_bytes.call_count == 2
+
+
+def test_cache_fetches_optional_filing_detail_once(tmp_path):
+    value = payload()
+    base = "https://www.sec.gov/Archives/edgar/data/1/000000000126000001"
+    value["cases"][0]["filing_detail_url"] = (
+        base + "/0000000001-26-000001-index.html"
+    )
+    value["cases"][0]["filing_detail_sha256"] = hashlib.sha256(DETAIL).hexdigest()
+    case = parse_manifest(value).cases[0]
+    client = Mock()
+    client.get_bytes.side_effect = [DOCUMENT, HEADER, DETAIL]
+    cache = CorpusCache(client, tmp_path)
+
+    first = cache.read_case(case)
+    second = cache.read_case(case)
+
+    assert first == (DOCUMENT, HEADER.decode(), DETAIL.decode())
+    assert second == first
+    assert client.get_bytes.call_count == 3
 
 
 def test_cache_rejects_download_checksum_mismatch(tmp_path):
@@ -131,3 +183,36 @@ def test_cache_rejects_download_checksum_mismatch(tmp_path):
 
     with pytest.raises(CorpusSchemaError, match="checksum mismatch"):
         CorpusCache(client, tmp_path).ensure_case(case)
+
+
+def test_committed_holdout_is_disjoint_from_development_corpus():
+    corpus_dir = Path(__file__).resolve().parents[1] / "corpus"
+    development = load_manifest(corpus_dir / "manifest.json")
+    holdout = load_manifest(corpus_dir / "holdout_manifest.json")
+
+    assert len(development.cases) == 30
+    assert len(holdout.cases) == 30
+    assert {case.accession for case in development.cases}.isdisjoint(
+        case.accession for case in holdout.cases
+    )
+    assert {case.document_sha256 for case in development.cases}.isdisjoint(
+        case.document_sha256 for case in holdout.cases
+    )
+
+
+def test_v5_followup_is_disjoint_from_all_prior_corpora():
+    corpus_dir = Path(__file__).resolve().parents[1] / "corpus"
+    development = load_manifest(corpus_dir / "manifest.json")
+    holdout = load_manifest(corpus_dir / "holdout_manifest.json")
+    followup = load_manifest(corpus_dir / "v5_followup_manifest.json")
+
+    assert len(followup.cases) == 30
+    assert len({case.accession for case in followup.cases}) == 30
+    assert len({case.document_sha256 for case in followup.cases}) == 30
+    for prior in (development, holdout):
+        assert {case.accession for case in followup.cases}.isdisjoint(
+            case.accession for case in prior.cases
+        )
+        assert {case.document_sha256 for case in followup.cases}.isdisjoint(
+            case.document_sha256 for case in prior.cases
+        )
