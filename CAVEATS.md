@@ -34,16 +34,22 @@ Caveat statuses:
 | M1-C002 | mitigated | SEC availability and future schema changes remain outside project control. | Scheduled monitoring in Roadmap Milestone 7. |
 | M1-C003 | open | CIK-only resolution cannot establish a class or series relationship. | Identity enrichment in Roadmap Milestone 8. |
 | M2-C001 | mitigated | Live provider coverage exists, but class-to-series fallback remains mocked only. | Curated contract matrix maintenance. |
-| M3-C001 | mitigated | Deterministic content rules still misclassify unfamiliar SEC documents. | Expand the corpus from measured misses. |
-| M3-C003 | mitigated | The location-aware replacement is measured but remains shadow-only. | Resolve M6.1-C003 before activation. |
+| M3-C001 | mitigated | V7 materially improves measured coverage, but deterministic rules can still misclassify unfamiliar SEC documents. | Expand the corpus from production review outcomes. |
+| M3-C003 | mitigated | V7 is feature-flagged and measured, but direct identifier evidence remains position- and structure-dependent. | Monitor staged V7 disagreements before any default switch. |
 | M5-C001 | mitigated | Real SEC archive parsing is live-tested, but no stable live fixture currently triggers sibling replacement. | Curated contract matrix maintenance. |
 | M6-C001 | mitigated | Thirty curated cases do not establish production-wide accuracy. | Expand by provider and observed failures. |
-| M6-C002 | mitigated | `v5` preserves zero false automatic approvals, but the follow-up has one missed allowed document and 20% review. | M6.1-C003 and M6.1-C004. |
 | M6-C003 | retired | Filing-detail fallback is cross-checked on real pages and exercised synthetically. | Monitor real fallback frequency. |
 | M6.1-C001 | retired | Both `v4` and `v5` were evaluated on separately frozen, disjoint 30-case sets. | Use new data for any later policy version. |
-| M6.1-C002 | mitigated | `v5` resolves the original holdout supplement misses, but one later Appendix A fund-list case still routes to review. | Expand location-aware fund-list evidence from new reviewed cases. |
-| M6.1-C003 | open | A combined `485BPOS` package can be classified as SAI when its SAI section precedes its prospectus section. | Resolve mixed-document precedence before activation. |
-| M6.1-C004 | mitigated | Class- or fund-limited supplements without the requested identity route to review rather than explicit rejection. | Add structured scope contradictions from labeled review outcomes. |
+| M6.3-C001 | preserved | V7 activation corpora are consumed evidence and cannot be tuning data for the next policy. | Freeze new disjoint cases before another policy change. |
+| M6.3-C002 | mitigated | Complete-document structures still vary beyond measured filing generations. | Route unknown structures to review and learn only from new labeled cases. |
+| M6.3-C003 | enforced | Class-cover omission is contradictory only for a demonstrably closed SEC-series roster. | Keep the boundary narrow; do not generalize absence from arbitrary text. |
+| M6.3-C004 | open | The five-form policy excludes some valid CIK-only instrument form families. | Milestone 8 supported instrument/form matrix. |
+| M6.3-C005 | mitigated | V7 identity metadata is persisted after a completed package, but transient stage failures are not durably retried. | Milestone 7.3 stage-aware Temporal retries. |
+| M7.1-C001 | open | The SQLite repository proves local durability but not PostgreSQL concurrency behavior. | Milestone 7.2 PostgreSQL adapter and contention tests. |
+| M7.1-C002 | open | Filesystem artifact paths are not durable service-level object references. | Milestone 7.2 artifact-store interface. |
+| M7.1-C003 | open | Review tasks can be queued before reviewer authorization and decision semantics are defined. | Product decision before Milestone 7.4. |
+| M7.1-C004 | open | SQLite lease recovery relies on comparable UTC clocks. | Replace local lease authority with production workflow/database time in Milestone 7.3. |
+| M7.1-C005 | open | A completed ticker failure is terminal in the local runner; retry ownership is not stage-aware. | Define typed activity retries in Milestone 7.3. |
 
 ---
 
@@ -286,11 +292,12 @@ share class and whether it is a complete standalone prospectus.
   long.
 - **Current mitigation:** Verification also requires a recognized complete
   document shape. Missing evidence routes to review rather than rejection.
-- **Milestone 6 result:** `m6-shadow-v1` adds filing-header identity, legal names,
+- **Milestone 6.3 result:** V7 adds filing-header identity, legal names,
   structured class tables, cover/front-matter locality, negative examples, and
-  explicit missing/contradictory evidence. It remains shadow-only.
-- **Next review:** Decide whether to revise and activate the policy after its
-  measured misses are reviewed.
+  explicit missing/contradictory evidence. It passed the frozen activation
+  gates and is available behind an explicit feature flag.
+- **Next review:** Monitor staged V7 disagreements and expand only from newly
+  labeled review outcomes before considering a default-policy switch.
 
 #### M3-C004: No sibling-document recovery
 
@@ -635,7 +642,7 @@ This milestone owns M3-C001 and M3-C003.
 
 #### M6-C002: Measured shadow-policy misses
 
-- **Status:** mitigated
+- **Status:** retired as an activation blocker in Milestone 6.3
 - **Risk:** `m6-shadow-v1` can still withhold valid automatic output or
   misclassify unusual document structure.
 - **Evidence:** It produced zero false automatic approvals but missed three
@@ -647,6 +654,10 @@ This milestone owns M3-C001 and M3-C003.
   and cannot alter packages or exit codes.
 - **Next review:** Inspect these cases and add general rules only when they do not
   reduce automatic-verification precision.
+- **Resolution:** V5 and V6 iterations addressed the measured miss classes, and
+  V7 passed all approved safety, recall, and representative-review gates on 80
+  fresh disjoint cases. The general unfamiliar-layout risk remains tracked as
+  M6.3-C002.
 
 #### M6-C003: Filing-detail identity fallback not exercised
 
@@ -927,7 +938,7 @@ Ambiguity without a reason is not accepted ground truth.
 
 #### M6.1-C002: Broad supplement relevance is under-classified
 
-- **Status:** mitigated; residual case remains
+- **Status:** retired as a V5 activation blocker in Milestone 6.3
 - **Risk:** `v4` under-classified explicit fund-list and universal-scope
   supplements. `v5` adds guarded evidence, but a requested fund listed only in
   a later Appendix A still routes to review.
@@ -938,10 +949,13 @@ Ambiguity without a reason is not accepted ground truth.
   disallowed even when relevance-positive.
 - **Next review:** Add a structured fund-list parser or bounded Appendix
   recognition using additional independently labeled cases.
+- **Resolution:** V7 replaced this case-specific gap with bounded cover and
+  closed-roster evidence evaluated on fresh cases. Unknown or open-ended lists
+  still route to review under M6.3-C003.
 
 #### M6.1-C003: Mixed prospectus and SAI package precedence
 
-- **Status:** open; activation blocker
+- **Status:** retired in Milestone 6.3
 - **Risk:** A combined filing document can contain both prospectus and SAI
   sections. The current kind classifier uses the earliest recognized complete
   document marker, so an early SAI section can cause a complete `485BPOS`
@@ -954,10 +968,13 @@ Ambiguity without a reason is not accepted ground truth.
 - **Exit condition:** Represent mixed packages explicitly or require stronger
   top-level package/form evidence before an SAI marker can override complete
   prospectus structure.
+- **Resolution:** V6 introduced independent content facets and V7 added
+  declaration-style SAI evidence plus document-boundary rules. Fresh V7
+  evaluation did not automatically disallow any valid complete document.
 
 #### M6.1-C004: Negative supplement scope is not fully structured
 
-- **Status:** mitigated
+- **Status:** retired as a V5 activation blocker in Milestone 6.3
 - **Risk:** A supplement may expressly apply only to other classes or funds
   without naming the requested identity. Absence alone is not a contradiction,
   so `v5` can route a known mismatch to review rather than reject it.
@@ -967,6 +984,9 @@ Ambiguity without a reason is not accepted ground truth.
   returned as a complete prospectus.
 - **Exit condition:** Parse explicit class/fund scope lists and emit a
   contradiction only when the list is demonstrably exhaustive.
+- **Resolution:** V7 permits an omission contradiction only on a demonstrably
+  closed SEC-series roster. The narrower general rule and its boundary are now
+  tracked as M6.3-C003.
 
 ### Remaining disagreement audit
 
@@ -1007,7 +1027,7 @@ activation candidate against both adversarial and representative data.
 
 #### M6.2-C001: The v6 activation candidate misses the recall and review gates
 
-- **Status:** open; activation blocker
+- **Status:** retired by the V7 activation evaluation
 - **Risk:** Activating `m6.2-shadow-v6` would send valid complete packages to
   manual review more often than the approved operating target.
 - **Independent evidence:** On the 30-case challenge set, v6 produced zero false
@@ -1020,10 +1040,12 @@ activation candidate against both adversarial and representative data.
   controls packages, manifests, and exit codes.
 - **Exit condition:** A generalized successor must meet every gate on a new
   accession- and checksum-disjoint evaluation set.
+- **Resolution:** V7 met every preserved gate on 80 fresh, disjoint cases and
+  is available through explicit staged activation.
 
 #### M6.2-C002: Historical and alternate prospectus layouts remain under-detected
 
-- **Status:** open
+- **Status:** mitigated and superseded by M6.3-C002
 - **Risk:** Complete `485BPOS`, closed-end offering, prospectus/proxy, appended
   SAI, and heading variants such as `Fund Summary` can be classified as
   incomplete even when their requested identity evidence is sound.
@@ -1035,6 +1057,9 @@ activation candidate against both adversarial and representative data.
 - **Exit condition:** Add provider-independent structural evidence, then
   evaluate the changed policy on fresh data rather than reusing the consumed
   v6 corpora as holdouts.
+- **Resolution:** V7 added provider-independent cover, section-cluster, and
+  document-boundary evidence and reached 97.5% complete-document recall on the
+  fresh representative set. Universal layout coverage is not claimed.
 
 #### M6.2-C003: CIK-only form coverage is narrower than the public ticker map
 
@@ -1288,6 +1313,138 @@ Identifier contradictions still take priority over name agreement.
 - Live staged-policy smoke test: VUSXX, QQQ, and SPY all produced verified V7
   packages; QQQ included a review-required supplement and a verified
   date-linked base.
+
+---
+
+## Milestone 7.1: Durable Local Operations Contract
+
+**Status:** complete
+
+**Goal:** Prove persistent, idempotent, resumable job execution and durable
+review-task creation before adding PostgreSQL, Temporal, or an API.
+
+### Caveats register
+
+#### M7.1-C001: SQLite does not prove production database concurrency
+
+- **Status:** open; handed to Milestone 7.2
+- **Risk:** SQLite transaction and locking behavior differs from PostgreSQL.
+  Passing local lease/idempotency tests does not prove correct work claiming
+  across multiple pods.
+- **Current mitigation:** Keep persistence behind a repository boundary and
+  make state transitions and uniqueness rules explicit. Use SQLite only as a
+  local/test reference adapter.
+- **Exit condition:** Implement the same contract with PostgreSQL migrations,
+  row-level contention tests, and database-enforced work claiming.
+
+#### M7.1-C002: Local artifact paths are not durable object references
+
+- **Status:** open; handed to Milestone 7.2
+- **Risk:** A database record can outlive or move away from its local HTML,
+  manifest, or PDF file.
+- **Current mitigation:** Persist source URLs, roles, sizes, and SHA-256
+  checksums with every path. Do not represent a local path as an S3 URL or
+  service-stable artifact ID.
+- **Exit condition:** Add an artifact-store interface and immutable object keys,
+  then verify object checksums before a result is published.
+
+#### M7.1-C003: Review resolution semantics require a product decision
+
+- **Status:** open; queue creation only
+- **Risk:** “Approve” could mean accepting machine evidence, creating a human
+  override, selecting another document, or authorizing downstream use. Treating
+  these as one action would weaken the audit model.
+- **Current mitigation:** M7.1 may create and list pending review tasks, but it
+  must not implement reviewer decisions or upgrade
+  `manual_review_required`.
+- **Exit condition:** Define allowed decisions, actor identity, authorization,
+  downstream effect, and whether a newer machine run supersedes an open task.
+
+#### M7.1-C004: Lease recovery assumes synchronized UTC clocks
+
+- **Status:** open operational assumption
+- **Risk:** A worker with a materially incorrect clock could reclaim active
+  work early or delay recovery of abandoned work.
+- **Current mitigation:** Store all timestamps in normalized UTC, require a
+  positive bounded lease duration, and treat lease expiry as an execution
+  claim only, never as correctness evidence.
+- **Exit condition:** Temporal or the production database becomes the
+  authoritative lease/workflow clock, with clock-skew monitoring where
+  applicable.
+
+#### M7.1-C005: Local failures do not have stage-aware durable retries
+
+- **Status:** open; handed to Milestone 7.3
+- **Risk:** `SECClient` handles bounded HTTP retries, but a ticker-level
+  exception recorded by the local runner becomes terminal. It cannot resume
+  from an individual resolve, discovery, validation, or storage stage.
+- **Current mitigation:** One ticker failure does not stop the rest of the job;
+  interrupted `running` items can be reclaimed after lease expiry; and a new
+  job can intentionally retry a failed ticker.
+- **Exit condition:** Temporal activities own typed retry policies and persist
+  completed stage outputs so a retry does not repeat unrelated work.
+
+### Assumptions register
+
+#### M7.1-A001: PostgreSQL remains the production state store
+
+SQLite is introduced only because it is deterministic, dependency-free, and
+available in local tests. The repository contract and schema vocabulary should
+map directly to PostgreSQL; SQLite is not the target deployment recommendation.
+
+#### M7.1-A002: At-least-once attempts are acceptable when effects are idempotent
+
+An interrupted worker may execute an external read again after its lease
+expires. Database uniqueness and immutable artifact checksums must prevent that
+retry from creating conflicting logical results.
+
+#### M7.1-A003: Machine evidence and human review are separate records
+
+Review tasks and later decisions are additive audit data. They must not rewrite
+the package manifest, validation signals, contradictions, policy version, or
+artifact checksum that caused review.
+
+### Decisions register
+
+#### M7.1-D001: Freeze persistence contracts before infrastructure
+
+- **Status:** approved by implementation sequence
+- **Decision:** Define job, item, artifact, lease, and review records first.
+  PostgreSQL and Temporal adapters must implement these contracts rather than
+  introducing a second state model.
+
+#### M7.1-D002: Use explicit caller-owned idempotency keys
+
+- **Status:** approved for M7.1
+- **Decision:** A repeated key returns the same job only when normalized
+  tickers and validation policy have the same request fingerprint. Reusing a
+  key for a different request is an explicit conflict.
+
+#### M7.1-D003: Do not change the submitted CLI yet
+
+- **Status:** approved for M7.1
+- **Decision:** The local persistent runner is an application service exercised
+  by deterministic tests. CLI flags and asynchronous API behavior are added
+  only after the storage contract is stable.
+
+### Verification at completion
+
+- Schema migration is idempotent across reopen and rejects a database whose
+  recorded schema version is newer than this code understands.
+- An explicit idempotency key returns the existing job only for the same
+  normalized ticker sequence and validation policy; conflicting reuse fails.
+- Expired work can be reclaimed, the old owner cannot finalize it, and two
+  SQLite connections do not claim the same active item.
+- Mixed verified, review-required, and failed ticker outcomes are persisted
+  independently, with aggregate job status derived from terminal item states.
+- Successful results persist the complete manifest, identity level, policy
+  version, and verified artifact bytes/checksums. Missing manifests, policy
+  mismatches, and checksum drift fail closed.
+- A successful non-verified package creates exactly one pending review task;
+  rerunning a terminal job does not retrieve its tickers again.
+- Focused operations suite: 13 passed. Full deterministic suite: 172 passed
+  with the one opt-in live SEC test skipped. All 37 Python source and test files
+  parse under Python 3.9 grammar.
 
 ---
 

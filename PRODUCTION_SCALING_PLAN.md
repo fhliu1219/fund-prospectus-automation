@@ -1,9 +1,11 @@
 # Production Scaling Plan
 
-**Status:** deferred target architecture
+**Status:** active implementation blueprint; Milestone 7.1 complete
 
-**Return point:** revisit after the accuracy-first roadmap is complete, or
-earlier only if a concrete product requirement changes the priority order.
+**Current point:** the durable local operations contract is implemented and
+tested. PostgreSQL plus immutable artifact references are the next production
+slice; Temporal, the API/review application, and deployment remain later
+phases.
 
 This document describes how the current Python CLI could become a durable
 internal cloud service and review application. `ROADMAP.md` decides when the
@@ -42,6 +44,9 @@ directly or hold a browser request open while the complete pipeline runs.
 - Deterministic document classification and evidence validation
 - Supplement/base-prospectus package construction
 - Manifest, checksum, and warning contracts
+- Persistent job, item, lease, artifact, and review-task contracts
+- Explicit idempotency-key/request-fingerprint semantics
+- SQLite reference adapter for deterministic durability and recovery tests
 - Deterministic and opt-in live tests
 
 These modules should become domain and application services used by both the
@@ -381,6 +386,8 @@ responses, `429` responses, and interrupted workflows.
 
 ### Phase P0: Freeze production contracts
 
+**Status:** substantially complete; reviewer decision semantics remain open
+
 - Complete the active correctness milestones.
 - Version manifests, evidence policies, and job outcomes.
 - Define retryable, review-required, rejected, and failed states.
@@ -388,6 +395,8 @@ responses, `429` responses, and interrupted workflows.
 **Exit:** deterministic inputs produce stable, versioned output contracts.
 
 ### Phase P1: Extract service boundaries
+
+**Status:** in progress
 
 - Separate orchestration from resolver, retrieval, validation, and persistence.
 - Introduce artifact-store and repository interfaces.
@@ -398,6 +407,8 @@ selection logic.
 
 ### Phase P2: Add durable persistence
 
+**Status:** not started; SQLite proves the contract but is not this phase
+
 - Add PostgreSQL job and evidence records.
 - Add S3 artifact storage.
 - Implement idempotency and artifact integrity checks.
@@ -405,6 +416,8 @@ selection logic.
 **Exit:** interrupted local workers can resume without duplicate or lost output.
 
 ### Phase P3: Add Temporal orchestration
+
+**Status:** not started
 
 - Implement one workflow per ticker and bounded batch coordination.
 - Move network and storage side effects into Activities.
@@ -415,6 +428,8 @@ completed stages.
 
 ### Phase P4: Enforce global SEC traffic policy
 
+**Status:** not started
+
 - Implement shared request pacing and coordinated retry behavior.
 - Add persistent metadata caching and request instrumentation.
 - Test simultaneous workers and processes.
@@ -423,6 +438,8 @@ completed stages.
 and failover.
 
 ### Phase P5: Add API and review UI
+
+**Status:** not started
 
 - Add asynchronous job endpoints and stored-result endpoints.
 - Build the manual-review queue and evidence inspection UI.
@@ -433,6 +450,8 @@ or database access.
 
 ### Phase P6: Deploy and operate on AWS
 
+**Status:** not started
+
 - Deploy API, workers, and UI to EKS.
 - Add OpenTelemetry, Jaeger integration, metrics, alerts, and dashboards.
 - Create backup, restore, rollback, incident, and SEC-throttling runbooks.
@@ -441,6 +460,8 @@ or database access.
 an accountable owner.
 
 ### Phase P7: Scale validation
+
+**Status:** not started
 
 - Run the 100, 1,000, and 5,000-ticker progression.
 - Measure correctness, completion time, request amplification, cache efficiency,
@@ -462,9 +483,11 @@ an accountable owner.
 | Overuse of AI | Plausible generated conclusions override evidence | Keep deterministic SEC evidence authoritative; use AI only as review assistance. |
 | Premature infrastructure | Complexity grows before contracts are stable | Implement phases only after their entry and exit criteria are met. |
 
-## 16. Decisions required when this plan resumes
+## 16. Decisions required during implementation
 
-Do not silently assume answers to these questions:
+Do not silently assume answers to these questions. The immediate Milestone 7.2
+choice is the PostgreSQL migration/repository toolkit and artifact-store
+boundary; the remaining choices become blocking only in their owning phase.
 
 1. What ticker universe and nightly completion objective are required?
 2. Are registrant-only verified documents acceptable, or must they always enter

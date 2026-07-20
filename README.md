@@ -316,6 +316,10 @@ validated Atom pagination, historical submissions batches, primary-document
 resolution, accession inventory filtering, strict sibling recovery, content
 classification, exact-identifier evidence, date-first supplement/base linkage,
 manifest serialization, archive-URL construction, and the graceful-error path.
+The operations tests additionally cover schema compatibility, idempotency-key
+conflicts, transactional work claims, lease recovery and ownership, aggregate
+job states, manifest-policy integrity, artifact checksums, terminal resume
+behavior, and persistent review-task creation.
 The single opt-in live contract test exercises VUSXX, QQQ, and SPY across
 class-level and registrant-level paths, including a real SEC filing inventory.
 
@@ -341,6 +345,20 @@ representative review. The exact evaluated policy is now available only through
 the explicit `--validation-policy v7` staged-control flag; `legacy` is the
 default rollback.
 
+### Durable operations foundation
+
+Milestone 7.1 adds a storage-neutral job runner and a SQLite reference
+repository for local development and deterministic tests. It persists
+normalized batch items, explicit idempotency keys, expiring work leases,
+terminal result states, complete package manifests, identity fields, policy
+versions, artifact checksums, and pending review tasks. Artifact bytes are
+rehashed before their records are committed.
+
+This foundation is not wired into the submitted CLI yet, and SQLite is not the
+production database recommendation. PostgreSQL, immutable object storage,
+stage-aware Temporal retries, reviewer decisions, an internal API, and
+monitoring remain explicit later Milestone 7 work.
+
 ---
 
 ## Project layout
@@ -361,6 +379,8 @@ prospectus_fetcher/
   corpus_evaluator.py       # current-vs-shadow metrics and disagreements
   corpus_cli.py             # opt-in corpus fetch/evaluate commands
   package.py                # assemble documents and write the evidence manifest
+  operations.py             # durable job contracts and persistent runner
+  sqlite_operations.py      # local/test persistence reference adapter
   converter.py              # optional, best-effort HTML -> PDF
   models.py                 # ResolvedFund, Filing, FetchResult
   cli.py                    # orchestration, summary table, logging
