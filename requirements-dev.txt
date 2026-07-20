@@ -1,4 +1,4 @@
--r requirements-service.txt
+-r requirements-temporal.txt
 
 # Test/dev dependencies
 pytest>=8.0

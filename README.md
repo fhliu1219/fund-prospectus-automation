@@ -22,7 +22,8 @@ defined in the [curated contract matrix](TEST_MATRIX.md).
 
 ## Setup
 
-Requires Python 3.9+.
+The standalone CLI requires Python 3.9+. The Temporal service path requires
+Python 3.10+ because the current Temporal Python SDK has that minimum.
 
 ```bash
 # from the project root
@@ -31,10 +32,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Service persistence dependencies are isolated in `requirements-service.txt`.
-Tests install both CLI and service dependencies through
-`pip install -r requirements-dev.txt`. The optional PDF feature still requires
-WeasyPrint and its system libraries.
+Service persistence dependencies are isolated in `requirements-service.txt`;
+Temporal worker dependencies are in `requirements-temporal.txt`. Tests install
+all three layers through `pip install -r requirements-dev.txt`. The optional PDF
+feature still requires WeasyPrint and its system libraries.
 
 ## Usage
 
@@ -311,6 +312,9 @@ docker compose -f docker-compose.postgres.yml up -d --wait
 RUN_POSTGRES_TESTS=1 pytest tests/postgres_contract.py -q
 docker compose -f docker-compose.postgres.yml down
 
+# Optional real Temporal workflow/retry contract (Python 3.10+)
+RUN_TEMPORAL_TESTS=1 pytest tests/temporal_contract.py -q
+
 # Optional: download and evaluate the checksum-verified 30-case corpus
 python -m prospectus_fetcher.corpus_cli all
 ```
@@ -333,7 +337,12 @@ conditional no-overwrite writes, collision handling, and explicit SSE-S3/KMS
 parameters without requiring AWS credentials. The PostgreSQL contract file is
 not discovered by the default suite; it runs explicitly against the disposable
 Docker database and covers Alembic upgrade/downgrade/drift, schema revision
-refusal, server-time leases, and eight-worker claim contention.
+refusal, server-time leases, exact-item claims, and eight-worker claim
+contention.
+The opt-in Temporal contract uses Temporal's official ephemeral test server and
+proves parent/child execution plus stage-aware retry: filing resolution
+completes once while a transient package-persistence failure retries only the
+package stage.
 The single opt-in live contract test exercises VUSXX, QQQ, and SPY across
 class-level and registrant-level paths, including a real SEC filing inventory.
 
@@ -359,13 +368,14 @@ representative review. The exact evaluated policy is now available only through
 the explicit `--validation-policy v7` staged-control flag; `legacy` is the
 default rollback.
 
-### Durable operations foundation
+### Durable service foundation
 
-Milestones 7.1 and 7.2 add a storage-neutral job runner plus SQLite and
-PostgreSQL repositories. They persist scoped idempotency keys, leased batch
-items, terminal states, package manifests, identity and policy fields,
+Milestones 7.1 through 7.3 add a storage-neutral job runner, SQLite and
+PostgreSQL repositories, immutable artifact adapters, and Temporal
+orchestration. They persist scoped idempotency keys, leased batch items,
+terminal states, package manifests, identity and policy fields,
 content-addressed artifacts, and pending review tasks. PostgreSQL claims work
-with `FOR UPDATE SKIP LOCKED` and uses database time for lease recovery.
+with `FOR UPDATE SKIP LOCKED` and use database time for lease recovery.
 
 Artifact identity is `(storage_provider, storage_namespace, object_key,
 sha256)`, never a worker-local path. The local adapter publishes an immutable
@@ -373,9 +383,18 @@ content-addressed object; the S3 adapter sends and verifies SHA-256, uses
 conditional no-overwrite writes, and requires explicit SSE-S3 or SSE-KMS
 configuration.
 
-This operations path is not wired into the submitted CLI yet. Temporal
-stage-aware retries, reviewer decisions, an internal API, deployment-account
-AWS validation, and monitoring remain later Milestone 7 work.
+The Temporal service uses a bounded child workflow per ticker. Network,
+database, and storage effects run in Activities; versioned workflow payloads
+contain filing metadata but never HTML/PDF bytes. Temporal owns service-path
+retries, so worker-created `SECClient` instances disable adapter retries and
+share one process-local SEC throttle. PostgreSQL remains the operational source
+of record and the artifact store remains the byte source of record.
+
+Run the local or Temporal Cloud path using
+[TEMPORAL_RUNBOOK.md](TEMPORAL_RUNBOOK.md). The original CLI remains unchanged
+for local diagnostics. Distributed SEC rate control, reviewer decisions, an
+internal API, target-account AWS validation, retention, and monitoring remain
+later production work.
 
 ---
 
@@ -403,6 +422,12 @@ prospectus_fetcher/
   postgres_operations.py    # PostgreSQL repository and queue claims
   artifact_store.py         # artifact protocol and local content-addressed store
   s3_artifact_store.py      # checksummed, encrypted, conditional S3 writes
+  temporal_contracts.py     # versioned byte-free workflow/activity payloads
+  temporal_config.py        # local, API-key, and mTLS connection settings
+  temporal_workflows.py     # deterministic batch and per-ticker workflows
+  temporal_activities.py    # SEC/database/storage side effects and retry types
+  temporal_worker.py        # PostgreSQL/S3 worker composition root
+  temporal_submit.py        # idempotent asynchronous batch submission
   converter.py              # optional, best-effort HTML -> PDF
   models.py                 # ResolvedFund, Filing, FetchResult
   cli.py                    # orchestration, summary table, logging
@@ -420,5 +445,7 @@ migrations/                  # explicit Alembic PostgreSQL migrations
 alembic.ini
 docker-compose.postgres.yml  # disposable PostgreSQL 16 contract service
 requirements-service.txt
+requirements-temporal.txt
+TEMPORAL_RUNBOOK.md
 Dockerfile
 ```

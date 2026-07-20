@@ -58,3 +58,25 @@ def assert_active_claim_isolation_contract(first_store, second_store):
     assert second_claim is not None and second_claim.ticker == "SPY"
     assert first_claim.item_id != second_claim.item_id
     assert no_third_claim is None
+
+
+def assert_direct_claim_contract(first_store, second_store):
+    job = first_store.create_job(
+        "direct-claim",
+        ["VUSXX", "SPY"],
+        "v7",
+    )
+    vusxx, spy = first_store.list_items(job.job_id)
+
+    claimed = first_store.claim_item(vusxx.item_id, "temporal-vusxx", 60)
+    blocked = second_store.claim_item(vusxx.item_id, "other-worker", 60)
+    spy_claim = second_store.claim_item(spy.item_id, "temporal-spy", 60)
+    renewed = first_store.claim_item(vusxx.item_id, "temporal-vusxx", 60)
+
+    assert claimed is not None and claimed.ticker == "VUSXX"
+    assert blocked is None
+    assert spy_claim is not None and spy_claim.ticker == "SPY"
+    assert renewed is not None
+    assert renewed.lease_owner == "temporal-vusxx"
+    assert renewed.attempt_count == claimed.attempt_count
+    assert first_store.get_item(vusxx.item_id) == renewed

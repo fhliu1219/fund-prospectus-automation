@@ -1,0 +1,4 @@
+-r requirements-service.txt
+
+# Milestone 7.3 durable orchestration. The current SDK requires Python 3.10+.
+temporalio>=1.30,<2

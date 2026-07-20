@@ -26,6 +26,25 @@ from . import config
 logger = logging.getLogger(__name__)
 
 
+class SECRequestThrottle:
+    """Thread-safe request pacing that can be shared across client sessions."""
+
+    def __init__(self, max_rps: float) -> None:
+        self._min_interval = 1.0 / max_rps if max_rps > 0 else 0.0
+        self._lock = threading.Lock()
+        self._last_request = 0.0
+
+    def wait(self) -> None:
+        if self._min_interval <= 0:
+            return
+        with self._lock:
+            elapsed = time.monotonic() - self._last_request
+            wait = self._min_interval - elapsed
+            if wait > 0:
+                time.sleep(wait)
+            self._last_request = time.monotonic()
+
+
 class SECClient:
     """Rate-limited, retrying HTTP client scoped to SEC endpoints."""
 
@@ -36,11 +55,10 @@ class SECClient:
         timeout: int = config.REQUEST_TIMEOUT,
         max_retries: int = config.MAX_RETRIES,
         session: Optional[requests.Session] = None,
+        throttle: Optional[SECRequestThrottle] = None,
     ) -> None:
         self.timeout = timeout
-        self._min_interval = 1.0 / max_rps if max_rps > 0 else 0.0
-        self._lock = threading.Lock()
-        self._last_request = 0.0
+        self.throttle = throttle or SECRequestThrottle(max_rps)
 
         self.session = session or requests.Session()
         self.session.headers.update(
@@ -59,14 +77,7 @@ class SECClient:
 
     def _throttle(self) -> None:
         """Block just long enough to honour the max requests/second limit."""
-        if self._min_interval <= 0:
-            return
-        with self._lock:
-            elapsed = time.monotonic() - self._last_request
-            wait = self._min_interval - elapsed
-            if wait > 0:
-                time.sleep(wait)
-            self._last_request = time.monotonic()
+        self.throttle.wait()
 
     def get(self, url: str, params: Optional[dict] = None) -> requests.Response:
         self._throttle()
@@ -83,3 +94,6 @@ class SECClient:
 
     def get_bytes(self, url: str, params: Optional[dict] = None) -> bytes:
         return self.get(url, params=params).content
+
+    def close(self) -> None:
+        self.session.close()

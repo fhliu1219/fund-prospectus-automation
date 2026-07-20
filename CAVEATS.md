@@ -44,13 +44,18 @@ Caveat statuses:
 | M6.3-C002 | mitigated | Complete-document structures still vary beyond measured filing generations. | Route unknown structures to review and learn only from new labeled cases. |
 | M6.3-C003 | enforced | Class-cover omission is contradictory only for a demonstrably closed SEC-series roster. | Keep the boundary narrow; do not generalize absence from arbitrary text. |
 | M6.3-C004 | open | The five-form policy excludes some valid CIK-only instrument form families. | Milestone 8 supported instrument/form matrix. |
-| M6.3-C005 | mitigated | V7 identity metadata is persisted after a completed package, but transient stage failures are not durably retried. | Milestone 7.3 stage-aware Temporal retries. |
+| M6.3-C005 | mitigated | Temporal durably retries service-path stages, while the standalone local runner intentionally keeps terminal failure semantics. | Keep the CLI diagnostic-only; use Temporal for unattended work. |
 | M7.1-C003 | open | Review tasks can be queued before reviewer authorization and decision semantics are defined. | Product decision before Milestone 7.4. |
-| M7.1-C005 | open | A completed ticker failure is terminal in the local runner; retry ownership is not stage-aware. | Define typed activity retries in Milestone 7.3. |
+| M7.1-C005 | retired | Temporal now owns typed stage retries and preserves filing selection before retrying package persistence. | Local runner remains intentionally simpler. |
 | M7.2-C001 | mitigated | PostgreSQL contention is proven locally, not across an EKS deployment or database failover. | Roadmap Milestone 7.4 deployment validation. |
 | M7.2-C002 | open | S3 behavior is SDK-stubbed but not exercised against the target AWS account, IAM, KMS, or bucket policy. | Roadmap Milestone 7.4 infrastructure contract test. |
 | M7.2-C003 | open | An immutable object can become unreferenced if storage succeeds but database finalization fails. | Roadmap Milestone 7.4 retention and reconciliation policy. |
 | M7.2-C004 | mitigated | Exact manifests retain worker-local source paths as provenance, although durable artifact records never use them as identity. | Keep paths out of API contracts and downstream decisions. |
+| M7.3-C001 | open | SEC pacing is shared across Activity threads in one worker process, not across processes or pods. | Milestone 7.4 shared traffic control. |
+| M7.3-C002 | mitigated | Temporal is verified against the official local test server, not the target Cloud namespace or EKS topology. | Milestone 7.4 deployment and failure-injection tests. |
+| M7.3-C003 | mitigated | A failed package Activity repeats candidate work inside that stage; heartbeats report liveness but do not checkpoint every candidate. | Measure real retry cost before finer stage decomposition. |
+| M7.3-C004 | open | Worker workspaces and orphaned immutable artifacts have no approved retention or cleanup policy. | Milestone 7.4 retention and reconciliation design. |
+| M7.3-C005 | mitigated | Workflow history excludes document bytes but still contains fund identifiers, filing metadata, and SEC URLs. | Apply the team's namespace access, encryption, and retention controls. |
 
 ---
 
@@ -1391,7 +1396,7 @@ review-task creation before adding PostgreSQL, Temporal, or an API.
 
 #### M7.1-C005: Local failures do not have stage-aware durable retries
 
-- **Status:** open; handed to Milestone 7.3
+- **Status:** retired as a service-path blocker in Milestone 7.3
 - **Risk:** `SECClient` handles bounded HTTP retries, but a ticker-level
   exception recorded by the local runner becomes terminal. It cannot resume
   from an individual resolve, discovery, validation, or storage stage.
@@ -1400,6 +1405,10 @@ review-task creation before adding PostgreSQL, Temporal, or an API.
   job can intentionally retry a failed ticker.
 - **Exit condition:** Temporal activities own typed retry policies and persist
   completed stage outputs so a retry does not repeat unrelated work.
+- **Resolution:** The Temporal worker disables adapter retries, classifies
+  retryable failures at the Activity boundary, and stores filing selection as a
+  completed Activity result before package construction. The standalone local
+  runner keeps its simpler terminal-failure behavior for diagnostics.
 
 ### Assumptions register
 
@@ -1598,6 +1607,156 @@ existing content-addressed object is never overwritten with different bytes.
   migration, and test files parse under Python 3.9 grammar.
 - The existing lightweight CLI image still builds without service dependencies,
   and its containerized `--help` smoke test passes.
+
+---
+
+## Milestone 7.3: Temporal Orchestration
+
+**Status:** complete
+
+**Goal:** Add durable, bounded workflow orchestration without duplicating the
+PostgreSQL state model or placing document bytes in workflow history.
+
+### Caveats register
+
+#### M7.3-C001: SEC throttling is process-local
+
+- **Status:** open
+- **Risk:** Activity threads and their separate HTTP sessions share one
+  `SECRequestThrottle` inside a worker process, but two worker processes or EKS
+  pods have independent limiters and can exceed the intended aggregate rate.
+- **Current mitigation:** The worker defaults to four Activity threads, paces
+  all of their SEC requests at eight requests per second in aggregate, and
+  disables hidden adapter retries.
+- **Exit condition:** Milestone 7.4 routes all workers through one approved
+  distributed limiter or coordinated egress policy and tests aggregate traffic
+  under retries and failover.
+
+#### M7.3-C002: Temporal deployment behavior is not target-environment proven
+
+- **Status:** mitigated
+- **Risk:** The official ephemeral Temporal test server proves workflow
+  semantics, but not Temporal Cloud credentials, namespace policy, EKS worker
+  identity, network interruption, Cloud retention, or a real pod restart.
+- **Current mitigation:** Connection configuration supports local, API-key TLS,
+  and mTLS modes. Workflows are independent of hosting mode, and the real-engine
+  contract executes parent/child workflows and Activity retries.
+- **Exit condition:** Run restart, failover, permission, and connectivity
+  contracts in the approved Temporal Cloud namespace and EKS environment.
+
+#### M7.3-C003: Package retries are stage-aware, not candidate-checkpointed
+
+- **Status:** mitigated
+- **Risk:** Filing selection is not repeated after it succeeds, but a failed
+  package Activity may redownload or reevaluate candidates already inspected
+  inside that Activity.
+- **Current mitigation:** Candidate boundaries emit heartbeats; source reads
+  are idempotent; artifact publication is content-addressed and no-overwrite;
+  retries are bounded.
+- **Exit condition:** Measure retry amplification and Activity duration in
+  production-like runs. Split or checkpoint the package stage only if observed
+  cost or timeout risk justifies the added workflow-history complexity.
+
+#### M7.3-C004: Workspace and orphan retention is undefined
+
+- **Status:** open
+- **Risk:** Per-item worker directories remain after immutable publication, and
+  a storage success followed by database failure can still leave an unreferenced
+  content-addressed object.
+- **Current mitigation:** Each item has an isolated workspace, and unreferenced
+  objects cannot be served as completed results. Checksums make reconciliation
+  deterministic.
+- **Exit condition:** Milestone 7.4 defines workspace cleanup, object retention,
+  orphan reconciliation, and garbage-collection schedules.
+
+#### M7.3-C005: Workflow metadata needs production security controls
+
+- **Status:** mitigated
+- **Risk:** HTML/PDF bytes are excluded from Temporal, but workflow history
+  includes ticker, CIK, series/class identifiers, accession, SEC URLs, and
+  selection evidence.
+- **Current mitigation:** No credentials or document bytes are workflow
+  payloads; API keys are process configuration and excluded from dataclass
+  representation.
+- **Exit condition:** Apply the team's namespace access controls, retention,
+  encryption, payload-codec policy, and audit requirements before production.
+
+### Assumptions register
+
+#### M7.3-A001: Temporal Cloud is the likely hosted target
+
+The code does not require Cloud, but Cloud-compatible API-key and mTLS
+configuration is included because managed Temporal is the preferred long-term
+operational direction. Final hosting remains a team decision.
+
+#### M7.3-A002: PostgreSQL and artifact storage remain authoritative
+
+Temporal records orchestration history. PostgreSQL owns jobs, item outcomes,
+review tasks, and artifact references. Local CAS or S3 owns bytes. A workflow
+result summarizes those records rather than replacing them.
+
+#### M7.3-A003: At-least-once Activity execution is acceptable
+
+An Activity can execute more than once after timeout or worker interruption.
+Exact claims, terminal-state checks, immutable content-addressed writes, and
+database uniqueness make repeated effects safe.
+
+#### M7.3-A004: New service submissions should use V7
+
+The Temporal submitter defaults to the measured V7 validation policy. The
+standalone CLI keeps `legacy` as its backward-compatible rollback default.
+
+### Decisions register
+
+#### M7.3-D001: Use a bounded parent/child workflow hierarchy
+
+- **Status:** implemented
+- **Decision:** One batch workflow prepares the durable job and starts one child
+  per exact database item in bounded chunks. A 5,000-ticker request does not run
+  as one unbounded sequence of side effects.
+
+#### M7.3-D002: Give Temporal sole retry ownership on the service path
+
+- **Status:** implemented
+- **Decision:** Worker-created `SECClient` instances set `max_retries=0`.
+  Temporal retries typed `429`, `5xx`, transport, database, and object-store
+  failures. Deterministic contract errors and unknown programming errors do not
+  retry.
+
+#### M7.3-D003: Preserve filing selection as a workflow stage
+
+- **Status:** implemented
+- **Decision:** Resolve/select and build/persist are separate Activities. The
+  byte-free filing selection payload is recorded in workflow history so package
+  retries do not rerun selection.
+
+#### M7.3-D004: Use stable versioned names and payload schemas
+
+- **Status:** implemented
+- **Decision:** Workflow and Activity names include `v1`; dataclass payloads
+  include a schema version and contain no document bytes. A future incompatible
+  contract requires a new version rather than mutating replay history.
+
+#### M7.3-D005: Keep Temporal workflow IDs and database idempotency distinct
+
+- **Status:** implemented
+- **Decision:** The workflow ID is stable for the caller scope/key and request
+  fingerprint. PostgreSQL remains the authoritative detector of reusing one
+  scope/key for a different normalized request.
+
+### Verification at completion
+
+- Normal offline suite: 198 passed, with one opt-in live SEC test skipped.
+- PostgreSQL contract: 7 passed, including exact-item claims, migrations,
+  server-time leases, contention, and immutable artifact persistence.
+- Temporal contract: 1 passed against the official ephemeral test server.
+- The real workflow test proves resolve/select runs once while a transient
+  package failure causes only the package Activity to run a second time.
+- Configuration tests cover local defaults, API-key TLS, mTLS pairing, secret
+  redaction, explicit S3 encryption, byte-free payloads, and stable workflow
+  IDs.
+- Existing CLI, package, SEC client, and local operations focused tests remain
+  green.
 
 ---
 

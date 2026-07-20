@@ -110,9 +110,20 @@ class OperationsStore(Protocol):
     def list_items(self, job_id: str) -> List[JobItem]:
         ...
 
+    def get_item(self, item_id: str) -> JobItem:
+        ...
+
     def claim_next_item(
         self,
         job_id: str,
+        worker_id: str,
+        lease_seconds: int,
+    ) -> Optional[JobItem]:
+        ...
+
+    def claim_item(
+        self,
+        item_id: str,
         worker_id: str,
         lease_seconds: int,
     ) -> Optional[JobItem]:
@@ -201,7 +212,7 @@ class PersistentJobRunner:
 
             try:
                 result = self.fetcher.fetch(item.ticker)
-                manifest = self._load_manifest(result)
+                manifest = load_result_manifest(result)
                 self.store.complete_item(
                     item.item_id,
                     self.worker_id,
@@ -215,28 +226,6 @@ class PersistentJobRunner:
                     f"{type(exc).__name__}: {exc}",
                 )
 
-    @staticmethod
-    def _load_manifest(result: FetchResult) -> Optional[dict]:
-        if not result.ok:
-            return None
-        if not result.manifest_path:
-            raise OperationsContractError(
-                f"{result.ticker}: successful result has no manifest path"
-            )
-        path = Path(result.manifest_path)
-        try:
-            value = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            raise OperationsContractError(
-                f"{result.ticker}: could not read package manifest {path}: {exc}"
-            ) from exc
-        if not isinstance(value, dict) or value.get("ticker") != result.ticker:
-            raise OperationsContractError(
-                f"{result.ticker}: package manifest ticker does not match result"
-            )
-        return value
-
-
 def normalize_tickers(tickers: Sequence[str]) -> List[str]:
     values: List[str] = []
     seen = set()
@@ -248,6 +237,27 @@ def normalize_tickers(tickers: Sequence[str]) -> List[str]:
     if not values:
         raise OperationsContractError("at least one ticker is required")
     return values
+
+
+def load_result_manifest(result: FetchResult) -> Optional[dict]:
+    if not result.ok:
+        return None
+    if not result.manifest_path:
+        raise OperationsContractError(
+            f"{result.ticker}: successful result has no manifest path"
+        )
+    path = Path(result.manifest_path)
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise OperationsContractError(
+            f"{result.ticker}: could not read package manifest {path}: {exc}"
+        ) from exc
+    if not isinstance(value, dict) or value.get("ticker") != result.ticker:
+        raise OperationsContractError(
+            f"{result.ticker}: package manifest ticker does not match result"
+        )
+    return value
 
 
 def normalize_idempotency_scope(value: str) -> str:

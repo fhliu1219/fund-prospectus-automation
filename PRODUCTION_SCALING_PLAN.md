@@ -1,11 +1,12 @@
 # Production Scaling Plan
 
-**Status:** active implementation blueprint; Milestone 7.2 complete
+**Status:** active implementation blueprint; Milestone 7.3 complete
 
 **Current point:** SQLite and PostgreSQL implement the durable operations
-contract, and local CAS/S3 adapters implement immutable artifact references.
-Temporal orchestration is the next production slice; the API/review
-application and deployment remain later phases.
+contract, local CAS/S3 adapters implement immutable artifact references, and a
+local/Temporal Cloud-neutral worker implements durable orchestration. Shared SEC
+traffic control, the API/review application, observability, and deployment
+validation remain later phases.
 
 This document describes how the current Python CLI could become a durable
 internal cloud service and review application. `ROADMAP.md` decides when the
@@ -400,7 +401,7 @@ responses, `429` responses, and interrupted workflows.
 
 ### Phase P1: Extract service boundaries
 
-**Status:** in progress
+**Status:** complete
 
 - Separate orchestration from resolver, retrieval, validation, and persistence.
 - Introduce artifact-store and repository interfaces.
@@ -421,13 +422,19 @@ selection logic.
 
 ### Phase P3: Add Temporal orchestration
 
-**Status:** not started
+**Status:** implementation complete; deployment validation pending
 
 - Implement one workflow per ticker and bounded batch coordination.
 - Move network and storage side effects into Activities.
 - Configure typed retries, heartbeats, cancellation, and review waits.
 
-**Exit:** worker termination and transient failures recover without restarting
+**Implemented boundary:** bounded child workflows, typed retry ownership,
+candidate-boundary heartbeats, byte-free workflow payloads, and completed-stage
+resume are implemented and covered by an official Temporal test-server
+contract. Long-lived review waits belong to the review product in Phase P5.
+
+**Exit:** target Temporal Cloud/EKS restart and failure-injection tests confirm
+that worker termination and transient failures recover without restarting
 completed stages.
 
 ### Phase P4: Enforce global SEC traffic policy

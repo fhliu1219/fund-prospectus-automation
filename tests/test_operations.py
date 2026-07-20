@@ -29,6 +29,7 @@ from prospectus_fetcher.sqlite_operations import (
 )
 from tests.operations_contract import (
     assert_active_claim_isolation_contract,
+    assert_direct_claim_contract,
     assert_scoped_idempotency_contract,
 )
 
@@ -263,6 +264,12 @@ def test_separate_sqlite_connections_do_not_claim_the_same_active_item(
     path = str(tmp_path / "operations.db")
     with SQLiteOperationsStore(path) as first, SQLiteOperationsStore(path) as second:
         assert_active_claim_isolation_contract(first, second)
+
+
+def test_direct_item_claim_targets_one_ticker_and_is_owner_safe(tmp_path):
+    path = str(tmp_path / "operations.db")
+    with SQLiteOperationsStore(path) as first, SQLiteOperationsStore(path) as second:
+        assert_direct_claim_contract(first, second)
 
 
 def test_persistent_runner_records_mixed_results_and_resumes_idempotently(tmp_path):

@@ -383,6 +383,9 @@ class SQLiteOperationsStore:
         ).fetchall()
         return [self._item(row) for row in rows]
 
+    def get_item(self, item_id: str) -> JobItem:
+        return self._get_item(item_id)
+
     def claim_next_item(
         self,
         job_id: str,
@@ -455,6 +458,80 @@ class SQLiteOperationsStore:
             claimed = self.connection.execute(
                 "SELECT * FROM job_items WHERE item_id = ?",
                 (row["item_id"],),
+            ).fetchone()
+            self.connection.commit()
+            assert claimed is not None
+            return self._item(claimed)
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def claim_item(
+        self,
+        item_id: str,
+        worker_id: str,
+        lease_seconds: int,
+    ) -> Optional[JobItem]:
+        owner = worker_id.strip()
+        if not owner:
+            raise OperationsContractError("worker_id must not be empty")
+        if lease_seconds <= 0:
+            raise OperationsContractError("lease_seconds must be positive")
+        now_value = self.clock()
+        now = _timestamp(now_value)
+        lease_until = _timestamp(now_value + timedelta(seconds=lease_seconds))
+
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            row = self.connection.execute(
+                "SELECT * FROM job_items WHERE item_id = ?",
+                (item_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"unknown item {item_id}")
+            claimable = row["status"] == ItemStatus.PENDING.value or (
+                row["status"] == ItemStatus.RUNNING.value
+                and (
+                    row["lease_owner"] == owner
+                    or (
+                        row["lease_expires_at"] is not None
+                        and row["lease_expires_at"] <= now
+                    )
+                )
+            )
+            if not claimable:
+                self.connection.commit()
+                return None
+
+            next_attempt_count = row["attempt_count"]
+            if (
+                row["status"] == ItemStatus.PENDING.value
+                or row["lease_owner"] != owner
+            ):
+                next_attempt_count += 1
+            self.connection.execute(
+                """
+                UPDATE job_items
+                SET status = ?, attempt_count = ?,
+                    lease_owner = ?, lease_expires_at = ?, updated_at = ?
+                WHERE item_id = ?
+                """,
+                (
+                    ItemStatus.RUNNING.value,
+                    next_attempt_count,
+                    owner,
+                    lease_until,
+                    now,
+                    item_id,
+                ),
+            )
+            self.connection.execute(
+                "UPDATE jobs SET status = ?, updated_at = ? WHERE job_id = ?",
+                (JobStatus.RUNNING.value, now, row["job_id"]),
+            )
+            claimed = self.connection.execute(
+                "SELECT * FROM job_items WHERE item_id = ?",
+                (item_id,),
             ).fetchone()
             self.connection.commit()
             assert claimed is not None

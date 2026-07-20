@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import asdict, dataclass, replace
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 from urllib.parse import unquote, urlsplit
 
 import requests
@@ -66,6 +66,7 @@ class DocumentPackageBuilder:
         validator: Optional[DocumentValidator] = None,
         validation_policy: str = LEGACY_VALIDATION_POLICY,
         want_pdf: bool = False,
+        progress_callback: Optional[Callable[[str], None]] = None,
     ) -> None:
         if validation_policy not in VALIDATION_POLICIES:
             raise ValueError(
@@ -77,11 +78,14 @@ class DocumentPackageBuilder:
         self.evidence_policy = ShadowEvidencePolicy()
         self.validation_policy = validation_policy
         self.want_pdf = want_pdf
+        self.progress_callback = progress_callback
 
     def build(self, fund: ResolvedFund, selected: Filing) -> FetchResult:
         ticker = fund.ticker.upper()
         selection_warnings = list(selected.warnings)
+        self._progress("download_selected_document")
         content = self.downloader.download(selected, ticker)
+        self._progress("validate_selected_document")
         validation = self._validate(content, fund, selected)
         self._apply_validation(selected, validation)
 
@@ -263,6 +267,9 @@ class DocumentPackageBuilder:
                 continue
 
             search.evaluated_count += 1
+            self._progress(
+                f"evaluate_sibling:{selected.accession}:{document.name}"
+            )
             candidate = replace(
                 selected,
                 doc_url=document.url,
@@ -395,6 +402,7 @@ class DocumentPackageBuilder:
 
         for ref in refs:
             search.evaluated_count += 1
+            self._progress(f"evaluate_base:{ref.accession}")
             try:
                 candidate = self.edgar.resolve_related_prospectus(fund, selected, ref)
                 content = self.downloader.download(candidate, fund.ticker)
@@ -764,3 +772,7 @@ class DocumentPackageBuilder:
     @staticmethod
     def _dedupe(values: List[str]) -> List[str]:
         return list(dict.fromkeys(values))
+
+    def _progress(self, stage: str) -> None:
+        if self.progress_callback is not None:
+            self.progress_callback(stage)

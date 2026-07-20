@@ -164,6 +164,9 @@ class PostgreSQLOperationsStore:
             ).mappings().all()
         return [self._item(row) for row in rows]
 
+    def get_item(self, item_id: str) -> JobItem:
+        return self._get_item(_uuid(item_id, "item"))
+
     def claim_next_item(
         self,
         job_id: str,
@@ -223,6 +226,66 @@ class PostgreSQLOperationsStore:
             connection.execute(
                 jobs.update()
                 .where(jobs.c.job_id == job_uuid)
+                .values(status=JobStatus.RUNNING.value, updated_at=now)
+            )
+            return self._item(claimed)
+
+    def claim_item(
+        self,
+        item_id: str,
+        worker_id: str,
+        lease_seconds: int,
+    ) -> Optional[JobItem]:
+        owner = worker_id.strip()
+        if not owner:
+            raise OperationsContractError("worker_id must not be empty")
+        if lease_seconds <= 0:
+            raise OperationsContractError("lease_seconds must be positive")
+        item_uuid = _uuid(item_id, "item")
+
+        with self.engine.begin() as connection:
+            now = self._server_now(connection)
+            row = connection.execute(
+                select(job_items)
+                .where(job_items.c.item_id == item_uuid)
+                .with_for_update()
+            ).mappings().first()
+            if row is None:
+                raise KeyError(f"unknown item {item_id}")
+            claimable = row["status"] == ItemStatus.PENDING.value or (
+                row["status"] == ItemStatus.RUNNING.value
+                and (
+                    row["lease_owner"] == owner
+                    or (
+                        row["lease_expires_at"] is not None
+                        and row["lease_expires_at"] <= now
+                    )
+                )
+            )
+            if not claimable:
+                return None
+
+            next_attempt_count = row["attempt_count"]
+            if (
+                row["status"] == ItemStatus.PENDING.value
+                or row["lease_owner"] != owner
+            ):
+                next_attempt_count += 1
+            claimed = connection.execute(
+                job_items.update()
+                .where(job_items.c.item_id == item_uuid)
+                .values(
+                    status=ItemStatus.RUNNING.value,
+                    attempt_count=next_attempt_count,
+                    lease_owner=owner,
+                    lease_expires_at=now + timedelta(seconds=lease_seconds),
+                    updated_at=now,
+                )
+                .returning(job_items)
+            ).mappings().one()
+            connection.execute(
+                jobs.update()
+                .where(jobs.c.job_id == row["job_id"])
                 .values(status=JobStatus.RUNNING.value, updated_at=now)
             )
             return self._item(claimed)

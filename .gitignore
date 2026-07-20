@@ -2,6 +2,7 @@
 output/
 logs/
 docs/
+var/
 ROADMAP.md
 TEST_MATRIX.md
 corpus/cache/

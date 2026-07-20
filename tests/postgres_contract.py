@@ -37,6 +37,7 @@ from prospectus_fetcher.postgres_operations import (
 )
 from tests.operations_contract import (
     assert_active_claim_isolation_contract,
+    assert_direct_claim_contract,
     assert_scoped_idempotency_contract,
 )
 from tests.test_operations import manifest_for, successful_result
@@ -128,6 +129,14 @@ def test_postgres_matches_active_claim_contract(postgres_engine, tmp_path):
         tmp_path,
     ) as second:
         assert_active_claim_isolation_contract(first, second)
+
+
+def test_postgres_matches_direct_claim_contract(postgres_engine, tmp_path):
+    with _store(postgres_engine, tmp_path) as first, _store(
+        postgres_engine,
+        tmp_path,
+    ) as second:
+        assert_direct_claim_contract(first, second)
 
 
 def test_skip_locked_claims_each_item_once_under_contention(

@@ -56,8 +56,9 @@ class ProspectusFetcher:
         output_dir: str = config.DEFAULT_OUTPUT_DIR,
         want_pdf: bool = False,
         validation_policy: str = LEGACY_VALIDATION_POLICY,
+        sec_client: Optional[SECClient] = None,
     ) -> None:
-        self.client = SECClient()
+        self.client = sec_client or SECClient()
         self.resolver = Resolver(self.client)
         self.edgar = EdgarClient(self.client, self.resolver)
         self.downloader = Downloader(self.client, output_dir=output_dir)
